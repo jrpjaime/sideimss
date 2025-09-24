@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  seguridad:
+    build:
+      context: ./mssideimss-seguridad
+      dockerfile: Dockerfile
+    ports:
+      - "6000:6000"
+    container_name: mssideimss-seguridad
+
+  catalogos:
+    build:
+      context: ./mssideimss-catalogos
+      dockerfile: Dockerfile
+    ports:
+      - "6010:6010"
+    container_name: mssideimss-catalogos
+
+  devoluciones:
+    build:
+      context: ./mssideimss-contadores
+      dockerfile: Dockerfile
+    ports:
+      - "6011:6011"
+    container_name: mssideimss-contadores

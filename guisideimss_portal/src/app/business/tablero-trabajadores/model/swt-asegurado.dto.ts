@@ -1,0 +1,41 @@
+export class SwtAseguradoDto {
+	page: number = 0;
+	size: number = 10;
+	order: string = '';
+	asc: boolean = true;
+
+	idAsegurado: string | null = null;
+	numNss: string | null = null;
+	refCurp: string | null = null;
+	refRfc: string | null = null;
+	nomNombre: string | null = null;
+	nomPrimerApellido: string | null = null;
+	nomSegundoApellido: string | null = null;
+	fecAlt: string | null = null;
+	fecBaj: string | null = null;
+	cveUbcacion: string | null = null;
+	cveMunicipio: string | null = null;
+	idTipoTrabajador: number | null = null;
+	idJornada: number | null = null;
+	idTipoPension: number | null = null;
+	idTipoSalario: number | null = null;
+	idEntidad: number | null = null;
+	idSexo: number | null = null;
+	refCppTrab: string | null = null;
+	fecNac: string | null = null;
+	numUmfTrab: string | null = null;
+	refOcupa: string | null = null;
+	numJorHoras: string | null = null;
+	salarioDiarioIntegrado: number | null = null;
+	numCredito: string | null = null;
+	fecInicioDescuento: string | null = null;
+	canValorDescuento: number | null = null;
+	fecSuspension: string | null = null;
+	fecRegistroAlta: string | null = null;
+	fecRegistroActualizado: string | null = null;
+	fecRegistroBaja: string | null = null;
+	idTipoDescuento: number | null = null;
+	indTablaDisminucion: number | null = null;
+	cveRegistroPatronal: string | null   = null;
+	idPatron: number | null = null;
+}

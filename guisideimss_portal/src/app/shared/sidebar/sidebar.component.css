@@ -1,0 +1,12 @@
+ nav.sub-navbar {
+  top: 42px; /* Ajusta este valor si la barra de gob.mx es más alta o más baja */
+}
+
+
+.info-patron-subtitulo {
+  font-size: 1.5rem;   
+  font-weight: 300;  
+  color: #c0ccd6;   
+  padding-left: 1.0rem;
+  margin-top: -5px;  
+}

@@ -1,0 +1,92 @@
+<div class="container-fluid " style="margin-top: -65px !important;  margin-left: -20px !important;">
+  <div class="row">
+
+      <div class="col-md-6 d-none d-md-block ">
+          <!-- La imagen se establece como fondo a través de CSS -->
+		      <img src="personas.jpeg" alt="SUA" class="img-fluid image-cover">
+          <div class="overlay-text">
+          <!--    <h1 class="h2 fw-bold">SIDEIMSS</h1>
+              <p class="lead ">Sistema de Dictamen Electrónico</p>-->
+          </div>
+      </div>
+
+    <!--  Formulario y Widget -->
+    <div class="col-md-6" style="overflow-y: auto;  margin-top: 20px; ">
+
+
+
+
+        <!-- Pestañas de Navegación -->
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'firma'" (click)="setActiveTab('firma')">e.firma</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'login'" (click)="setActiveTab('login')">Usuario (CURP)
+              y contraseña</a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <!-- Pestaña 1: Formulario de Login con CURP y Contraseña -->
+          <div class="tab-pane" [class.active]="activeTab === 'login'">
+            <label class="control-label">Proporcione sus credenciales para iniciar sesión</label>
+            <form [formGroup]="loginForm" (ngSubmit)="login()" class="form-horizontal">
+              <div class="form-group mb-1">
+                <label for="user" class="col-sm-4 control-label">CURP</label>
+                <div class="col-sm-8">
+                  <input id="user" formControlName="user" type="text" class="form-control"
+                    placeholder="CURP del usuario">
+                  @if (loginForm.get('user')?.invalid && loginForm.get('user')?.touched) {
+                  <small class="text-danger">El usuario (CURP) es requerido y debe tener un formato válido.</small>
+                  }
+                </div>
+              </div>
+
+              <div class="form-group mb-1">
+                <label for="password" class="col-sm-4 control-label">Contraseña</label>
+                <div class="col-sm-8">
+                  <input id="password" formControlName="password" type="password" class="form-control"
+                    placeholder="Contraseña">
+                  @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+                  <small class="text-danger">La contraseña es requerida.</small>
+                  }
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="col-sm-12">
+                  <button type="submit" class="btn btn-primary pull-right" [disabled]="loginForm.invalid">Iniciar
+                    sesión</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Pestaña 2: Widget de Firma Digital -->
+          <div class="tab-pane" [class.active]="activeTab === 'firma'">
+            <div class="single-feature align-items-center">
+              <!-- Formulario que envía datos al iframe para iniciar el widget -->
+              <form #formWidget id="formWidget" [action]="widgetUrl" method="post" target="formFirmaDigital"
+                style="display: none;">
+                <input id="params" name="params" type="hidden"
+                  value='{"operacion":"validarCertificado","salida":"rfc,cert,vigIni,vigFin,serie_cert,curp,rfc_rl,curp_rl,nombreRazonSocial"}'>
+              </form>
+
+              <!-- Iframe donde se renderiza el widget de firma -->
+              <div class="text-center">
+                <p><iframe id="formFirmaDigital" name="formFirmaDigital" width="850" height="370"
+                    style="border: none; max-width: 100%;"></iframe></p>
+              </div>
+            </div>
+          </div>
+        </div>
+         @if (errorMessage) {
+        <div class="alert alert-danger mt-3" role="alert">
+          {{ errorMessage }}
+        </div>
+        }
+
+    </div>
+  </div>
+</div>

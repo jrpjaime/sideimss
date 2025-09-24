@@ -1,0 +1,48 @@
+server:
+  port: ${SIDEIMSS_SEGURIDAD_PORT}
+jwt:
+  secret: TExBVkVfTVVZX1NFQ1JFVEzE3Zmxu7BSGSJx72BSBXM 
+spring:
+  application:
+    name: mssideimss-seguridad
+  datasource:
+   #CAMBIOS_ORACLE
+    #driver-class-name: oracle.jdbc.driver.OracleDriver
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${SIDEIMSS_DB_URL_MARIADB}
+    username: ${SIDEIMSS_DB_USER_MARIADB}
+    password: ${SIDEIMSS_DB_PASSWORD_MARIADB}
+    hikari:
+      minimum-idle: ${POOL_MINIMUM_IDLE}
+      maximum-pool-size: ${POOL_MAX_SIZE}
+      idle-timeout: ${POOL_IDLE_TIMEOUT}
+      max-lifetime: ${POOL_LIFETIME}
+      connection-timeout: ${POOL_CONNECTION_TIMEOUT}
+      pool-name: sideimssPoolSeguridad
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.MariaDBDialect
+  #CAMBIOS_ORACLE  
+    #database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        proc:
+          param_null_passing: true
+management:
+  endpoints:
+    web:
+      base-path: /mssideimss-seguridad/v1/actuator
+      exposure:
+        include: health
+  endpoint:
+    auditevents:
+      enabled: true
+
+

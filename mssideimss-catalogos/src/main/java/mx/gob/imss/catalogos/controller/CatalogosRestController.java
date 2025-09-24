@@ -1,0 +1,140 @@
+package mx.gob.imss.catalogos.controller;
+
+ 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import org.springframework.data.domain.Page;
+
+ 
+import mx.gob.imss.catalogos.dto.DitPatronGeneralDto;
+import mx.gob.imss.catalogos.dto.DitPatronGeneralFiltroDto;
+import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
+import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
+import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto; 
+import mx.gob.imss.catalogos.service.DitPatronGeneralService;
+import mx.gob.imss.catalogos.service.SdcDelegacionService;
+import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
+
+import jakarta.validation.Valid; 
+ 
+
+
+@Controller
+@CrossOrigin("*") 
+@RequestMapping("/mssideimss-catalogos/v1")
+public class CatalogosRestController {
+	private final static Logger logger = LoggerFactory.getLogger(CatalogosRestController.class);
+  
+	@Autowired
+	private DitPatronGeneralService ditPatronGeneralService;
+
+	@Autowired
+	private SdcDelegacionService sdcDelegacionService;
+
+	@Autowired
+	private SdcSubdelegacionService sdcSubdelegacionService;
+	
+ 
+    @GetMapping("/info")
+	public ResponseEntity<List<String>> info() {
+		logger.info("........................mssideimss-catalogos info..............................");
+		List<String> list = new ArrayList<String>();
+		list.add("mssideimss-catalogos");
+		list.add("20240927");
+		list.add("Catálogos");
+		return new ResponseEntity<List<String>>(list, HttpStatus.OK);
+	}
+
+
+	@GetMapping("/list")
+	public ResponseEntity<List<String>> list() {
+		logger.info("........................mssideimss-catalogos list..............................");
+		List<String> list = new ArrayList<String>();
+		list.add("mssideimss-catalogos");
+		list.add("20240927");
+		list.add("Catálogos");
+		return new ResponseEntity<List<String>>(list, HttpStatus.OK);
+	}
+
+
+ 
+ 
+	 
+
+	/*
+	 * Consulta todo el contenido de DitPatronGeneral
+	*/
+	@PostMapping("/listRegistrosPatronales")
+	public  ResponseEntity<List< DitPatronGeneralDto>> listRegistrosPatronales(@Valid @RequestBody DitPatronGeneralFiltroDto ditPatronGeneralFiltroDto) {
+		logger.info("/listRegistrosPatronales"); 
+		List<DitPatronGeneralDto> ditPatronGeneralDtos = new ArrayList<DitPatronGeneralDto>();  
+ 
+		//PENDIENTE: Este metodo debe ser modificado para consultar los Registros Patronales vinculados al RFC
+		ditPatronGeneralDtos = ditPatronGeneralService.findDitPatronGeneralByRfc(ditPatronGeneralFiltroDto.getRfc());
+		logger.info("ditPatronGeneralDtos.size(): "+ ditPatronGeneralDtos.size()); 
+ 
+		return new ResponseEntity<List<DitPatronGeneralDto>>(ditPatronGeneralDtos, HttpStatus.OK);
+	} 
+
+		/*
+	 * Consulta todo el contenido paginado de DitPatronGeneral
+	*/
+	@PostMapping(value = "/listPaginatedRegistrosPatronales")
+	public  ResponseEntity<Page< DitPatronGeneralDto>> listPaginatedRegistrosPatronales (@Valid @RequestBody DitPatronGeneralFiltroDto ditPatronGeneralFiltroDto) {
+		logger.info("/listPaginatedRegistrosPatronales"); 
+		String orders = "idPatronGeneral"; 
+		Page<DitPatronGeneralDto> ditPatronGeneralDtos =  ditPatronGeneralService.findAllPageableDitPatronGeneral(ditPatronGeneralFiltroDto, PageRequest.of(ditPatronGeneralFiltroDto.getPage(), ditPatronGeneralFiltroDto.getSize(), org.springframework.data.domain.Sort.by(orders)));
+		return new ResponseEntity<Page<DitPatronGeneralDto>>(ditPatronGeneralDtos, HttpStatus.OK);
+	} 
+
+
+
+
+
+
+		
+	/*
+	 * Consulta todo el contenido de SdcDelegacion
+	*/
+	@PostMapping("/listDelegacion")
+	public  ResponseEntity<List<SdcDelegacionDto>> listDelegacion() {
+		logger.info("/listDelegacion"); 
+		List<SdcDelegacionDto> sdcDelegacionDtos = new ArrayList<SdcDelegacionDto>();  
+		sdcDelegacionDtos = sdcDelegacionService.findAllSdcDelegacion();
+		return new ResponseEntity<List<SdcDelegacionDto>>(sdcDelegacionDtos, HttpStatus.OK);
+	} 
+
+
+
+
+		
+	/*
+	 * Consulta todo el contenido de SdcDelegacion
+	*/
+	@PostMapping("/listSubdelegacion")
+	public  ResponseEntity<List<SdcSubdelegacionDto>> listSubdelegacion(@Valid @RequestBody  SdcSubdelegacionFiltroDto sdcSubdelegacionFiltroDto) {
+		logger.info("/listSubdelegacion"); 
+		List<SdcSubdelegacionDto> sdcSubdelegacionDtos = new ArrayList<SdcSubdelegacionDto>();  
+			sdcSubdelegacionDtos = sdcSubdelegacionService.findAllSdcSubdelegacion(sdcSubdelegacionFiltroDto);
+		return new ResponseEntity<List<SdcSubdelegacionDto>>(sdcSubdelegacionDtos, HttpStatus.OK);
+	} 
+
+ 
+ 
+ 
+
+}

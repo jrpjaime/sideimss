@@ -1,0 +1,176 @@
+/* --- CONFIGURACIÓN GENERAL DEL HOST --- */
+:host {
+  display: block;
+  width: 300px; /* Un ancho generoso para nombres largos */
+  flex-shrink: 0;
+  transition: width 0.3s ease-in-out;
+  /* Una fuente sans-serif estándar y limpia */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+:host-context(.menu-collapsed) {
+  width: 80px;
+}
+
+/* --- ESTILO PRINCIPAL DEL MENÚ (TEMA GRIS CLARO) --- */
+.side-menu {
+  width: 100%;
+  height: 100%;
+  background-color: #f8f9fa; /* Un gris muy claro, estándar en Bootstrap */
+  border-right: 1px solid #dee2e6; /* Un borde sutil */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+ 
+
+/* --- ENCABEZADO CON LOGO/TÍTULO (OPCIONAL, AJUSTADO AL TEMA CLARO) --- */
+.menu-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #dee2e6;
+  white-space: nowrap;
+}
+.app-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #343a40; /* Texto oscuro principal */
+}
+.app-logo .menu-icon {
+  margin-right: 12px;
+  color: #0d6efd; /* Un toque de color de marca en el logo */
+}
+
+
+/* --- LISTA DE NAVEGACIÓN PRINCIPAL --- */
+.nav-list {
+  list-style: none;
+  padding: 8px 0; /* Menos padding vertical para un look más denso si se prefiere */
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* --- ESTILO DE LOS ENLACES (LA PARTE MÁS IMPORTANTE) --- */
+li a {
+  display: flex;
+  align-items: center;
+  padding: 14px 25px; /* Más padding para un look espacioso */
+  color: #495057; /* Un gris oscuro suave para el texto */
+  text-decoration: none;
+  font-weight: 500; /* Un peso medio, ni muy delgado ni muy grueso */
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+li a:hover {
+  background-color: #e9ecef; /* Un fondo ligeramente más oscuro al pasar el ratón */
+  color: #212529; /* El texto se hace más oscuro para mayor contraste */
+}
+
+/* ESTADO ACTIVO: Sutil y profesional */
+li a.active-link {
+  color: #212529; /* Texto negro para máxima prominencia */
+  font-weight: 600; /* La fuente se hace negrita para indicar selección */
+  background-color: transparent; /* Sin fondo para un look minimalista */
+}
+
+.menu-icon {
+  margin-right: 20px; /* Más espacio entre el icono y el texto */
+  font-size: 1.3rem; /* Iconos un poco más grandes y visibles */
+  width: 24px;
+  text-align: center;
+  transition: margin 0.3s ease-in-out;
+  color: #6c757d; /* Color de icono gris medio */
+}
+li a:hover .menu-icon,
+li a.active-link .menu-icon {
+  color: #212529; /* El icono se oscurece junto con el texto */
+}
+
+
+/* --- SUBMENÚS Y FLECHA --- */
+.submenu-arrow {
+  margin-left: auto;
+  color: #6c757d; /* Flecha gris */
+  transition: transform 0.3s ease, color 0.2s ease;
+}
+li a:hover .submenu-arrow { color: #212529; }
+li.expanded > a > .submenu-arrow {
+  transform: rotate(90deg);
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 0;
+  background-color: transparent; /* Sin cambio de fondo, la indentación es suficiente */
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.4s ease-in-out;
+}
+
+li.expanded > .submenu {
+  max-height: 1000px;
+}
+
+.submenu li a {
+  padding-left: 70px; /* Indentación fuerte para claridad */
+  font-size: 0.9em;
+  font-weight: 400;
+  color: #6c757d;
+}
+.submenu li a:hover {
+  color: #212529;
+}
+.submenu li a.active-link {
+  color: #0d6efd; /* Color de marca para el sub-item activo */
+  font-weight: 500;
+  background: transparent;
+}
+
+
+/* --- ESTADO CONTRAÍDO --- */
+:host-context(.menu-collapsed) .menu-text,
+:host-context(.menu-collapsed) .submenu-arrow {
+  opacity: 0;
+  width: 0;
+}
+:host-context(.menu-collapsed) li a {
+  justify-content: center;
+  padding: 14px 0;
+}
+:host-context(.menu-collapsed) .menu-icon {
+  margin-right: 0;
+  font-size: 1.5rem; /* Iconos más grandes cuando no hay texto */
+}
+:host-context(.menu-collapsed) .submenu {
+  display: none;
+}
+
+
+/* --- BOTÓN DE TOGGLE --- */
+.menu-toggle-container {
+  padding: 15px;
+  border-top: 1px solid #dee2e6;
+}
+.toggle-button {
+  background: #f1f3f5;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.toggle-button:hover { background: #dee2e6; }
+.toggle-button svg {
+  color: #495057;
+  transition: transform 0.3s ease-in-out;
+}
+:host-context(.menu-collapsed) .toggle-button svg {
+  transform: rotate(180deg);
+}

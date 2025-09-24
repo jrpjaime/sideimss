@@ -1,0 +1,41 @@
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-0">Términos y Condiciones de Uso </h3>
+        <hr class="red">
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+            <div class="terminos-container">
+            <div class="terminos-card">
+            
+                
+                <div class="terminos-content" (scroll)="onScroll($event)">
+                <!-- AQUÍ VA TODO TU TEXTO LEGAL DE TÉRMINOS Y CONDICIONES -->
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
+                <!-- ... -->
+                <p><b>Fin de los términos y condiciones.</b></p>
+                </div>
+
+                <!-- ========================================================= -->
+                <!--  Solo muestra esta sección si los términos NO están aceptados -->
+                <!-- ========================================================= -->
+                @if (!terminosYaAceptados) {
+                <div class="aceptacion-section">
+                    <input type="checkbox" id="aceptoCheck" [(ngModel)]="haLeidoCompleto">
+                    <label for="aceptoCheck">He leído y acepto los Términos y Condiciones.</label>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" [disabled]="!haLeidoCompleto" (click)="aceptarTerminos()">
+                    Aceptar y Continuar
+                    </button>
+                </div>
+                }
+            </div>
+            </div>
+    </div>
+</div>
+
+

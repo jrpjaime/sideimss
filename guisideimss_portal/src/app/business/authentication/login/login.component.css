@@ -1,0 +1,21 @@
+ .image-cover {
+  width: 100%;
+  height: 70vh; /* Ocupa toda la altura de la pantalla */
+  object-fit: cover; /* Evita que la imagen se deforme */
+  filter: brightness(40%); /* Oscurece la imagen para que el texto resalte */
+}
+
+/* Contenedor del texto superpuesto */
+.overlay-text {
+  /* La magia para centrar el texto */
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Estilos del texto */
+  color: rgb(236, 240, 234);
+  text-align: center;
+  width: 80%; /* Evita que el texto llegue a los bordes */
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* Sombra para mejorar legibilidad */
+}

@@ -1,0 +1,130 @@
+<div class="row">
+  <div class="col-12">
+    <h3 class="mb-0">{{ titulo }}</h3>
+    <hr class="red">
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <form [formGroup]="formFiltro" (ngSubmit)="onSubmit()">
+    
+        <div class="col-sm-4">
+          <div class="form-group">
+            <label for="numNss" class="form-label">Número de Seguridad Social (NSS)</label>
+            <input type="text" class="form-control" id="numNss" formControlName="numNss" placeholder="Número de Seguridad Social" />
+          </div>
+        </div>
+      <!-- Botones alineados a la derecha -->
+      <div class="pull-right">
+        <button type="button" class="btn btn-secondary" (click)="onClearFiltro()">Limpiar</button>
+        <button type="submit" class="btn btn-primary">Buscar</button>
+
+      </div>
+    
+    </form>
+  </div>
+</div>
+<hr>
+
+
+
+ 
+
+
+
+<div class="row">
+  <div class="col-12">
+    <form [formGroup]="form">
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="pull-right">
+            <button type="button" class="btn btn-primary" (click)="agregarTrabajador()" [disabled]="!form.get('registroPatronal')?.value">
+              Agregar Trabajador
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Número de Seguridad Social (NSS)</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Apellido Paterno</th>
+            <th scope="col">Apellido Materno</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of swtAseguradoDtosPaginado; track item.numNss) {
+          <tr>
+            <td>
+              <div class="form-group">
+                <div class="radio">
+                  <label>
+                    <!--
+                      SOLUCIÓN: Cambiar 'item.registroPatronal' por 'item.cveRegistroPatronal'
+                      para que coincida con el modelo SwtAseguradoDto.
+                    -->
+                    <input type="radio" formControlName="registroPatronal" [value]="item.cveRegistroPatronal" />
+                  </label>
+                </div>
+              </div>
+            </td>
+            <td>{{ item.numNss }}</td>
+            <td>{{ item.nomNombre }}</td>
+            <td>{{ item.nomPrimerApellido }}</td>
+            <td>{{ item.nomSegundoApellido }}</td>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="5" class="text-center">No hay resultados de búsqueda.</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </form>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="pull-right">
+      <form [formGroup]="formPaginador">
+        <div class="d-flex align-items-center">
+          @if (!isEmpty) {
+          <!-- Selector de elementos por página -->
+          <span class="me-2">Elementos por página:</span>
+          <select class="form-control input-sm me-3" formControlName="size" (change)="setSizeCombo()" style="width: auto;">
+            @for (item of elementosPagina; track $index) {
+            <option [value]="item">{{ item }}</option>
+            }
+          </select>
+
+          <!-- Indicador de rango -->
+          <span class="me-3">
+            {{ (((page) * size) + 1) }} - {{ ((page) * size) + numberOfElements }} de {{ totalElements }}
+          </span>
+
+          <!-- Controles de paginación -->
+          <ul class="pagination pagination-sm m-0">
+            <li class="page-item" [class.disabled]="isFirst">
+              <a class="page-link" href="javascript:void(0)" (click)="setPage(0)">&laquo;</a>
+            </li>
+            <li class="page-item" [class.disabled]="isFirst">
+              <a class="page-link" href="javascript:void(0)" (click)="rewindPage()">&lsaquo;</a>
+            </li>
+            <li class="page-item" [class.disabled]="isLast">
+              <a class="page-link" href="javascript:void(0)" (click)="forwardPage()">&rsaquo;</a>
+            </li>
+            <li class="page-item" [class.disabled]="isLast">
+              <a class="page-link" href="javascript:void(0)" (click)="setPage(numeroPaginas - 1)">&raquo;</a>
+            </li>
+          </ul>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
