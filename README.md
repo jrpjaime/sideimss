@@ -1,2 +1,2 @@
 # sideimss
-SUA Sistema Único de Autodeterminación
+Sistema de Dictamen Electrónico
