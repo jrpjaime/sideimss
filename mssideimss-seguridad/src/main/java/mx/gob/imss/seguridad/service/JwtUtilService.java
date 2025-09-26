@@ -3,7 +3,7 @@ package mx.gob.imss.seguridad.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import mx.gob.imss.seguridad.entity.SdtUsuario;
+import mx.gob.imss.seguridad.dto.UsuarioDto; 
 import io.jsonwebtoken.io.Decoders;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 @Service
@@ -26,20 +27,15 @@ public class JwtUtilService {
     private static final long JWT_TIME_REFRESH_VALIDATE = 1000 * 60 * 60 * 24; // 24 horas
 
     // Genera el token JWT
-    public String generateToken(UserDetails userDetails, String role, SdtUsuario sdtUsuario, String registroPatronal) {
+    public String generateToken(UserDetails userDetails, List<String> roles, UsuarioDto  usuarioDto) {
         var claims = new HashMap<String, Object>();
-        claims.put("rfc", sdtUsuario.getRefRfc());
-        claims.put("nombre", sdtUsuario.getNomNombre());
-        claims.put("primerApellido", sdtUsuario.getNomApellidoPaterno());
-        claims.put("segundoApellido", sdtUsuario.getNomApellidoMaterno());
-        // claims.put("desDelegacion", sdtUsuario.getDesDelegacion());
-        // claims.put("desSubdelegacion", sdtUsuario.getDesSubdelegacion());
-        claims.put("role", role); 
+        claims.put("rfc", usuarioDto.getRfc());
+        claims.put("nombre", usuarioDto.getNombre());
+        claims.put("primerApellido", usuarioDto.getPrimerApellido());
+        claims.put("segundoApellido", usuarioDto.getSegundoApellido()); 
+        claims.put("roles", roles);  
 
-        if (registroPatronal != null && !registroPatronal.isEmpty()) {
-            claims.put("registroPatronal", registroPatronal);
-        }
-
+ 
         return Jwts.builder()
                 .claims(claims) // método para establecer los claims
                 .subject(userDetails.getUsername())
@@ -50,19 +46,14 @@ public class JwtUtilService {
     }
 
     // Genera el refresh token
-    public String generateRefreshToken(UserDetails userDetails, String role, SdtUsuario sdtUsuario, String registroPatronal) {
+    public String generateRefreshToken(UserDetails userDetails, List<String> roles, UsuarioDto  usuarioDto ) {
         var claims = new HashMap<String, Object>();
-        claims.put("rfc", sdtUsuario.getRefRfc());
-        claims.put("nombre", sdtUsuario.getNomNombre());
-        claims.put("primerApellido", sdtUsuario.getNomApellidoPaterno());
-        claims.put("segundoApellido", sdtUsuario.getNomApellidoMaterno());
-        // claims.put("desDelegacion", sdtUsuario.getDesDelegacion());
-        // claims.put("desSubdelegacion", sdtUsuario.getDesSubdelegacion());
-        claims.put("role", role);
-
-        if (registroPatronal != null && !registroPatronal.isEmpty()) {
-            claims.put("registroPatronal", registroPatronal);
-        }
+        claims.put("rfc", usuarioDto.getRfc());
+        claims.put("nombre", usuarioDto.getNombre());
+        claims.put("primerApellido", usuarioDto.getPrimerApellido());
+        claims.put("segundoApellido", usuarioDto.getSegundoApellido());
+        claims.put("roles", roles);
+ 
         return Jwts.builder()
                 .claims(claims) // Nuevo método para establecer los claims
                 .subject(userDetails.getUsername())
@@ -107,5 +98,10 @@ public class JwtUtilService {
     // Extrae el nombre de usuario del token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    @SuppressWarnings("unchecked") // Para suprimir la advertencia de tipo no verificado
+    public List<String> extractRoles(String token) {
+        return extractClaim(token, claims -> (List<String>) claims.get("roles"));
     }
 }
