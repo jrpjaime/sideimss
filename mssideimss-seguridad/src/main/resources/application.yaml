@@ -6,12 +6,10 @@ spring:
   application:
     name: mssideimss-seguridad
   datasource:
-   #CAMBIOS_ORACLE
-    #driver-class-name: oracle.jdbc.driver.OracleDriver
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: ${SIDEIMSS_DB_URL_MARIADB}
-    username: ${SIDEIMSS_DB_USER_MARIADB}
-    password: ${SIDEIMSS_DB_PASSWORD_MARIADB}
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    url: ${SIDEIMSS_DB_URL}
+    username: ${SIDEIMSS_DB_USER}
+    password: ${SIDEIMSS_DB_PASSWORD}
     hikari:
       minimum-idle: ${POOL_MINIMUM_IDLE}
       maximum-pool-size: ${POOL_MAX_SIZE}
@@ -25,9 +23,7 @@ spring:
       ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    database-platform: org.hibernate.dialect.MariaDBDialect
-  #CAMBIOS_ORACLE  
-    #database-platform: org.hibernate.dialect.OracleDialect
+    database-platform: org.hibernate.dialect.OracleDialect
     properties:
       hibernate:
         jdbc:

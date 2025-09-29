@@ -19,13 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.data.domain.Page;
 
- 
-import mx.gob.imss.catalogos.dto.DitPatronGeneralDto;
-import mx.gob.imss.catalogos.dto.DitPatronGeneralFiltroDto;
+  
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
-import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto; 
-import mx.gob.imss.catalogos.service.DitPatronGeneralService;
+import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;  
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
 
@@ -39,8 +36,7 @@ import jakarta.validation.Valid;
 public class CatalogosRestController {
 	private final static Logger logger = LoggerFactory.getLogger(CatalogosRestController.class);
   
-	@Autowired
-	private DitPatronGeneralService ditPatronGeneralService;
+ 
 
 	@Autowired
 	private SdcDelegacionService sdcDelegacionService;
@@ -75,35 +71,8 @@ public class CatalogosRestController {
  
 	 
 
-	/*
-	 * Consulta todo el contenido de DitPatronGeneral
-	*/
-	@PostMapping("/listRegistrosPatronales")
-	public  ResponseEntity<List< DitPatronGeneralDto>> listRegistrosPatronales(@Valid @RequestBody DitPatronGeneralFiltroDto ditPatronGeneralFiltroDto) {
-		logger.info("/listRegistrosPatronales"); 
-		List<DitPatronGeneralDto> ditPatronGeneralDtos = new ArrayList<DitPatronGeneralDto>();  
  
-		//PENDIENTE: Este metodo debe ser modificado para consultar los Registros Patronales vinculados al RFC
-		ditPatronGeneralDtos = ditPatronGeneralService.findDitPatronGeneralByRfc(ditPatronGeneralFiltroDto.getRfc());
-		logger.info("ditPatronGeneralDtos.size(): "+ ditPatronGeneralDtos.size()); 
  
-		return new ResponseEntity<List<DitPatronGeneralDto>>(ditPatronGeneralDtos, HttpStatus.OK);
-	} 
-
-		/*
-	 * Consulta todo el contenido paginado de DitPatronGeneral
-	*/
-	@PostMapping(value = "/listPaginatedRegistrosPatronales")
-	public  ResponseEntity<Page< DitPatronGeneralDto>> listPaginatedRegistrosPatronales (@Valid @RequestBody DitPatronGeneralFiltroDto ditPatronGeneralFiltroDto) {
-		logger.info("/listPaginatedRegistrosPatronales"); 
-		String orders = "idPatronGeneral"; 
-		Page<DitPatronGeneralDto> ditPatronGeneralDtos =  ditPatronGeneralService.findAllPageableDitPatronGeneral(ditPatronGeneralFiltroDto, PageRequest.of(ditPatronGeneralFiltroDto.getPage(), ditPatronGeneralFiltroDto.getSize(), org.springframework.data.domain.Sort.by(orders)));
-		return new ResponseEntity<Page<DitPatronGeneralDto>>(ditPatronGeneralDtos, HttpStatus.OK);
-	} 
-
-
-
-
 
 
 		
