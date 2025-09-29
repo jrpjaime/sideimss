@@ -6,6 +6,7 @@ import lombok.Data;
 public class UsuarioDto {
 
     private String rfc;
+    private String curp;
     private String nombre;
     private String primerApellido;
     private String segundoApellido;

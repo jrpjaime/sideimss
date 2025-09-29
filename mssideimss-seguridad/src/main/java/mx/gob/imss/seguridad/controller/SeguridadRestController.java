@@ -85,6 +85,7 @@ public class SeguridadRestController {
                 usuarioDto.setNombre("Pedro");
                 usuarioDto.setPrimerApellido("Hernandez");
                 usuarioDto.setSegundoApellido("Robles");
+                usuarioDto.setCurp("asdsadsadsa");
                 
                 if (roles.isEmpty()) {
                     logger.warn("El usuario {} no tiene roles asignados.", authRequestDto.getUser());
