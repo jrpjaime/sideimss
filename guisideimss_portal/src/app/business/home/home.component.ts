@@ -11,19 +11,18 @@ import { DitPatronGeneralDto } from '../../shared/catalogos/model/ditpatrongener
 import { Constants } from '../../global/Constants';
 import { BaseComponent } from '../../shared/base/base.component';
 import { LoaderService } from '../../shared/services/loader.service';
- 
-import { ContextoPatronalService, RegistroPatronal } from '../../core/services/contexto-patronal.service';
+
+
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { RpActivoComponent } from './rp-activo/rp-activo.component';
 import { AlertService } from '../../shared/services/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 
 @Component({
     selector: 'app-home',
-    standalone: true, 
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, RpActivoComponent ],
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, FormsModule ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.css']
 })
@@ -68,8 +67,7 @@ export class HomeComponent   extends BaseComponent implements OnInit  {
       private router: Router,
       private loaderService: LoaderService,
       private alertService: AlertService,
-      public contextoService: ContextoPatronalService, 
-      private zone: NgZone, 
+      private zone: NgZone,
       sharedService: SharedService
     ) {
 
@@ -98,15 +96,15 @@ export class HomeComponent   extends BaseComponent implements OnInit  {
       this.form.get('registroPatronal')?.setValue(registroPatronal);
     }
 
- 
+
 
 override ngOnInit(): void {
   console.log('ngOnInit HomeComponent: ' + this.rfc);
   this.recargaParametros();
- 
-  if (!this.contextoService.valorActual) {
+
+
     this.cargarListPaginatedRegistrosPatronales(this.getFiltro());
-  }
+
 }
 
 
@@ -126,7 +124,7 @@ override ngOnInit(): void {
 
 
 
- 
+
 
 
 seleccionarYContinuar(): void {
@@ -145,17 +143,8 @@ seleccionarYContinuar(): void {
       console.log('Registro Patronal Objeto Completo:', registroCompleto);
        console.log('Registro Patronal: ', registroCompleto.registroPatronal);
         console.log('denominacionRazonSocial: ', registroCompleto.denominacionRazonSocial);
-      
-      // 4. Ahora sí, crea el objeto para el contexto desde el objeto encontrado.
-      const rpParaContexto: RegistroPatronal = {
-        registroPatronal: registroCompleto.registroPatronal,
-        nombre: registroCompleto.denominacionRazonSocial  
-      };
 
-     setTimeout(() => {
-        this.contextoService.seleccionarRegistro(rpParaContexto);
-        window.location.reload();
-      }, 0);
+
 
     } else {
       console.error("Error crítico: No se encontró el registro con ID:", registroIdSeleccionado);
@@ -200,7 +189,7 @@ seleccionarYContinuar(): void {
 }
 
 
- 
+
 
     this.loaderService.showLoader();
 
@@ -223,7 +212,7 @@ seleccionarYContinuar(): void {
 
           //this.alertService.success('Registros Patronales cargados exitosamente.', { autoClose: true });
         },
-        error: (err: HttpErrorResponse) => {  
+        error: (err: HttpErrorResponse) => {
           this.loaderService.closeLoader();
           console.error('Error al cargar Registros Patronales:', err);
 
@@ -231,7 +220,7 @@ seleccionarYContinuar(): void {
             // Accede a los mensajes de error del backend
             const errorMessages = err.error.messages.join(', ');
             console.error('Mensajes de error del backend:', errorMessages);
-            // mensajes al usuario 
+            // mensajes al usuario
             this.alertService.error(`<strong>Error:</strong><br>${errorMessages}`, { autoClose: false });
           } else {
             // Si no hay mensajes específicos del backend, muestra un mensaje genérico

@@ -1,10 +1,9 @@
- 
+
 import { Component, EventEmitter, Output } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { ContextoPatronalService } from '../../core/services/contexto-patronal.service';
 import { CommonModule } from '@angular/common';
 import { ModalService } from '../services/modal.service';
- 
+
 
 // Definimos una interfaz para nuestros elementos de menú para tener un código más limpio
 export interface MenuItem {
@@ -13,7 +12,7 @@ export interface MenuItem {
   route?: string; // Ruta para la navegación
   isExpanded?: boolean; // Para controlar si el submenú está abierto
   children?: MenuItem[]; // Para los subniveles
-  action?: 'limpiarContexto'; 
+  action?: 'limpiarContexto';
 }
 
 @Component({
@@ -27,7 +26,7 @@ export class LeftMenuComponent {
 
   @Output() toggleMenuClicked = new EventEmitter<void>();
 
-  // Aquí definimos toda la estructura del menú 
+  // Aquí definimos toda la estructura del menú
   menuItems: MenuItem[] = [
     { name: 'Patrones', icon: 'bi bi-building-fill', isExpanded: false, children: [
         { name: 'Términos y Condiciones', icon: 'bi bi-file-text-fill', route: '/terminos-y-condiciones' },
@@ -63,9 +62,8 @@ export class LeftMenuComponent {
   ];
 
   constructor(
-    private contextoService: ContextoPatronalService,
     private modalService: ModalService,
-    private router: Router  
+    private router: Router
   ) { }
 
   // Este método se llama cuando se hace clic en el botón principal de toggle
@@ -74,10 +72,10 @@ export class LeftMenuComponent {
   }
 
   // Este método maneja la apertura y cierre de los submenús
- 
 
-  
-  
+
+
+
   // Este método se mantiene igual
   toggleSubmenu(item: MenuItem): void {
     const isOpening = !item.isExpanded;
@@ -93,11 +91,9 @@ onItemClick(event: MouseEvent, item: MenuItem): void {
   if (item.action) {
     event.preventDefault(); // Detenemos cualquier navegación
     if (item.action === 'limpiarContexto') {
-      if (this.contextoService.valorActual) {
-        this.solicitarConfirmacionParaCambiar();
-      } else {
+
         this.router.navigate(['/home']);
-      }
+
     }
     return; // Detenemos la ejecución aquí
   }
@@ -112,7 +108,7 @@ onItemClick(event: MouseEvent, item: MenuItem): void {
   // Caso 3: Es un enlace de navegación normal (no tiene acción ni hijos)
   if (item.route) {
     event.preventDefault(); // Detenemos la navegación por defecto de [routerLink]
-    
+
     // Usamos setTimeout para que la navegación ocurra en el siguiente "tick",
     // evitando la colisión con el ciclo de detección de cambios actual.
     setTimeout(() => {
@@ -132,7 +128,7 @@ onItemClick(event: MouseEvent, item: MenuItem): void {
       '¿Está seguro de que quiere cambiar de Registro Patronal?', // Mensaje
       (confirmado: boolean) => {
         if (confirmado) {
-          this.contextoService.limpiarRegistro();
+
           this.router.navigate(['/home']);
         }
       },

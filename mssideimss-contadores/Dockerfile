@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/mssideimss-autodeterminaciones-0.0.1-SNAPSHOT.jar /app/mssideimss-autodeterminaciones.jar
 
 # Exponer el puerto que usa la aplicación
-EXPOSE 6011
+EXPOSE 4111
 
 # Comando para ejecutar la aplicación
 CMD ["java", "-jar", "/app/mssideimss-autodeterminaciones.jar"]

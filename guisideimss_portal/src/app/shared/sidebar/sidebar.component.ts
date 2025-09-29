@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { SharedService } from '../services/shared.service';
-import { ContextoPatronalService, RegistroPatronal } from '../../core/services/contexto-patronal.service';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
@@ -17,13 +16,12 @@ export class SidebarComponent {
   primerApellidoSesion: string = '';
   segundoApellidoSesion: string = '';
 
-  registroActual$: Observable<RegistroPatronal | null>;
 
 
-  constructor(private authService: AuthService, 
-              private contextoService: ContextoPatronalService,
+
+  constructor(private authService: AuthService,
               private sharedService: SharedService) {
-              this.registroActual$ = this.contextoService.registroActual$;
+
                }
 
   logout(): void {

@@ -1,34 +1,31 @@
 import { Directive, OnInit } from '@angular/core';
 import { SharedService } from '../services/shared.service';
- 
-import { AuthService } from '../../core/services/auth.service'; 
+
+import { AuthService } from '../../core/services/auth.service';
+import { Constants } from '../../global/Constants';
 
 @Directive()
 export class BaseComponent implements OnInit {
   rfc: string = '';
   rfcSesion: string = '';
   registroPatronal: string | null = null; // Para almacenar el registro seleccionado
-  role: string = '';
+
+  roles: string[] = [];
   indPatron: boolean = false;
 
   indFase: number = 1;
 
   desDelegacionSesion: string = '';
   desSubdelegacionSesion: string = '';
-  
+
 
   selectedFile: File | null = null; // Variable para almacenar el archivo seleccionado
   fileErrorMessage: string = '';
 
    readonly PATTERNS = {
       cveRegistroPatronal: '^[A-Za-z0-9]{8}[0-9]{2}[0-9]{1}$',
-      cveNss: '^[0-9]{11}$',
-      numPorcentajeDescuento: '^[0-9]{1,2}$',
-      refFolioSua: '^[0-9]{6}$',
-      refFolioGefide: '^[0-9]{9}$',
-      refNumeroCredito: '^[0-9]{9}$',
-      numSalarioDiarioInte: '^[0-9]{3,}(\\.[0-9]{2})?$',
-      numDias: '^[1-9][0-9]*$'
+      cveNss: '^[0-9]{11}$'
+
     };
 
   constructor(
@@ -58,16 +55,20 @@ export class BaseComponent implements OnInit {
     });
 
 
-    this.sharedService.currentRoleSesion.subscribe(role => {
-      this.role = role;
-      if(role==='Patron'){
-        this.indPatron=true;
-      }
-      console.log('this.role: '+ this.role);
+    this.sharedService.currentRoleSesion.subscribe(roles => {
+    this.roles = roles;
 
+    // Usa .includes() para verificar si el usuario tiene el rol de 'Patron'
+     if (this.roles.includes(Constants.rolePatron)) {
+     this.indPatron = true;
+    } else {
+     this.indPatron = false;
+    }
+
+    console.log('this.roles: ' + this.roles.join(', '));
     });
 
- 
+
 
     this.sharedService.currentSubdelegacionSesion.subscribe(desDelegacionSesion => {
       this.desDelegacionSesion = desDelegacionSesion;

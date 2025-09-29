@@ -5,7 +5,6 @@ import { catchError, Observable, of, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { EPs } from '../../global/endPoint';
 import { Constants } from '../../global/Constants';
-import { ContextoPatronalService, RegistroPatronal } from './contexto-patronal.service';
 import { ModalService } from '../../shared/services/modal.service';
 
 
@@ -32,13 +31,12 @@ export class AuthService {
   constructor(
     private httpClient: HttpClient,
     private router: Router,
-    private contextoPatronalService: ContextoPatronalService,
-    private modalService: ModalService 
+    private modalService: ModalService
   ) { }
 
-  login(user: string, password: string, tipoAuth: string): Observable<any>{
+  login(user: string, password: string ): Observable<any>{
       console.log("entro en login(user: string, password:");
-    return this.httpClient.post<any>(this.LOGIN_URL, { user, password,tipoAuth }).pipe(
+    return this.httpClient.post<any>(this.LOGIN_URL, { user, password }).pipe(
       tap(response => {
         if (response.token) {
           this.setToken(response.token);
@@ -96,12 +94,10 @@ private handleError(error: HttpErrorResponse) {
       return of(null);
     }
 
-    //Prepara el cuerpo de la petición para incluir el registro patronal actual.
-    const registroActual = this.contextoPatronalService.valorActual;
+
     const body = {
       refreshToken: refreshToken,
-      // Si hay un registro patronal en el contexto, lo enviamos. Si no, enviamos null.
-      registroPatronal: registroActual ? registroActual.registroPatronal : null
+
     };
 
     return this.httpClient.post<AuthResponse>(this.REFRESH_URL, body).pipe(
@@ -109,7 +105,7 @@ private handleError(error: HttpErrorResponse) {
         if (response && response.token) {
           this.setToken(response.token);
           this.setRefreshToken(response.refreshToken);
-          
+
           // NUEVO: Actualiza el contexto también después de cada refresh.
           this.actualizarContextoDesdeToken(response.token);
 
@@ -140,20 +136,7 @@ private handleError(error: HttpErrorResponse) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
 
-      if (payload.registroPatronal) {
-        console.log("Registro Patronal encontrado en el token:", payload.registroPatronal);
-        const rpDesdeToken: RegistroPatronal = {
-          registroPatronal: payload.registroPatronal,
-          // Puedes añadir más campos si los incluyes en el token, como el nombre del patrón.
-          // nombre: payload.nombrePatronal 
-        };
-        // Llama al servicio de contexto para que actualice su estado y notifique a toda la app.
-        this.contextoPatronalService.seleccionarRegistro(rpDesdeToken);
-      }/* else {
-        //Nota: pendiente implentar que el RP este en el token
-        this.contextoPatronalService.limpiarRegistro();
-        console.log("No se encontró un Registro Patronal en el token.");
-      }*/
+
     } catch (error) {
       console.error("No se pudo decodificar el token JWT:", error);
     }
@@ -183,7 +166,7 @@ private handleError(error: HttpErrorResponse) {
       console.log("El token expira en menos de un minuto, no se programará la renovación automática.");
       return;
     }
-    
+
     const refreshTime = timeLeft - 60000;
     console.log(`Próxima renovación de token en ${Math.round(refreshTime / 1000 / 60)} minutos.`);
 
@@ -196,7 +179,7 @@ private handleError(error: HttpErrorResponse) {
     }, refreshTime);
   }
 
- 
+
 
     isAuthenticated(): boolean {
     const token = this.getToken();
@@ -219,11 +202,11 @@ private handleError(error: HttpErrorResponse) {
     console.log("Cerrando sesión...");
 
     this.modalService.close();
-    this.contextoPatronalService.limpiarRegistro();
+
 
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.refreshTokenKey);
-    Opcional: sessionStorage.clear();  
+    Opcional: sessionStorage.clear();
 
     // Cancelar el refresco automático programado
     if (this.timeoutId) {
@@ -247,13 +230,13 @@ private handleError(error: HttpErrorResponse) {
     // Comprueba si el usuario tiene un token válido y no expirado.
     if (this.isAuthenticated()) {
       console.log("Sesión válida encontrada. Restaurando contexto y programando refresh...");
-      
+
       // 1. Obtiene el token actual del sessionStorage.
       const token = this.getToken();
-      
+
       // 2. Restaura el contexto (registroPatronal) desde ese token.
       this.actualizarContextoDesdeToken(token);
-      
+
       // 3. Programa la renovación automática para el futuro.
       this.autoRefreshToken();
 

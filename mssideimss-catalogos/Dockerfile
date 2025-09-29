@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/mssideimss-catalogos-0.0.1-SNAPSHOT.jar /app/mssideimss-catalogos.jar
 
 # Exponer el puerto que usa la aplicación
-EXPOSE 6010
+EXPOSE 4110
 
 # Comando para ejecutar la aplicación
 CMD ["java", "-jar", "/app/mssideimss-catalogos.jar"]

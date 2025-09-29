@@ -1,10 +1,9 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { BaseComponent } from '../../shared/base/base.component'; 
+import { BaseComponent } from '../../shared/base/base.component';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { LoaderService } from '../../shared/services/loader.service';
-import { ContextoPatronalService, RegistroPatronal } from '../../core/services/contexto-patronal.service';
 import { SharedService } from '../../shared/services/shared.service';
 import { SwtAseguradoDto } from './model/swt-asegurado.dto';
 import { TrabajadoresService } from './services/trabajadores.service';
@@ -21,7 +20,7 @@ import { AlertService } from '../../shared/services/alert.service';
 export class TableroTrabajadoresComponent extends BaseComponent implements OnInit  {
 
   titulo: string = 'Trabajadores';
-  private registroPatronalSeleccionado: RegistroPatronal | null = null;
+
 
   page: number = 0;
   seleccionapagina: number = 1;
@@ -56,7 +55,6 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
     private router: Router,
     private loaderService: LoaderService,
     private alertService: AlertService,
-    private contextoPatronalService: ContextoPatronalService, 
     sharedService: SharedService
   ) {
     super(sharedService);
@@ -85,20 +83,13 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
   console.log('ngOnInit TableroTrabajadores: ' + this.rfc);
   this.recargaParametros();
 
-  // Aquí está la clave. El servicio ahora mantiene el objeto completo.
-    this.registroPatronalSeleccionado = this.contextoPatronalService.valorActual;
-  
-  if (this.registroPatronalSeleccionado && this.registroPatronalSeleccionado.registroPatronal) {
-    console.log(`Cargando trabajadores para el RP: ${this.registroPatronalSeleccionado.registroPatronal}`);
-    this.cargarListPaginatedTrabajadores(this.getFiltro());
-  } else {
+
     // Si por alguna razón llega aquí sin un registro, es una condición de error.
     // El Guard ya debería haberlo prevenido, pero es una buena práctica de defensa.
     console.error("Tablero de trabajadores cargado sin un Registro Patronal en el contexto.");
-    this.router.navigate(['/home']); // Lo enviamos de vuelta
-  }
+
 }
- 
+
   agregarTrabajador(): void {
     const registroSeleccionado = this.form.get('registroPatronal')?.value;
     if (registroSeleccionado) {
@@ -139,13 +130,13 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
     console.log("filtro.size: " + filtro.size);
     console.log("filtro.order: " + filtro.order);
     console.log("filtro.asc: " + filtro.asc);
- 
+
     if (!filtro.cveRegistroPatronal || filtro.cveRegistroPatronal.trim() === "") {
       console.log("Debe redireccionar a login")
       this.router.navigate(['/']); // Redirigir a la página de login
       return; // Importante: Salir del método para no continuar la ejecución
     }
-    
+
 
     this.loaderService.showLoader();
 
@@ -164,7 +155,7 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
         console.log("data.numberOfElements " + data.numberOfElements);
         this.alertService.success('Trabajadores cargados exitosamente.', { autoClose: true });
       },
-      error: (err: HttpErrorResponse) => {  
+      error: (err: HttpErrorResponse) => {
         this.loaderService.closeLoader();
         console.error('Error al cargar trabajadores:', err);
 
@@ -172,7 +163,7 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
           // Accede a los mensajes de error del backend
           const errorMessages = err.error.messages.join(', ');
           console.error('Mensajes de error del backend:', errorMessages);
-          // mensajes al usuario 
+          // mensajes al usuario
           this.alertService.error(`<strong>Error:</strong><br>${errorMessages}`, { autoClose: false });
         } else {
           // Si no hay mensajes específicos del backend, muestra un mensaje genérico
@@ -188,13 +179,8 @@ export class TableroTrabajadoresComponent extends BaseComponent implements OnIni
   private getFiltro() {
     let swtAseguradoDto = new SwtAseguradoDto();
     swtAseguradoDto.refRfc = this.rfc;
-    swtAseguradoDto.numNss = this.formFiltro.controls['numNss'].value; 
+    swtAseguradoDto.numNss = this.formFiltro.controls['numNss'].value;
 
-    if (this.registroPatronalSeleccionado && this.registroPatronalSeleccionado.registroPatronal !== undefined) {
-        swtAseguradoDto.cveRegistroPatronal = this.registroPatronalSeleccionado.registroPatronal;
-    } else {
-        swtAseguradoDto.cveRegistroPatronal = null; // Asigna null explícitamente si es undefined
-    }
 
     console.log("getFiltro()  ");
     console.log("rfc: " + swtAseguradoDto.refRfc);

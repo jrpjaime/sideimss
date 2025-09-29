@@ -78,6 +78,7 @@ public class SeguridadRestController {
 
                 roles.add("Contador");
                 roles.add("Representante");
+                roles.add("Patron");
 
                 UsuarioDto  usuarioDto= new UsuarioDto();
                 usuarioDto.setRfc(authRequestDto.getUser());

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Constants } from '../../global/Constants'; 
+import { Constants } from '../../global/Constants';
 
 @Injectable({
   providedIn: 'root'
@@ -23,12 +23,12 @@ export class SharedService {
   currentSegundoApellido= this.segundoApellidoSource.asObservable();
 
 
-  private roleSource = new BehaviorSubject<string>(''); // Valor por defecto
-  currentRole = this.roleSource.asObservable();
+  private roleSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
+  currentRole = this.roleSource.asObservable(); // Observador de string[]
 
   private registroPatronalSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentRegistroPatronal = this.registroPatronalSource.asObservable();
- 
+
 
 
 
@@ -49,8 +49,8 @@ export class SharedService {
   currentSegundoApellidoSesion= this.segundoApellidoSesionSource.asObservable();
 
 
-  private roleSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
-  currentRoleSesion = this.roleSesionSource.asObservable();
+  private roleSesionSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
+  currentRoleSesion = this.roleSesionSource.asObservable(); // Observador de string[]
 
 
   private delegacionSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
@@ -81,16 +81,15 @@ export class SharedService {
     this.segundoApellidoSource.next(segundoApellido); // Cambia el valor del SegundoApellido
   }
 
-  changeRole(role: string) {
-    this.roleSource.next(role); // Cambia el valor del Role
-  }
-
+  changeRole(roles: string[]) {
+    this.roleSource.next(roles); // Cambia el valor del Role
+  }
 
   changeRegistroPatronal(registroPatronal: string) {
     this.registroPatronalSource.next(registroPatronal); // Cambia el valor del registro patronal
   }
 
- 
+
 
 
 
@@ -113,9 +112,9 @@ export class SharedService {
     this.segundoApellidoSesionSource.next(segundoApellidoSesion); // Cambia el valor del SegundoApellido
   }
 
-  changeRoleSesion(roleSesion: string) {
-    this.roleSesionSource.next(roleSesion); // Cambia el valor del Role
-  }
+  changeRoleSesion(rolesSesion: string[]) {
+    this.roleSesionSource.next(rolesSesion); // Cambia el valor del Role
+  }
 
 
   changeDelegacionSesion(delegacionSesion: string) {
@@ -138,6 +137,9 @@ export class SharedService {
     console.log("INICIO SharedService initializeUserData: " );
     const token = sessionStorage.getItem(this.tokenKey+"")+"";
     const payload = JSON.parse(atob(token.split('.')[1] ));
+
+    const roles: string[] = payload.roles || []; // Asumiendo que el claim se llama 'roles'
+
     const role = payload.role;
     const rfc = payload.rfc;
     const nombre = payload.nombre;
@@ -151,7 +153,7 @@ export class SharedService {
     console.log("nombre: " + nombre);
     console.log("primerApellido: " + primerApellido);
     console.log("segundoApellido: " + segundoApellido);
-    console.log("role: " + role);
+    console.log("roles: " + roles.join(', '));
     console.log("desDelegacion: " + desDelegacion);
     console.log("desSubdelegacion: " + desSubdelegacion);
 
@@ -161,15 +163,15 @@ export class SharedService {
     this.changeSegundoApellidoSesion(segundoApellido);
     this.changeDelegacionSesion(desDelegacion);
     this.changeSubdelegacionSesion(desSubdelegacion);
-    this.changeRoleSesion(role);
+    this.changeRoleSesion(roles);
 
-    if (role === Constants.rolePatron) {
+    if (roles.includes(Constants.rolePatron)) {
 
       this.changeRfc(rfc);
       this.changeNombre(nombre);
       this.changePrimerApellido(primerApellido);
       this.changeSegundoApellido(segundoApellido);
-      this.changeRole(role);
+      this.changeRole(roles);
 
       console.log("::rfc: " + rfc);
 

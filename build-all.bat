@@ -17,14 +17,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Compilando mssideimss-contadores...
-cd /d %BASEPATH%\mssideimss-contadores
-call mvn clean package -DskipTests
-if errorlevel 1 (
-    echo Error al compilar mssideimss-contadores.
-    pause
-    exit /b 1
-)
+
 
 echo Compilando mssideimss-catalogos...
 cd /d %BASEPATH%\mssideimss-catalogos
@@ -35,6 +28,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+echo Compilando mssideimss-contadores...
+cd /d %BASEPATH%\mssideimss-contadores
+call mvn clean package -DskipTests
+if errorlevel 1 (
+    echo Error al compilar mssideimss-contadores.
+    pause
+    exit /b 1
+)
 echo.
 echo Todas las aplicaciones se compilaron correctamente.
 pause

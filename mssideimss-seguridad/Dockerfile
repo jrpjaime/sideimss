@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/mssideimss-seguridad-0.0.1-SNAPSHOT.jar /app/mssideimss-seguridad.jar
 
 # Exponer el puerto que usa la aplicación
-EXPOSE 6000
+EXPOSE 4109
 
 # Comando para ejecutar la aplicación
 CMD ["java", "-jar", "/app/mssideimss-seguridad.jar"]

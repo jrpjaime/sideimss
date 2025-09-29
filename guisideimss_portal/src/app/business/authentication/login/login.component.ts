@@ -21,7 +21,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   loginForm: FormGroup;
-  role: string = '';
+  roles: string[] = [];
   activeTab: 'login' | 'firma' = 'firma';
   errorMessage: string | null = null;
 
@@ -83,31 +83,34 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.loginForm.valid) {
       const { user, password } = this.loginForm.value;
       this.loaderService.showLoader();
-      this.authService.login(user, password,"login").subscribe({
+      this.authService.login(user, password).subscribe({
         next: (response) => {
           this.sharedService.initializeUserData();
-          this.sharedService.currentRole.subscribe(role => {
-            this.role = role;
-            if (this.role === Constants.rolePatron) {
-              this.router.navigate([NAV.home]);
-            } else {
+            this.sharedService.currentRole.subscribe(roles => {
+              this.roles = roles; // Asigna el array de roles
+              console.log("this.roles: "+ this.roles.join(', '));
+
+              // Usa .includes() para verificar si tiene el rol deseado
+              if (this.roles.includes(Constants.rolePatron)) {
+                this.router.navigate([NAV.home]);
+              } else {
               this.router.navigate([NAV.login]);
-            }
-          });
+              }
+            });
         },
-     error: (err: HttpErrorResponse) => { 
+     error: (err: HttpErrorResponse) => {
         console.error('Objeto de Error Recibido:', err);
 
         // Verificamos si la propiedad 'error' contiene el string de tu backend
         if (err.error && typeof err.error === 'string') {
           // ¡Aquí está tu mensaje! Asignamos el contenido del cuerpo del error.
-          this.errorMessage = err.error;  
-        
+          this.errorMessage = err.error;
+
         } else if (err.status === 0) {
           // Manejo de errores de conexión (servidor no alcanzable)
-          
-            
-          this.errorMessage = 'Servicio no disponible. Reintente mas tarde';
+
+
+          this.errorMessage = 'AAAA Servicio no disponible. Reintente mas tarde';
           this.alertService.error( this.errorMessage);
 
         } else {
@@ -173,30 +176,32 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         // Llamar al servicio de autenticación con los datos procesados
         // Se asume que el backend puede manejar este tipo de credenciales.
         // El primer parámetro es el usuario y el segundo la contraseña.
-        this.authService.login(cadenaCodificada, rfcRazonSocial, "firma").subscribe({
+        this.authService.login(cadenaCodificada, rfcRazonSocial).subscribe({
             next: (response) => {
               this.sharedService.initializeUserData();
-              this.sharedService.currentRole.subscribe(role => {
-                this.role = role;
-                if (this.role === Constants.rolePatron) {
-                    this.router.navigate([NAV.home]);
+               //  Recibe 'roles' (array) en lugar de 'role' (string)
+             this.sharedService.currentRole.subscribe(roles => {
+                this.roles = roles; // Asigna el array de roles
+                //  Usa .includes() para verificar si tiene el rol deseado
+                if (this.roles.includes(Constants.rolePatron)) {
+                this.router.navigate([NAV.home]);
                 } else {
-                    this.router.navigate([NAV.login]);
+                  this.router.navigate([NAV.login]);
                 }
-              });
+             });
             },
               error: (err: HttpErrorResponse) => {
-                 
+
                   console.error('Objeto de Error Recibido:', err);
 
                   // Verificamos si la propiedad 'error' contiene el string de tu backend
                   if (err.error && typeof err.error === 'string') {
                     // ¡Aquí está tu mensaje! Asignamos el contenido del cuerpo del error.
                     this.errorMessage = err.error; // <-- Asignará "Error Authetication"
-                  
+
                   } else if (err.status === 0) {
                     // Manejo de errores de conexión (servidor no alcanzable)
-                    this.errorMessage = 'Servicio no disponible. Reintente mas tarde';
+                    this.errorMessage = 'BBBB Servicio no disponible. Reintente mas tarde';
                     this.alertService.error( this.errorMessage);
                   } else {
                     // Fallback para otros errores inesperados
