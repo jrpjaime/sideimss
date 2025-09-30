@@ -13,6 +13,9 @@ export class SharedService {
   private rfcSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentRfc = this.rfcSource.asObservable();
 
+  private curpSource = new BehaviorSubject<string>(''); // Valor por defecto
+  currentCurp = this.curpSource.asObservable();
+
   private nombreSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentNombre = this.nombreSource.asObservable();
 
@@ -23,8 +26,8 @@ export class SharedService {
   currentSegundoApellido= this.segundoApellidoSource.asObservable();
 
 
-  private roleSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
-  currentRole = this.roleSource.asObservable(); // Observador de string[]
+  private roleSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
+  currentRole = this.roleSource.asObservable(); // Observador de string[]
 
   private registroPatronalSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentRegistroPatronal = this.registroPatronalSource.asObservable();
@@ -39,6 +42,9 @@ export class SharedService {
   private rfcSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentRfcSesion = this.rfcSesionSource.asObservable();
 
+  private curpSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
+  currentCurpSesion = this.curpSesionSource.asObservable();
+
   private nombreSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentNombreSesion = this.nombreSesionSource.asObservable();
 
@@ -49,8 +55,8 @@ export class SharedService {
   currentSegundoApellidoSesion= this.segundoApellidoSesionSource.asObservable();
 
 
-  private roleSesionSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
-  currentRoleSesion = this.roleSesionSource.asObservable(); // Observador de string[]
+  private roleSesionSource = new BehaviorSubject<string[]>([]); // Valor por defecto: array vacío
+  currentRoleSesion = this.roleSesionSource.asObservable(); // Observador de string[]
 
 
   private delegacionSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
@@ -69,6 +75,10 @@ export class SharedService {
     this.rfcSource.next(rfc); // Cambia el valor del RFC
   }
 
+  changeCurp(curp: string) {
+    this.curpSource.next(curp); // Cambia el valor del RFC
+  }
+
   changeNombre(nombre: string) {
     this.nombreSource.next(nombre); // Cambia el valor del Nombre
   }
@@ -81,9 +91,9 @@ export class SharedService {
     this.segundoApellidoSource.next(segundoApellido); // Cambia el valor del SegundoApellido
   }
 
-  changeRole(roles: string[]) {
-    this.roleSource.next(roles); // Cambia el valor del Role
-  }
+ changeRole(roles: string[]) {
+   this.roleSource.next(roles); // Cambia el valor del Role
+ }
 
   changeRegistroPatronal(registroPatronal: string) {
     this.registroPatronalSource.next(registroPatronal); // Cambia el valor del registro patronal
@@ -100,6 +110,9 @@ export class SharedService {
     this.rfcSesionSource.next(rfcSesion); // Cambia el valor del RFC
   }
 
+  changeCurpSesion(curpSesion: string) {
+    this.curpSesionSource.next(curpSesion); // Cambia el valor del RFC
+  }
   changeNombreSesion(nombreSesion: string) {
     this.nombreSesionSource.next(nombreSesion); // Cambia el valor del Nombre
   }
@@ -112,9 +125,9 @@ export class SharedService {
     this.segundoApellidoSesionSource.next(segundoApellidoSesion); // Cambia el valor del SegundoApellido
   }
 
-  changeRoleSesion(rolesSesion: string[]) {
-    this.roleSesionSource.next(rolesSesion); // Cambia el valor del Role
-  }
+  changeRoleSesion(rolesSesion: string[]) {
+   this.roleSesionSource.next(rolesSesion); // Cambia el valor del Role
+  }
 
 
   changeDelegacionSesion(delegacionSesion: string) {
@@ -140,8 +153,9 @@ export class SharedService {
 
     const roles: string[] = payload.roles || []; // Asumiendo que el claim se llama 'roles'
 
-    const role = payload.role;
+     
     const rfc = payload.rfc;
+    const curp = payload.curp;
     const nombre = payload.nombre;
     const primerApellido = payload.primerApellido;
     const segundoApellido = payload.segundoApellido;
@@ -150,6 +164,7 @@ export class SharedService {
 
 
     console.log("rfc: " + rfc);
+    console.log("curp: " + curp);
     console.log("nombre: " + nombre);
     console.log("primerApellido: " + primerApellido);
     console.log("segundoApellido: " + segundoApellido);
@@ -158,6 +173,7 @@ export class SharedService {
     console.log("desSubdelegacion: " + desSubdelegacion);
 
     this.changeRfcSesion(rfc);
+    this.changeCurpSesion(curp);
     this.changeNombreSesion(nombre);
     this.changePrimerApellidoSesion(primerApellido);
     this.changeSegundoApellidoSesion(segundoApellido);
@@ -168,13 +184,14 @@ export class SharedService {
     if (roles.includes(Constants.rolePatron)) {
 
       this.changeRfc(rfc);
+      this.changeCurp(curp);
       this.changeNombre(nombre);
       this.changePrimerApellido(primerApellido);
       this.changeSegundoApellido(segundoApellido);
       this.changeRole(roles);
 
       console.log("::rfc: " + rfc);
-
+      console.log("::curp: " + curp);
     }
     console.log("TERMINA SharedService initializeUserData: " );
   }

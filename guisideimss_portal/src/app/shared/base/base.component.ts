@@ -7,8 +7,15 @@ import { Constants } from '../../global/Constants';
 @Directive()
 export class BaseComponent implements OnInit {
   rfc: string = '';
+
+  
   rfcSesion: string = '';
-  registroPatronal: string | null = null; // Para almacenar el registro seleccionado
+
+  nombreSesion: string = '';
+  primerApellidoSesion: string = '';
+  segundoApellidoSesion: string = '';
+  curpSesion: string = '';
+   
 
   roles: string[] = [];
   indPatron: boolean = false;
@@ -50,10 +57,22 @@ export class BaseComponent implements OnInit {
       this.rfcSesion = rfcSesion;
     });
 
-    this.sharedService.currentRegistroPatronal.subscribe(registroPatronal => {
-          this.registroPatronal = registroPatronal;
+
+    this.sharedService.currentCurpSesion.subscribe(curpSesion => {
+      this.curpSesion = curpSesion;
     });
 
+    this.sharedService.currentNombreSesion.subscribe(nombreSesion => {
+      this.nombreSesion = nombreSesion;
+    });
+
+    this.sharedService.currentPrimerApellidoSesion.subscribe(primerApellidoSesion => {
+      this.primerApellidoSesion = primerApellidoSesion;
+    });
+
+    this.sharedService.currentSegundoApellidoSesion.subscribe(segundoApellidoSesion => {
+      this.segundoApellidoSesion = segundoApellidoSesion;
+    });
 
     this.sharedService.currentRoleSesion.subscribe(roles => {
     this.roles = roles;

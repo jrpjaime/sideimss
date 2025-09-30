@@ -30,6 +30,7 @@ public class JwtUtilService {
     public String generateToken(UserDetails userDetails, List<String> roles, UsuarioDto  usuarioDto) {
         var claims = new HashMap<String, Object>();
         claims.put("rfc", usuarioDto.getRfc());
+        claims.put("curp", usuarioDto.getCurp());
         claims.put("nombre", usuarioDto.getNombre());
         claims.put("primerApellido", usuarioDto.getPrimerApellido());
         claims.put("segundoApellido", usuarioDto.getSegundoApellido()); 
@@ -49,6 +50,7 @@ public class JwtUtilService {
     public String generateRefreshToken(UserDetails userDetails, List<String> roles, UsuarioDto  usuarioDto ) {
         var claims = new HashMap<String, Object>();
         claims.put("rfc", usuarioDto.getRfc());
+        claims.put("curp", usuarioDto.getCurp());
         claims.put("nombre", usuarioDto.getNombre());
         claims.put("primerApellido", usuarioDto.getPrimerApellido());
         claims.put("segundoApellido", usuarioDto.getSegundoApellido());

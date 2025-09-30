@@ -35,7 +35,7 @@ export class AuthService {
   ) { }
 
   login(user: string, password: string ): Observable<any>{
-      console.log("entro en login(user: string, password:");
+      console.log("AuthService entro en login(user: string, password:");
     return this.httpClient.post<any>(this.LOGIN_URL, { user, password }).pipe(
       tap(response => {
         if (response.token) {

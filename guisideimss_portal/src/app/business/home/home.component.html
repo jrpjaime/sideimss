@@ -3,7 +3,7 @@
 
   <div class="row">
     <div class="col-12">
-        <h3 class="mb-0">Registros Patronales </h3>
+        <h3 class="mb-0">Bienvenido </h3>
         <hr class="red">
     </div>
   </div>
@@ -11,145 +11,19 @@
 
 <div class="row">
   <div class="col-12">
-    <form [formGroup]="formFiltro" (ngSubmit)="onSubmit()">
-
-      <div class="col-sm-4">
-        <div class="form-group">
-          <label for="registroPatronal" class="form-label">Número de Registro Patronal (NRP)</label>
-          <input type="text" class="form-control" id="registroPatronal" formControlName="registroPatronal" placeholder="Número de Registro Patronal"/>
+      <div class="container d-flex  "  >
+        <div class="text-center">
+          <!-- Muestra el nombre completo del usuario -->
+          <h3 class="mb-2">{{ nombreCompleto }}</h3>
+          <!-- Muestra el RFC del usuario -->
+          <p class="lead mb-1"><strong>RFC:</strong> {{ rfcUsuario }}</p>
+          <!-- Muestra el CURP del usuario -->
+          <p class="lead"><strong>CURP:</strong> {{ curpUsuario }}</p>
         </div>
       </div>
-      <div class="col-sm-4">
-        <div class="form-group">
-          <label for="desDelegacion" class="form-label">Delegación</label>
-          <input type="text" class="form-control" id="desDelegacion" formControlName="desDelegacion" placeholder="Delegación"/>
-        </div>
-      </div>
-      <div class="col-sm-4">
-        <div class="form-group">
-          <label for="desSubdelegacion" class="form-label">Subdelegación</label>
-          <input type="text" class="form-control" id="desSubdelegacion" formControlName="desSubdelegacion" placeholder="Subdelegación"/>
-        </div>
-      </div>
-      <!-- Botones alineados a la derecha -->
-      <div class="pull-right">
-        <button type="button" class="btn btn-secondary" (click)="onClearFiltro()">Limpiar</button>
-        <button type="submit" class="btn btn-primary">Buscar</button>
-
-      </div>
-    </form>
-  </div>
-</div>
-<hr>
-<div class="row">
-  <div class="col-12">
-    <form [formGroup]="form">
-      <div class="row">
-        <div class="col-6">
-
-        </div>
-        <div class="col-6">
-          <div class="pull-right">
-                       <button type="button" class="btn btn-primary" (click)="seleccionarYContinuar()" [disabled]="!form.get('registroPatronal')?.value">
-              Establecer Registro Patronal y Continuar
-            </button>
-          </div>
-        </div>
-      </div>
-
-
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col"></th>
-            <th scope="col">Número de Registro Patronal (NRP)</th>
-            <th scope="col">Delegación</th>
-            <th scope="col">Subdelegación</th>
-          </tr>
-        </thead>
-        <tbody>
-
-          @for ( item of ditPatronGeneralDtosPaginado; track item.registroPatronal) {
-          <tr>
-            <td>
-              <div class="form-group">
-  <div class="radio">
-    <label>
-      <input
-        type="radio"
-        formControlName="registroPatronal"
-        [value]="item.registroPatronal" />
-    </label>
   </div>
 </div>
 
 
-            </td>
-            <td>{{ item.registroPatronal }}</td>
-            <td>{{ item.cveDelegacion }} {{ item.desDelegacion }}</td>
-            <td>{{ item.cveSubdelegacion }} {{ item.desSubdelegacion }}</td>
 
-          </tr>
-          } @empty {
-          <tr>
-            <td colspan="8">No hay resultados de búsqueda.</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </form>
-  </div>
-</div>
-
-
-<div class="row">
-  <div class="col-12">
-
-    <div class="pull-right">
-      <form [formGroup]="formPaginador">
-        <div class="d-flex align-items-center">
-          @if (!isEmpty) {
-          <!-- Selector de elementos por página con mejor presentación -->
-
-          <span class="me-2">Elementos por página:</span>
-          <select class="form-control input-sm" formControlName="size" (change)="setSizeCombo()" style="width: auto; display: inline-block; margin-right: 15px;">
-          @for (item of elementosPagina; track $index) {
-            <option [value]="item">{{ item }}</option>
-          }
-          </select>
-
-          <!-- Indicador de rango de elementos mostrados -->
-          <span class="mx-3" style="margin: -10px 0">
-            {{ (((page + 1) * size) - size) + 1 }} a {{ ((page) * size) + numberOfElements }}
-          </span>
-
-          <!-- Controles de paginación -->
-          <ul class="pagination pagination-sm" style="margin: -10px 0">
-            <!-- Primera página -->
-            <li [class.disabled]="page === 0">
-              <a href="javascript:void(0)" (click)="setPage(0)"> <i class="glyphicon glyphicon-step-backward"></i> </a>
-            </li>
-
-            <!-- Página anterior -->
-            <li [class.disabled]="page === 0">
-              <a href="javascript:void(0)" (click)="rewindPage()"> <i class="glyphicon glyphicon-chevron-left"></i> </a>
-            </li>
-
-            <!-- Página siguiente -->
-            <li [class.disabled]="page === numeroPaginas - 1">
-              <a href="javascript:void(0)" (click)="forwardPage()"> <i class="glyphicon glyphicon-chevron-right"></i> </a>
-            </li>
-
-            <!-- Última página -->
-            <li [class.disabled]="page === numeroPaginas - 1">
-              <a href="javascript:void(0)" (click)="setPage(numeroPaginas - 1)"> <i class="glyphicon glyphicon-step-forward"></i> </a>
-            </li>
-          </ul>
-          }
-        </div>
-      </form>
-    </div>
-
-  </div>
-</div>
 

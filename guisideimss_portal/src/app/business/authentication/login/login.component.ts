@@ -79,7 +79,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
   login(): void {
      this.errorMessage = null;
-     console.log("entro en login");
+     console.log("LoginComponent entro en login");
     if (this.loginForm.valid) {
       const { user, password } = this.loginForm.value;
       this.loaderService.showLoader();
@@ -99,18 +99,18 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
             });
         },
      error: (err: HttpErrorResponse) => {
-        console.error('Objeto de Error Recibido:', err);
+        console.error('Objeto de Error Recibido:', err.error);
 
         // Verificamos si la propiedad 'error' contiene el string de tu backend
         if (err.error && typeof err.error === 'string') {
-          // ¡Aquí está tu mensaje! Asignamos el contenido del cuerpo del error.
+          //  Asignamos el contenido del cuerpo del error.
           this.errorMessage = err.error;
-
+          this.alertService.error( this.errorMessage);
         } else if (err.status === 0) {
           // Manejo de errores de conexión (servidor no alcanzable)
 
 
-          this.errorMessage = 'AAAA Servicio no disponible. Reintente mas tarde';
+          this.errorMessage = 'Servicio no disponible. Reintente mas tarde';
           this.alertService.error( this.errorMessage);
 
         } else {
@@ -198,7 +198,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
                   if (err.error && typeof err.error === 'string') {
                     // ¡Aquí está tu mensaje! Asignamos el contenido del cuerpo del error.
                     this.errorMessage = err.error; // <-- Asignará "Error Authetication"
-
+                    this.alertService.error( this.errorMessage);
                   } else if (err.status === 0) {
                     // Manejo de errores de conexión (servidor no alcanzable)
                     this.errorMessage = 'BBBB Servicio no disponible. Reintente mas tarde';
