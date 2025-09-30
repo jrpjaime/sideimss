@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { SharedService } from '../services/shared.service';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { BaseComponent } from '../base/base.component';
 
 @Component({
     selector: 'app-sidebar',
@@ -11,36 +12,37 @@ import { CommonModule } from '@angular/common';
     templateUrl: './sidebar.component.html',
     styleUrl: './sidebar.component.css'
 })
-export class SidebarComponent {
-  nombreSesion: string = '';
-  primerApellidoSesion: string = '';
-  segundoApellidoSesion: string = '';
+export class SidebarComponent extends BaseComponent implements OnInit {
+  // Propiedades para mostrar en la pantalla
+  nombreCompleto: string = '';
 
+  constructor(
+    private authService: AuthService,
+    sharedService: SharedService // Mantenemos SharedService para acceder a los datos del usuario
+  ) {
+    super(sharedService); // Llama al constructor de BaseComponent
+  }
 
-
-
-  constructor(private authService: AuthService,
-              private sharedService: SharedService) {
-
-               }
+ 
 
   logout(): void {
     this.authService.logout();
   }
 
-  ngOnInit(): void {
-    // Suscribirse al nombre del usuario desde SharedService
-    this.sharedService.currentNombreSesion.subscribe(nombre => {
-      this.nombreSesion = nombre;
-    });
+  override ngOnInit(): void {
 
-    this.sharedService.currentPrimerApellidoSesion.subscribe(primerApellido => {
-      this.primerApellidoSesion = primerApellido;
-    });
+    this.recargaParametros(); // Carga los parámetros del usuario del BaseComponent
 
-    this.sharedService.currentSegundoApellidoSesion.subscribe(segundoApellido => {
-      this.segundoApellidoSesion = segundoApellido;
-    });
+    this.nombreCompleto = `${this.nombreSesion} ${this.primerApellidoSesion} ${this.segundoApellidoSesion}`;
   }
 
+
+ 
+
 }
+
+
+
+
+
+ 

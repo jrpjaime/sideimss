@@ -1,7 +1,29 @@
- nav.sub-navbar {
-  top: 42px; /* Ajusta este valor si la barra de gob.mx es más alta o más baja */
+
+
+.custom-user-dropdown-width {
+  /* Forzamos el ancho. Ajusta 300px a la longitud MÁXIMA que esperas para el nombre */
+  width: 300px !important; 
+  
+  /* Aseguramos que no se haga más pequeño de lo que queremos */
+  min-width: 280px !important; 
+  
+  /* Aseguramos que no se haga más grande de lo que queremos (opcional, si width es fijo) */
+  max-width: 350px !important; 
 }
 
+ 
+.custom-user-dropdown-width .text-wrap {
+  white-space: normal !important;        /* Asegura que el texto se envuelva */
+  overflow-wrap: break-word !important;   /* Para nombres sin espacios que puedan desbordar */
+}
+
+
+
+
+ 
+nav.sub-navbar {
+  top: 42px; /* Ajusta este valor si la barra de gob.mx es más alta o más baja */
+}
 
 .info-patron-subtitulo {
   font-size: 1.5rem;   
