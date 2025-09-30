@@ -1,26 +1,25 @@
- 
 <nav class="side-menu">
 
- 
+
   <div class="menu-header">
-    
+
       <!-- Aquí poner un <img> con  logo -->
-   
-  
+
+
       <span class="app-logo"> AA</span>
- 
+
   </div>
 
- 
+
   <ul class="nav-list">
     @for (item of menuItems; track item.name) {
       <li [class.has-submenu]="item.children" [class.expanded]="item.isExpanded">
 
-   
+
         <a [routerLink]="item.route" (click)="onItemClick($event, item)" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: !item.children}">
           <i class="menu-icon" [class]="item.icon"></i>
           <span class="menu-text">{{ item.name }}</span>
-          
+
           <!--   FLECHA POR UN ÍCONO SVG -->
           @if (item.children) {
             <svg class="submenu-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

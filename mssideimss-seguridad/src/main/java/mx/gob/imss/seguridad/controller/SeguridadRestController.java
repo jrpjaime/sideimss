@@ -76,7 +76,7 @@ public class SeguridadRestController {
  
                 List<String> roles=new ArrayList<String>();
 
-                roles.add("Contador");
+              //  roles.add("Contador");
                 roles.add("Representante");
                 roles.add("Patron");
 

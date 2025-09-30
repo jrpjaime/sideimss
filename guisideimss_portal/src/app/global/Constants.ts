@@ -5,6 +5,8 @@ export const Constants = {
      refreshTokenKey: 'refreshT0k3n',
      registroPatronal: '_rtr0%&n',
      rolePatron: 'Patron',
+     roleContador: 'Contador',
+     roleRepresentante: 'Representante',
      idSolicitudDevolucion:'Z0l1%17_'
 
  }

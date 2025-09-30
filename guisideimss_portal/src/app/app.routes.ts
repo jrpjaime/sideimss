@@ -8,6 +8,7 @@ import { AuthenticatedGuard } from './core/guards/authenticated.guard';
 import { AcreditacionymembresiaComponent } from './business/contador/acreditacionymembresia/acreditacionymembresia.component';
 import { ModificaciondatosComponent } from './business/contador/modificaciondatos/modificaciondatos.component';
 import { SolicitudbajaComponent } from './business/contador/solicitudbaja/solicitudbaja.component';
+import { ContadorGuard } from './core/guards/contador.guard';
 
 
 
@@ -27,17 +28,17 @@ export const routes: Routes = [
       {
         path: 'contador/acreditacionymembresia',
         component: AcreditacionymembresiaComponent,
-        canActivate: [AuthGuard],
+        canActivate: [ContadorGuard],
       },
       {
         path: 'contador/modificaciondatos',
         component: ModificaciondatosComponent,
-        canActivate: [AuthGuard],
+        canActivate: [ContadorGuard],
       },
       {
         path: 'contador/solicitudbaja',
         component: SolicitudbajaComponent,
-        canActivate: [AuthGuard],
+        canActivate: [ContadorGuard],
       },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
