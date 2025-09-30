@@ -5,9 +5,10 @@ import { HomeComponent } from './business/home/home.component';
 import { LoginComponent } from './business/authentication/login/login.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AuthenticatedGuard } from './core/guards/authenticated.guard';
+import { AcreditacionymembresiaComponent } from './business/contador/acreditacionymembresia/acreditacionymembresia.component';
+import { ModificaciondatosComponent } from './business/contador/modificaciondatos/modificaciondatos.component';
+import { SolicitudbajaComponent } from './business/contador/solicitudbaja/solicitudbaja.component';
 
-
-import { TableroTrabajadoresComponent } from './business/tablero-trabajadores/tablero-trabajadores.component';
 
 
 
@@ -24,9 +25,19 @@ export const routes: Routes = [
         component: HomeComponent,
       },
       {
-        path: 'trabajadores/tablero',
-        component: TableroTrabajadoresComponent,
-        canActivate: [AuthGuard], // Protegido por SeleccionPatronalGuard
+        path: 'contador/acreditacionymembresia',
+        component: AcreditacionymembresiaComponent,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'contador/modificaciondatos',
+        component: ModificaciondatosComponent,
+        canActivate: [AuthGuard],
+      },
+      {
+        path: 'contador/solicitudbaja',
+        component: SolicitudbajaComponent,
+        canActivate: [AuthGuard],
       },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]

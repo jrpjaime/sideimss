@@ -29,17 +29,17 @@ export class LeftMenuComponent {
   // Aquí definimos toda la estructura del menú
   menuItems: MenuItem[] = [
     { name: 'Contador', icon: 'bi bi-building-fill', isExpanded: false, children: [
-        { name: 'Presentación de acreditación y menbresía', icon: 'bi bi-file-text-fill', route: '/terminos-y-condiciones' },
-        { name: 'Modificación de datos', icon: 'bi bi-arrow-repeat', action: 'limpiarContexto' },
-        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/patrones/registro' }
+        { name: 'Presentación de acreditación y menbresía', icon: 'bi bi-file-text-fill', route: '/contador/acreditacionymembresia' },
+        { name: 'Modificación de datos', icon: 'bi bi-arrow-repeat', route: '/contador/modificaciondatos' },
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
     ]},
     { name: 'Dictamen electrónico', icon: 'bi bi-people-fill', isExpanded: false, children: [
-        { name: 'Trabajadores', icon: 'bi bi-grid-1x2-fill', route: '/trabajadores/tablero' },
-        { name: 'Datos Afiliatorios', icon: 'bi bi-dot', route: '/trabajadores/datos-afiliatorios' }
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
     ]},
     { name: 'Consulta al dictamen', icon: 'bi bi-cloud-upload-fill', isExpanded: false, children: [
-        { name: 'Trabajadores (aseg.txt)', icon: 'bi bi-dot', route: '/carga/trabajadores' },
-        { name: 'Datos Afiliatorios (afil.txt)', icon: 'bi bi-dot', route: '/carga/afiliatorios' }
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
     ]}
   ];
 
@@ -101,38 +101,8 @@ onItemClick(event: MouseEvent, item: MenuItem): void {
 
 
 
-  private solicitarConfirmacionParaCambiar(): void {
-    // Así llamas al nuevo diálogo configurable
-    this.modalService.showDialog(
-      'confirm', // Tipo: Dos botones (Confirmar/Cancelar)
-      'info',    // Estilo: 'info' para el look dorado
-      'Información', // Título
-      '¿Está seguro de que quiere cambiar de Registro Patronal?', // Mensaje
-      (confirmado: boolean) => {
-        if (confirmado) {
-
-          this.router.navigate(['/home']);
-        }
-      },
-      'Continuar', // Texto del botón de confirmación
-      'Cancelar'   // Texto del botón de rechazo
-    );
-  }
 
 
-   private mostrarError(): void {
-    this.modalService.showDialog(
-      'alert', // Tipo: Un solo botón
-      'error', // Estilo: 'error' para el look rojo
-      'Error', // Título
-      'Existen 000 de trabajadores con error.<br>A continuación se muestran los motivos de rechazo por trabajador.', // Mensaje con salto de línea
-      (confirmado: boolean) => {
-        // Lógica a ejecutar después de que el usuario presione 'Aceptar'
-        console.log('Diálogo de error cerrado');
-      },
-      'Aceptar' // Texto del único botón
-      // No se necesita el texto de rechazo aquí
-    );
-  }
+
 
 }

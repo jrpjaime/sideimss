@@ -34,10 +34,10 @@ export const EPs = {
   },
 
     // ********** AUTODETERMINACIONES /mssideimss-autodeterminaciones**********
-    autodeterminaciones: {
+    contador: {
       info: "/v1/info",
       list: "/v1/list",
-      listPaginatedTrabajadores: "/v1/listPaginatedTrabajadores",
+
 
     }
 

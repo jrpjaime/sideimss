@@ -5,7 +5,10 @@ export const NAV = {
   login: CONTEXT + 'login',
   home: CONTEXT + '/home',
 
-  tableroTrabajadores: CONTEXT + '/trabajadores/tablero',
- 
+
+  contadoracreditacionymembresia: CONTEXT + '/contador/acreditacionymembresia',
+  contadormodificaciondatos: CONTEXT + '/contador/modificaciondatos',
+  contadorsolicitudbaja: CONTEXT + '/contador/solicitudbaja',
+
 
 }

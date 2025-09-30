@@ -44,7 +44,7 @@
 }
 .app-logo .menu-icon {
   margin-right: 12px;
-  color: #0d6efd;
+  color: #007038;
 }
 
 /* --- LISTA DE NAVEGACIÓN PRINCIPAL --- */
@@ -85,10 +85,10 @@ li a:hover {
 
 /* Estado activo del enlace principal */
 li a.active-link {
-  color: #0d6efd; /* Color de marca más distintivo para el activo */
+  color: #007038; /* Color de marca más distintivo para el activo */
   font-weight: 600;
   background-color: rgba(13, 110, 253, 0.08); /* Fondo ligero para el activo */
-  border-left: 4px solid #0d6efd; /* Barra lateral para resaltar */
+  border-left: 4px solid #007038; /* Barra lateral para resaltar */
   padding-left: 14px; /* Ajusta el padding por la barra */
 }
 
@@ -104,7 +104,7 @@ li a.active-link {
 }
 li a:hover .menu-icon,
 li a.active-link .menu-icon {
-  color: #0d6efd; /* Color de marca para iconos activos/hover */
+  color: #007038; /* Color de marca para iconos activos/hover */
 }
 
 /* --- SUBMENÚS Y FLECHA --- */
@@ -152,10 +152,10 @@ li.expanded > .submenu {
 
 }
 .submenu li a.active-link {
-  color: #0d6efd;
+  color: #007038;
   font-weight: 500;
   background: rgba(13, 110, 253, 0.08); /* Fondo ligero para activo */
-  border-left: 4px solid #0d6efd; /* Barra activa */
+  border-left: 4px solid #007038; /* Barra activa */
 }
 /* Asegura que el texto del submenú se ajuste correctamente */
 .submenu .menu-text {
