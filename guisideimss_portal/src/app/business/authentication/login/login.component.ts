@@ -183,11 +183,12 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
              this.sharedService.currentRole.subscribe(roles => {
                 this.roles = roles; // Asigna el array de roles
                 //  Usa .includes() para verificar si tiene el rol deseado
-                if (this.roles.includes(Constants.rolePatron)) {
+              /*  if (this.roles.includes(Constants.rolePatron)) {
                 this.router.navigate([NAV.home]);
                 } else {
                   this.router.navigate([NAV.login]);
-                }
+                }*/
+               this.router.navigate([NAV.home]);
              });
             },
               error: (err: HttpErrorResponse) => {

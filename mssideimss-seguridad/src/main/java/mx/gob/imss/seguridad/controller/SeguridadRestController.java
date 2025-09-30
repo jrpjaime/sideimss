@@ -76,16 +76,16 @@ public class SeguridadRestController {
  
                 List<String> roles=new ArrayList<String>();
 
-              //  roles.add("Contador");
+                roles.add("Contador");
                 roles.add("Representante");
-                roles.add("Patron");
+              //  roles.add("Patron");
 
                 UsuarioDto  usuarioDto= new UsuarioDto();
                 usuarioDto.setRfc(authRequestDto.getUser());
                 usuarioDto.setNombre("Pedro");
                 usuarioDto.setPrimerApellido("Hernandez");
                 usuarioDto.setSegundoApellido("Robles");
-                usuarioDto.setCurp("asdsadsadsa");
+                usuarioDto.setCurp("CURPASIGNADA");
                 
                 if (roles.isEmpty()) {
                     logger.warn("El usuario {} no tiene roles asignados.", authRequestDto.getUser());
