@@ -29,10 +29,9 @@ export class LeftMenuComponent {
   // Aquí definimos toda la estructura del menú
   menuItems: MenuItem[] = [
     { name: 'Contador', icon: 'bi bi-building-fill', isExpanded: false, children: [
-        { name: 'Términos y Condiciones', icon: 'bi bi-file-text-fill', route: '/terminos-y-condiciones' },
-        { name: 'Cambiar Registro Patronal', icon: 'bi bi-arrow-repeat', action: 'limpiarContexto' },
-        { name: 'Registro Patrón', icon: 'bi bi-dot', route: '/patrones/registro' },
-        { name: 'Prima de Riesgo de Trabajo', icon: 'bi bi-dot', route: '/patrones/prima-rt' }
+        { name: 'Presentación de acreditación y menbresía', icon: 'bi bi-file-text-fill', route: '/terminos-y-condiciones' },
+        { name: 'Modificación de datos', icon: 'bi bi-arrow-repeat', action: 'limpiarContexto' },
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/patrones/registro' }
     ]},
     { name: 'Dictamen electrónico', icon: 'bi bi-people-fill', isExpanded: false, children: [
         { name: 'Trabajadores', icon: 'bi bi-grid-1x2-fill', route: '/trabajadores/tablero' },
@@ -41,7 +40,7 @@ export class LeftMenuComponent {
     { name: 'Consulta al dictamen', icon: 'bi bi-cloud-upload-fill', isExpanded: false, children: [
         { name: 'Trabajadores (aseg.txt)', icon: 'bi bi-dot', route: '/carga/trabajadores' },
         { name: 'Datos Afiliatorios (afil.txt)', icon: 'bi bi-dot', route: '/carga/afiliatorios' }
-    ]} 
+    ]}
   ];
 
   constructor(

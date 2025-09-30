@@ -1,13 +1,14 @@
 /* --- CONFIGURACIÓN GENERAL DEL HOST --- */
 :host {
   display: block;
-  width: 300px; /* Un ancho generoso para nombres largos */
+  width: 330px; /* Aumentado a 350px para dar más espacio a textos largos */
   flex-shrink: 0;
   transition: width 0.3s ease-in-out;
-  /* Una fuente sans-serif estándar y limpia */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05); /* Sombra sutil para darle profundidad */
 }
 
+/* Estado del menú contraído */
 :host-context(.menu-collapsed) {
   width: 80px;
 }
@@ -16,120 +17,153 @@
 .side-menu {
   width: 100%;
   height: 100%;
-  background-color: #f8f9fa; /* Un gris muy claro, estándar en Bootstrap */
-  border-right: 1px solid #dee2e6; /* Un borde sutil */
+  background-color: #f8f9fa; /* Gris muy claro */
+  border-right: 1px solid #dee2e6; /* Borde sutil */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* Oculta cualquier desbordamiento inesperado */
 }
 
- 
-
-/* --- ENCABEZADO CON LOGO/TÍTULO (OPCIONAL, AJUSTADO AL TEMA CLARO) --- */
+/* --- ENCABEZADO CON LOGO/TÍTULO --- */
 .menu-header {
   padding: 15px 20px;
   border-bottom: 1px solid #dee2e6;
-  white-space: nowrap;
+  /* Eliminar white-space: nowrap; si el logo/texto del header también necesita envolverse */
+  white-space: nowrap; /* Mantenido para el header si el logo/título es corto */
+  display: flex; /* Para centrar el logo si fuera una imagen */
+  align-items: center;
+  justify-content: center; /* Centrar el contenido si es solo texto o un logo pequeño */
 }
 .app-logo {
   display: flex;
   align-items: center;
   text-decoration: none;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #343a40; /* Texto oscuro principal */
+  font-size: 1.4rem; /* Un poco más grande para el logo */
+  font-weight: 700; /* Más negrita para el logo */
+  color: #343a40;
 }
 .app-logo .menu-icon {
   margin-right: 12px;
-  color: #0d6efd; /* Un toque de color de marca en el logo */
+  color: #0d6efd;
 }
-
 
 /* --- LISTA DE NAVEGACIÓN PRINCIPAL --- */
 .nav-list {
   list-style: none;
-  padding: 8px 0; /* Menos padding vertical para un look más denso si se prefiere */
+  padding: 8px 0;
   margin: 0;
-  overflow-y: auto;
-  flex-grow: 1;
+  overflow-y: auto; /* Permite scroll si la lista es muy larga */
+  flex-grow: 1; /* Ocupa el espacio disponible */
 }
 
-/* --- ESTILO DE LOS ENLACES (LA PARTE MÁS IMPORTANTE) --- */
+/* Estilo para el texto del menú que permite envolver */
+.menu-text {
+  flex-grow: 1; /* Ocupa el espacio restante */
+  white-space: normal; /* Permite salto de línea */
+  word-break: break-word; /* Rompe palabras largas si es necesario */
+  min-width: 0; /* Necesario para que flex-grow funcione bien en algunos navegadores */
+  padding-right: 10px; /* Pequeño padding para que el texto no se pegue al borde o flecha */
+}
+
+/* --- ESTILO DE LOS ENLACES PRINCIPALES (li a) --- */
 li a {
   display: flex;
-  align-items: center;
-  padding: 14px 25px; /* Más padding para un look espacioso */
-  color: #495057; /* Un gris oscuro suave para el texto */
+  align-items: flex-start; /* Alinea el texto multilínea al inicio */
+  padding: 12px 18px; /* Padding más equilibrado */
+  color: #495057;
   text-decoration: none;
-  font-weight: 500; /* Un peso medio, ni muy delgado ni muy grueso */
-  white-space: nowrap;
+  font-weight: 500;
   position: relative;
   transition: all 0.2s ease;
+  min-height: 48px; /* Asegura una altura mínima para la accesibilidad del click */
 }
 
 li a:hover {
-  background-color: #e9ecef; /* Un fondo ligeramente más oscuro al pasar el ratón */
-  color: #212529; /* El texto se hace más oscuro para mayor contraste */
+  background-color: #e9ecef;
+  color: #212529;
 }
 
-/* ESTADO ACTIVO: Sutil y profesional */
+/* Estado activo del enlace principal */
 li a.active-link {
-  color: #212529; /* Texto negro para máxima prominencia */
-  font-weight: 600; /* La fuente se hace negrita para indicar selección */
-  background-color: transparent; /* Sin fondo para un look minimalista */
+  color: #0d6efd; /* Color de marca más distintivo para el activo */
+  font-weight: 600;
+  background-color: rgba(13, 110, 253, 0.08); /* Fondo ligero para el activo */
+  border-left: 4px solid #0d6efd; /* Barra lateral para resaltar */
+  padding-left: 14px; /* Ajusta el padding por la barra */
 }
 
+/* Estilo de los iconos */
 .menu-icon {
-  margin-right: 20px; /* Más espacio entre el icono y el texto */
-  font-size: 1.3rem; /* Iconos un poco más grandes y visibles */
+  margin-right: 18px; /* Ajustado */
+  font-size: 1.4rem; /* Iconos ligeramente más grandes */
   width: 24px;
+  flex-shrink: 0; /* Evita que el icono se comprima */
   text-align: center;
-  transition: margin 0.3s ease-in-out;
-  color: #6c757d; /* Color de icono gris medio */
+  transition: margin 0.3s ease-in-out, color 0.2s ease;
+  color: #6c757d;
 }
 li a:hover .menu-icon,
 li a.active-link .menu-icon {
-  color: #212529; /* El icono se oscurece junto con el texto */
+  color: #0d6efd; /* Color de marca para iconos activos/hover */
 }
-
 
 /* --- SUBMENÚS Y FLECHA --- */
 .submenu-arrow {
-  margin-left: auto;
-  color: #6c757d; /* Flecha gris */
-  transition: transform 0.3s ease, color 0.2s ease;
+  margin-left: auto; /* Empuja la flecha a la derecha */
+  color: #6c757d;
+  transition: transform 0.3s ease-in-out, color 0.2s ease;
+  flex-shrink: 0; /* Evita que la flecha se comprima */
+  width: 16px; /* Asegura un ancho fijo para la flecha */
+  height: 16px; /* Asegura una altura fija para la flecha */
 }
-li a:hover .submenu-arrow { color: #212529; }
+li a:hover .submenu-arrow {
+  color: #212529;
+}
 li.expanded > a > .submenu-arrow {
   transform: rotate(90deg);
 }
 
 .submenu {
   list-style: none;
-  padding-left: 0;
-  background-color: transparent; /* Sin cambio de fondo, la indentación es suficiente */
+  padding: 0; /* Resetea padding */
+  background-color: #f1f3f5; /* Un fondo ligeramente diferente para submenús */
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.4s ease-in-out;
+  transition: max-height 0.5s ease-in-out;
 }
 
 li.expanded > .submenu {
-  max-height: 1000px;
+  max-height: 1000px; /* Suficiente para expandirse */
 }
 
+/* Estilo de los enlaces del submenú */
 .submenu li a {
-  padding-left: 70px; /* Indentación fuerte para claridad */
+  padding: 10px 15px 15px 70px; /* Top, Right, Bottom, Left. Indentación de 70px */
   font-size: 0.9em;
   font-weight: 400;
   color: #6c757d;
+  line-height: 1.4; /* Interlineado para texto multilínea */
+  min-height: 40px; /* Altura mínima para accesibilidad */
+  border-left: 4px solid transparent; /* Espacio para la barra activa */
 }
 .submenu li a:hover {
   color: #212529;
+  background-color: #e2e6ea; /* Fondo de hover más sutil */
+
 }
 .submenu li a.active-link {
-  color: #0d6efd; /* Color de marca para el sub-item activo */
+  color: #0d6efd;
   font-weight: 500;
-  background: transparent;
+  background: rgba(13, 110, 253, 0.08); /* Fondo ligero para activo */
+  border-left: 4px solid #0d6efd; /* Barra activa */
+}
+/* Asegura que el texto del submenú se ajuste correctamente */
+.submenu .menu-text {
+  flex-grow: 1;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 0;
+  padding-right: 10px;
 }
 
 
@@ -138,17 +172,33 @@ li.expanded > .submenu {
 :host-context(.menu-collapsed) .submenu-arrow {
   opacity: 0;
   width: 0;
+  overflow: hidden; /* Asegura que el texto desaparezca limpiamente */
+  transition: opacity 0.2s ease, width 0.2s ease; /* Transición para desaparición */
 }
 :host-context(.menu-collapsed) li a {
   justify-content: center;
-  padding: 14px 0;
+  padding: 14px 0; /* Padding centrado para solo el icono */
+  border-left: none; /* Elimina la barra del activo cuando está colapsado */
 }
 :host-context(.menu-collapsed) .menu-icon {
   margin-right: 0;
-  font-size: 1.5rem; /* Iconos más grandes cuando no hay texto */
+  font-size: 1.6rem; /* Iconos más grandes y prominentes */
 }
 :host-context(.menu-collapsed) .submenu {
-  display: none;
+  display: none; /* Oculta submenús completamente */
+}
+/* Ajustes para el botón de toggle cuando está colapsado */
+:host-context(.menu-collapsed) .menu-toggle-container {
+  padding: 10px; /* Reduce padding */
+}
+:host-context(.menu-collapsed) .toggle-button {
+  width: 60px; /* Ancho fijo para el botón */
+  height: 60px; /* Altura fija */
+  border-radius: 50%; /* Lo hace redondo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto; /* Centrar el botón */
 }
 
 
@@ -156,21 +206,35 @@ li.expanded > .submenu {
 .menu-toggle-container {
   padding: 15px;
   border-top: 1px solid #dee2e6;
+  display: flex; /* Para controlar la posición del botón */
+  justify-content: flex-end; /* Lo alinea a la derecha por defecto */
 }
 .toggle-button {
   background: #f1f3f5;
   border: none;
   border-radius: 8px;
-  width: 100%;
-  padding: 10px;
+  width: 48px; /* Ancho fijo para el botón */
+  height: 48px; /* Altura fija */
+  padding: 0; /* Elimina el padding interno */
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.3s ease;
+  display: flex; /* Para centrar el SVG */
+  justify-content: center;
+  align-items: center;
 }
-.toggle-button:hover { background: #dee2e6; }
+.toggle-button:hover {
+  background: #dee2e6;
+  transform: scale(1.05); /* Pequeño efecto al pasar el ratón */
+}
 .toggle-button svg {
   color: #495057;
   transition: transform 0.3s ease-in-out;
+  font-size: 1.2rem; /* Tamaño del icono */
 }
 :host-context(.menu-collapsed) .toggle-button svg {
   transform: rotate(180deg);
+}
+.side-menu .nav-list li a {
+    /* Anula el height: 30px; heredado */
+    height: auto !important;
 }
