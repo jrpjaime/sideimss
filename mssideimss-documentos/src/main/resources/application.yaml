@@ -1,10 +1,10 @@
 server:
-  port: ${SIDEIMSS_CONTADORES_PORT}
+  port: ${SIDEIMSS_DOCUMENTOS_PORT}
 jwt:
   secret: TExBVkVfTVVZX1NFQ1JFVEzE3Zmxu7BSGSJx72BSBXM 
 spring:
   application:
-    name: mssideimss-contadores
+    name: mssideimss-documentos
   datasource:
     driver-class-name: oracle.jdbc.driver.OracleDriver
     url: ${SIDEIMSS_DB_URL}
@@ -16,7 +16,7 @@ spring:
       idle-timeout: ${POOL_IDLE_TIMEOUT}
       max-lifetime: ${POOL_LIFETIME}
       connection-timeout: ${POOL_CONNECTION_TIMEOUT}
-      pool-name: sideimssPoolContadores
+      pool-name: sideimssPoolDocumentos
   jpa:
     show-sql: true
     hibernate:
@@ -34,7 +34,7 @@ spring:
 management:
   endpoints:
     web:
-      base-path: /mssideimss-contadores/v1/actuator
+      base-path: /mssideimss-documentos/v1/actuator
       exposure:
         include: health
   endpoint:

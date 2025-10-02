@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.spring.security.jwt</groupId>
-    <artifactId>mssideimss-contadores</artifactId>
+    <artifactId>mssideimss-acuses</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>mssideimss-contadores</name>
+    <name>mssideimss-acuses</name>
     <description>Sistema de Dictamen Electrónico</description>
     <properties>
         <java.version>17</java.version>
