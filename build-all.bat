@@ -37,6 +37,28 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+
+echo Compilando mssideimss-acuses...
+cd /d %BASEPATH%\mssideimss-acuses
+call mvn clean package -DskipTests
+if errorlevel 1 (
+    echo Error al compilar mssideimss-acuses.
+    pause
+    exit /b 1
+)
+
+
+echo Compilando mssideimss-documentos...
+cd /d %BASEPATH%\mssideimss-documentos
+call mvn clean package -DskipTests
+if errorlevel 1 (
+    echo Error al compilar mssideimss-documentos.
+    pause
+    exit /b 1
+)
+
+
 echo.
 echo Todas las aplicaciones se compilaron correctamente.
 pause

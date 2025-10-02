@@ -19,11 +19,18 @@ if "%BASEPATH%"=="" (
 echo Iniciando mssideimss-seguridad...
 start cmd /k "cd /d %BASEPATH%\mssideimss-seguridad && java -jar target\mssideimss-seguridad-0.0.1-SNAPSHOT.jar"
 
+echo Iniciando mssideimss-catalogos...
+start cmd /k "cd /d %BASEPATH%\mssideimss-catalogos && java -jar target\mssideimss-catalogos-0.0.1-SNAPSHOT.jar"
+
 echo Iniciando mssideimss-contadores...
 start cmd /k "cd /d %BASEPATH%\mssideimss-contadores && java -jar target\mssideimss-contadores-0.0.1-SNAPSHOT.jar"
 
-echo Iniciando mssideimss-catalogos...
-start cmd /k "cd /d %BASEPATH%\mssideimss-catalogos && java -jar target\mssideimss-catalogos-0.0.1-SNAPSHOT.jar"
+echo Iniciando mssideimss-acuses...
+start cmd /k "cd /d %BASEPATH%\mssideimss-acuses && java -jar target\mssideimss-acuses-0.0.1-SNAPSHOT.jar"
+
+echo Iniciando mssideimss-documentos...
+start cmd /k "cd /d %BASEPATH%\mssideimss-documentos && java -jar target\mssideimss-documentos-0.0.1-SNAPSHOT.jar"
+
 
 echo.
 echo Las aplicaciones se han iniciado en ventanas separadas.

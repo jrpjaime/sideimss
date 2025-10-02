@@ -16,10 +16,27 @@ services:
       - "4110:4110"
     container_name: mssideimss-catalogos
 
-  devoluciones:
+  contadores:
     build:
       context: ./mssideimss-contadores
       dockerfile: Dockerfile
     ports:
       - "4111:4111"
     container_name: mssideimss-contadores
+    
+  acuses:
+    build:
+      context: ./mssideimss-acuses
+      dockerfile: Dockerfile
+    ports:
+      - "4112:4112"
+    container_name: mssideimss-acuses
+
+  documentos:
+    build:
+      context: ./mssideimss-documentos
+      dockerfile: Dockerfile
+    ports:
+      - "4113:4113"
+    container_name: mssideimss-documentos
+      

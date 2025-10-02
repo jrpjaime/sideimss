@@ -23,6 +23,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
+ 
+echo Compilando mssideimss-catalogos...
+cd /d %BASEPATH%\mssideimss-catalogos
+call mvn clean package -DskipTests
+if errorlevel 1 (
+    echo Error al compilar mssideimss-catalogos.
+    pause
+    exit /b 1
+)
+
+
 echo Compilando mssideimss-contadores...
 cd /d %BASEPATH%\mssideimss-contadores
 call mvn clean package -DskipTests
@@ -32,14 +43,26 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Compilando mssideimss-catalogos...
-cd /d %BASEPATH%\mssideimss-catalogos
+
+echo Compilando mssideimss-acuses...
+cd /d %BASEPATH%\mssideimss-acuses
 call mvn clean package -DskipTests
 if errorlevel 1 (
-    echo Error al compilar mssideimss-catalogos.
+    echo Error al compilar mssideimss-acuses.
     pause
     exit /b 1
 )
+
+
+echo Compilando mssideimss-documentos...
+cd /d %BASEPATH%\mssideimss-documentos
+call mvn clean package -DskipTests
+if errorlevel 1 (
+    echo Error al compilar mssideimss-documentos.
+    pause
+    exit /b 1
+)
+
 
 echo.
 echo Todas las aplicaciones se compilaron correctamente.
@@ -51,11 +74,17 @@ echo Todas las aplicaciones se compilaron correctamente.
 echo Iniciando mssideimss-seguridad...
 start cmd /k "cd /d %BASEPATH%\mssideimss-seguridad && java -jar target\mssideimss-seguridad-0.0.1-SNAPSHOT.jar"
 
+echo Iniciando mssideimss-catalogos...
+start cmd /k "cd /d %BASEPATH%\mssideimss-catalogos && java -jar target\mssideimss-catalogos-0.0.1-SNAPSHOT.jar"
+
 echo Iniciando mssideimss-contadores...
 start cmd /k "cd /d %BASEPATH%\mssideimss-contadores && java -jar target\mssideimss-contadores-0.0.1-SNAPSHOT.jar"
 
-echo Iniciando mssideimss-catalogos...
-start cmd /k "cd /d %BASEPATH%\mssideimss-catalogos && java -jar target\mssideimss-catalogos-0.0.1-SNAPSHOT.jar"
+echo Iniciando mssideimss-acuses...
+start cmd /k "cd /d %BASEPATH%\mssideimss-acuses && java -jar target\mssideimss-acuses-0.0.1-SNAPSHOT.jar"
+
+echo Iniciando mssideimss-documentos...
+start cmd /k "cd /d %BASEPATH%\mssideimss-documentos && java -jar target\mssideimss-documentos-0.0.1-SNAPSHOT.jar"
 
 echo.
 echo Las aplicaciones se han iniciado en ventanas separadas.
