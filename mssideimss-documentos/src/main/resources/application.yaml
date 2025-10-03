@@ -41,3 +41,6 @@ management:
     auditevents:
       enabled: true
     
+hadoop:
+  username: ${HADOOP_USER_NAME_ENV:kioimss} 
+  default-fs: ${HADOOP_DEFAULT_FS_ENV:hdfs://10.104.24.3:9000}
