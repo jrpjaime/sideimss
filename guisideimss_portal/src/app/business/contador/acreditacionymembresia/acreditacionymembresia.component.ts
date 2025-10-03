@@ -46,9 +46,11 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
 
     onSubmit() {
     console.log('Formulario enviado:', this.formAcreditacionMembresia.value);
-    // Aquí puedes añadir la lógica para procesar el formulario
+   
     if (this.formAcreditacionMembresia.valid) {
       // Hacer algo con los datos del formulario
+
+
     } else {
       // Marcar todos los campos como "touched" para mostrar los mensajes de error
       this.formAcreditacionMembresia.markAllAsTouched();
@@ -57,9 +59,8 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
 
 
 
-    onReiniciarTrabajador() {
-    console.log('Botón Cancelar presionado');
-    // Aquí puedes añadir la lógica para reiniciar el formulario o cancelar la operación
+    onReiniciarFormAcreditacionMembresia() {
+    console.log('Botón Cancelar presionado'); 
     this.formAcreditacionMembresia.reset(); // Reinicia el formulario
   }
 
