@@ -65,7 +65,7 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 
 		if(documentoIndividualVO.getDocumentoBase64()!=null) {
 			
-			Long cveIdTramite=16L; 
+			
 		    
 		    String fileName=documentoIndividualVO.getNomArchivo();
             if (fileName == null || fileName.trim().isEmpty()) {
@@ -76,18 +76,16 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 		   	SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern,new Locale("es", "MX"));
 		   	String dateCarga = simpleDateFormat.format(fechaCarga);
 		   	
-		    String path= "";
+		    String  path=  dateCarga +  "/"  + documentoIndividualVO.getDesRfc() + "/" ;
 		   	
 		    if(documentoIndividualVO.getDesPath()!=null) {
-		      path=  "/" + dateCarga +   documentoIndividualVO.getDesPath();
-		    }else {
-		      path=  "/" + dateCarga +  "/";
+		      path +=  documentoIndividualVO.getDesPath() ;
 		    }
-		   	
+
 			logger.info("se asigna el path correcto "+ path);
 		    documentoIndividualVO.setDesPath(path);
 
-		  	String pathUbicacion=cveIdTramite +  path + documentoIndividualVO.getDesRfc() + "/";
+		  	String pathUbicacion= path;
 		  	logger.info("pathUbicacion "+ pathUbicacion);
 
 			String pathHdfs=  pathUbicacion;
@@ -100,8 +98,7 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
                 logger.error("Error al decodificar el Base64 del documento.", e);
                 throw new IllegalArgumentException("El documento Base64 no es válido.", e);
             }
-
-			logger.info("utileriasService.saveDocumentoHdfs");
+ 
 			logger.info("archivoDatos.getBytes(): " + archivoBytes);
 			
 			//carga el documento en hadoop
