@@ -4,7 +4,7 @@ package mx.gob.imss.documentos.dto;
 import lombok.Data;
 
 @Data
-public class DocumentoIndividualVO {
+public class DocumentoIndividualDto {
 	 
  
 	private String desRfc; 

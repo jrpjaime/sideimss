@@ -7,10 +7,10 @@ import java.util.Date;
 
 import org.springframework.core.io.Resource;
 
-import mx.gob.imss.documentos.dto.DocumentoIndividualVO;
+import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
 
 public interface  CargaDocumentoService {  
-public DocumentoIndividualVO cargaDocumentoHadoop(DocumentoIndividualVO documentoIndividualVO ) throws Exception;
+public DocumentoIndividualDto cargaDocumentoHadoop(DocumentoIndividualDto documentoIndividualVO ) throws Exception;
 public String saveDocumentoHdfs(byte[] file,  String pathHdfs, String namefile ) throws Exception;
 public Resource readFileHdfs(String pathHdfs ) throws IOException ;    
 }

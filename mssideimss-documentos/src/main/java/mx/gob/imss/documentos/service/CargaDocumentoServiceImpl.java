@@ -13,7 +13,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation; 
 import jakarta.transaction.Transactional;
-import mx.gob.imss.documentos.dto.DocumentoIndividualVO;
+import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
@@ -40,7 +40,7 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 
 	@Override 
     @Transactional
-	public DocumentoIndividualVO cargaDocumentoHadoop(DocumentoIndividualVO documentoIndividualVO ) throws IOException, IllegalArgumentException, ParseException { 
+	public DocumentoIndividualDto cargaDocumentoHadoop(DocumentoIndividualDto documentoIndividualVO ) throws IOException, IllegalArgumentException, ParseException { 
 		
 	    logger.info("-------------inicio cargaDocumentoHadoop cargaDocumentoBase64 " );
 	    
@@ -95,6 +95,7 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
             byte[] archivoBytes;
             try {
 			    archivoBytes = Base64.getDecoder().decode(documentoIndividualVO.getDocumentoBase64());
+                  documentoIndividualVO.setDocumentoBase64(null);
             } catch (IllegalArgumentException e) {
                 logger.error("Error al decodificar el Base64 del documento.", e);
                 throw new IllegalArgumentException("El documento Base64 no es válido.", e);
