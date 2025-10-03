@@ -1,17 +1,72 @@
  <div class="row">
     <div class="col-12">
-        <h3 class="mb-0">Bienvenido </h3>
+        <h3 class="mb-0">Presentación de la acreditación y menbresía</h3>
         <hr class="red">
     </div>
   </div>
 
 
-<div class="row">
-  <div class="col-12">
-      <div class="container d-flex  "  >
-        <div class="text-center">
-<p>acreditacionymembresia works!</p>
-        </div>
+
+
+
+
+
+<form [formGroup]="formAcreditacionMembresia" (ngSubmit)="onSubmit()">
+  <div class="row">
+      <div class="col-sm-6">
+          <div class="form-group">
+            <p>El folio de la solicitud es: <strong>149876546453774745495</strong></p>
+          </div>
       </div>
   </div>
-</div>
+  <div class="row">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <p>Paso 1 de 2: Adjuntar documentación comprobatoria</p>
+            </div>
+          </div>
+  </div>
+  <div class="row">          
+          <div class="col-sm-3">
+            <label for="fechaExpedicionAcreditacion" class="form-label">Fecha Inicial del periodo que requiere la devolución </label>
+            <div class="form-group datepicker-group">
+              <input class="form-control"  id="fechaExpedicionAcreditacion" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionAcreditacion" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              @if (formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.invalid && formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.touched) {
+                <small class="text-danger">Proporcione la información requerida.</small>
+              }
+               <!-- Validación del error personalizado -->
+              <div [hidden]="!formAcreditacionMembresia.hasError('fechaInvalid') || !formAcreditacionMembresia.touched">
+                <small class="text-danger">{{ formAcreditacionMembresia.errors?.['fechaInvalid'] }}</small>
+              </div>
+
+            </div>
+          </div>
+  </div>
+  <div class="row">          
+          <div class="col-sm-3">
+            <label for="fechaExpedicionMembresia" class="form-label">Fecha de Fin del periodo que requiere la devolución </label>
+            <div class="form-group datepicker-group">
+              <input class="form-control"  id="fechaExpedicionMembresia" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionMembresia" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              @if (formAcreditacionMembresia.get('fechaExpedicionMembresia')?.invalid && formAcreditacionMembresia.get('fechaExpedicionMembresia')?.touched) {
+                <small class="text-danger">Proporcione la información requerida.</small>
+              }
+            </div>
+          </div>
+  </div>
+
+
+
+  <!-- Botones alineados a la derecha -->
+  <div class="pull-right">
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal"(click)="onReiniciarTrabajador()" >Cancelar</button>
+      <button type="submit"class="btn btn-primary" >Verificar</button>
+    </div>
+  </div>
+</form>
+
+
+
+
+
+ 
