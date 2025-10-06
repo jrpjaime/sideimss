@@ -15,8 +15,7 @@ public class DocumentoIndividualDto {
     private Integer codigo;
     private String mensaje; 
 	private String fechaActual;   // dd/MM/yyyy
-	   
-
+    private String desPathHdfs; 
  
 	
 	
