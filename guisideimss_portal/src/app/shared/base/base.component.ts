@@ -25,10 +25,10 @@ export class BaseComponent implements OnInit {
   desDelegacionSesion: string = '';
   desSubdelegacionSesion: string = '';
 
-
+/*
   selectedFile: File | null = null; // Variable para almacenar el archivo seleccionado
   fileErrorMessage: string = '';
-
+*/
    readonly PATTERNS = {
       cveRegistroPatronal: '^[A-Za-z0-9]{8}[0-9]{2}[0-9]{1}$',
       cveNss: '^[0-9]{11}$'
@@ -100,7 +100,7 @@ export class BaseComponent implements OnInit {
 
   }
 
-
+/*
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     const maxSize = 5 * 1024 * 1024; // 5MB en bytes
@@ -114,7 +114,7 @@ export class BaseComponent implements OnInit {
         this.fileErrorMessage = ''; // Limpiar mensaje de error si el archivo es válido
       }
     }
-  }
+  }*/
 
 
 // Método para formatear la fecha

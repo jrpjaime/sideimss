@@ -33,10 +33,11 @@ export const EPs = {
 
   },
 
-    // ********** AUTODETERMINACIONES /mssideimss-autodeterminaciones**********
-    contador: {
+    // ********** CONTADORES /mssideimss-contadores**********
+    contadores: {
       info: "/v1/info",
       list: "/v1/list",
+      acreditacionmembresia: "/v1/acreditacionMembresia",
 
 
     }

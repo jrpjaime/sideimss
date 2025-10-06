@@ -28,7 +28,7 @@
   </div>
   <div class="row">          
           <div class="col-sm-3">
-            <label for="fechaExpedicionAcreditacion" class="form-label">Fecha Inicial del periodo que requiere la devolución </label>
+            <label for="fechaExpedicionAcreditacion" class="form-label">* Fecha de expedición de la creditación: </label>
             <div class="form-group datepicker-group">
               <input class="form-control"  id="fechaExpedicionAcreditacion" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionAcreditacion" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.invalid && formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.touched) {
@@ -44,7 +44,7 @@
   </div>
   <div class="row">          
           <div class="col-sm-3">
-            <label for="fechaExpedicionMembresia" class="form-label">Fecha de Fin del periodo que requiere la devolución </label>
+            <label for="fechaExpedicionMembresia" class="form-label">* Fecha expedición de la membresía: </label>
             <div class="form-group datepicker-group">
               <input class="form-control"  id="fechaExpedicionMembresia" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionMembresia" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionMembresia')?.invalid && formAcreditacionMembresia.get('fechaExpedicionMembresia')?.touched) {
@@ -54,7 +54,48 @@
           </div>
   </div>
 
+  <div class="row">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <p>Los documentos se deberan adjuntar en formato pdf y que no sean mayores a 5MB.</p>
+            </div>
+          </div>
+  </div>
 
+
+    <div class="row">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <label for="archivoUno" class="form-label">* Archivo de Acreditación:</label>
+            <input type="file" class="form-control" id="archivoUno" (change)="onFileSelected($event, 'archivoUno')" accept="application/pdf">
+            @if (formAcreditacionMembresia.get('archivoUno')?.invalid && formAcreditacionMembresia.get('archivoUno')?.touched) {
+              <small class="text-danger">Por favor, adjunta el archivo de acreditación (PDF, máximo 5MB).</small>
+            }
+          </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <label for="archivoDos" class="form-label">* Archivo de Membresía:</label>
+            <input type="file" class="form-control" id="archivoDos" (change)="onFileSelected($event, 'archivoDos')" accept="application/pdf">
+            @if (formAcreditacionMembresia.get('archivoDos')?.invalid && formAcreditacionMembresia.get('archivoDos')?.touched) {
+              <small class="text-danger">Por favor, adjunta el archivo de membresía (PDF, máximo 5MB).</small>
+            }
+          </div>
+        </div>
+    </div>
+
+
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="form-group">
+        <p>* Campo obligatorio</p>
+        </div>
+      </div>
+  </div>
 
   <!-- Botones alineados a la derecha -->
   <div class="pull-right">
