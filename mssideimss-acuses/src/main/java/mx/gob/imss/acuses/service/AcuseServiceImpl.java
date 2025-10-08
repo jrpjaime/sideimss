@@ -73,13 +73,13 @@ public class AcuseServiceImpl implements AcuseService {
 	        Long cveIdPlantillaDatos=Long.parseLong( datos[1]);
 	        logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
 	        
-	        PlantillaDato butPlantillaDato=plantillaDatosRepository.findById(cveIdPlantillaDatos).get();
-	        logger.info("butPlantillaDato: " + butPlantillaDato.getDesDatos());
+	        PlantillaDato plantillaDato=plantillaDatosRepository.findById(cveIdPlantillaDatos).get();
+	        logger.info("plantillaDato: " + plantillaDato.getDesDatos());
 	        
-	        String nombreDocumento=butPlantillaDato.getNomDocumento();
+	        String nombreDocumento=plantillaDato.getNomDocumento();
 	        logger.info("nombreDocumento: " + nombreDocumento);
 			// Generar el acuse y obtener los bytes del PDF
-			byte[] pdfBytes = generarAcuseconDatosJSON(butPlantillaDato);
+			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
 
 			// Codificar los bytes del PDF a Base64
 			String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
@@ -106,15 +106,15 @@ public class AcuseServiceImpl implements AcuseService {
 	/**
 	 * Genera un acuse en formato PDF utilizando una plantilla JasperReports y datos JSON.
 	 *
-	 * @param butPlantillaDato El objeto ButPlantillaDato que contiene los datos JSON y la versión de la plantilla.
+	 * @param plantillaDato El objeto PlantillaDato que contiene los datos JSON y la versión de la plantilla.
 	 * @return Un array de bytes que representa el documento PDF generado.
 	 * @throws JRException Si ocurre un error durante la generación del reporte Jasper.
 	 * @throws java.io.IOException Si ocurre un error al procesar el JSON.
 	 */
-	private byte[] generarAcuseconDatosJSON(PlantillaDato butPlantillaDato) throws JRException, java.io.IOException {
+	private byte[] generarAcuseconDatosJSON(PlantillaDato plantillaDato) throws JRException, java.io.IOException {
 		logger.info("private byte[] generarAcuse");
-		String datosJSON = butPlantillaDato.getDesDatos();
-		String desVersionPlantilla = butPlantillaDato.getDesVersion()+".jasper"; // Esto debería ser el path o nombre del archivo .jasper
+		String datosJSON = plantillaDato.getDesDatos();
+		String desVersionPlantilla = plantillaDato.getDesVersion()+".jasper"; // Esto debería ser el path o nombre del archivo .jasper
 
 		 
 		logger.info("desVersionPlantilla: "+ desVersionPlantilla);
