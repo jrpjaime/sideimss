@@ -1,0 +1,1159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reportePrueba" pageWidth="612" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="552" leftMargin="30" rightMargin="30" topMargin="13" bottomMargin="13" uuid="c49a4e7a-415f-4be3-8b1c-610bf178a532">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="isSummaryNewPage" value="false"/>
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="2064"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.JRMapCollectionDataSource"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="fecha" class="java.lang.String"/>
+	<parameter name="numTramiteNotaria" class="java.lang.String"/>
+	<parameter name="nombreCompleto" class="java.lang.String"/>
+	<parameter name="RFC" class="java.lang.String"/>
+	<parameter name="CURP" class="java.lang.String"/>
+	<parameter name="numRegistroCpa" class="java.lang.String"/>
+	<parameter name="domicilioFiscal" class="java.lang.String"/>
+	<parameter name="numeroCedulaProfesional" class="java.lang.String"/>
+	<parameter name="selloDigitalIMSS" class="java.lang.String"/>
+	<parameter name="cadenaOriginal" class="java.lang.String"/>
+	<parameter name="imgLogoImss" class="java.lang.String"/>
+	<parameter name="imgGobiernoRepublica" class="java.lang.String"/>
+	<parameter name="imgEscudoNacional" class="java.lang.String"/>
+	<parameter name="imgGobMx" class="java.lang.String"/>
+	<parameter name="imgGobMxFooter" class="java.lang.String"/>
+	<parameter name="imgMarcaAgua" class="java.lang.String"/>
+	<parameter name="qrcode" class="java.io.InputStream"/>
+	<parameter name="numeroSerie" class="java.lang.String"/>
+	<parameter name="secuenciaNotarial" class="java.lang.String"/>
+	<parameter name="documentoCumplimientoImss" class="java.lang.String"/>
+	<parameter name="docMem" class="java.lang.String"/>
+	<parameter name="docAcr" class="java.lang.String"/>
+	<parameter name="docCer" class="java.lang.String"/>
+	<parameter name="docOpi" class="java.lang.String"/>
+	<parameter name="razonSocialDespacho" class="java.lang.String"/>
+	<parameter name="razonSocialColegio" class="java.lang.String"/>
+	<parameter name="numeroRegistroImss" class="java.lang.String"/>
+	<parameter name="escritoExperiencia" class="java.lang.String"/>
+	<parameter name="acuerdo1" class="java.lang.String"/>
+	<parameter name="dia1" class="java.lang.String"/>
+	<parameter name="mes1" class="java.lang.String"/>
+	<parameter name="anio1" class="java.lang.String"/>
+	<parameter name="acuerdo2" class="java.lang.String"/>
+	<parameter name="dia2" class="java.lang.String"/>
+	<parameter name="mes2" class="java.lang.String"/>
+	<parameter name="anio2" class="java.lang.String"/>
+	<parameter name="firmaElectronica" class="java.lang.String"/>
+	<parameter name="cargoDespacho" class="java.lang.String"/>
+	<parameter name="telefonoDespacho" class="java.lang.String"/>
+	<parameter name="numTrabajadores" class="java.lang.String"/>
+	<parameter name="docOpinion" class="java.lang.String"/>
+	<parameter name="correo2" class="java.lang.String"/>
+	<parameter name="telefono" class="java.lang.String"/>
+	<parameter name="correo" class="java.lang.String"/>
+	<parameter name="vistaPrevia" class="java.lang.String"/>
+	<background>
+		<band height="800">
+			<printWhenExpression><![CDATA[$P{vistaPrevia}.equals("SI")]]></printWhenExpression>
+			<image hAlign="Center">
+				<reportElement x="0" y="0" width="552" height="600" uuid="39b891e5-aef1-4c14-b8c7-7a756283b77c">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<imageExpression><![CDATA[$P{imgMarcaAgua}.toString()]]></imageExpression>
+			</image>
+		</band>
+	</background>
+	<columnHeader>
+		<band height="68">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<image>
+				<reportElement x="0" y="1" width="552" height="28" uuid="ef3f49af-2df7-44b2-95e4-8d146fe596be">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<imageExpression><![CDATA[$P{imgGobMx}.toString()]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="28" width="552" height="15" forecolor="#000000" backcolor="#EDEBEB" uuid="04aca208-ccda-44fe-a9e3-b3768e6eb4a6">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" markup="none">
+					<font fontName="Arial" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Instituto Mexicano del Seguro Social]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="43" width="552" height="25" uuid="4c35076b-7227-4d44-9ec8-3f2e0c11e232">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" size="10"/>
+				</textElement>
+				<text><![CDATA[Acuse de solicitud de reactivación en el registro de contadores públicos para dictaminar]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="675">
+			<rectangle>
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="444" width="552" height="78" isRemoveLineWhenBlank="true" uuid="2eef99ae-5ff3-4386-b5ab-841c7a403212">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineColor="#ADACAC"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="393" width="552" height="51" isRemoveLineWhenBlank="true" uuid="16c686d0-54e8-4607-bc62-8f812da1d964">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineColor="#ADACAC"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="157" width="552" height="235" isRemoveLineWhenBlank="true" uuid="f909acbc-16d7-471b-9c4a-d93db75ae0e5">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineColor="#ADACAC"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="0" width="552" height="169" isRemoveLineWhenBlank="true" uuid="0b239905-fd66-4c19-9465-02f82d99bc6c">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineColor="#ADACAC"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="522" width="552" height="153" isRemoveLineWhenBlank="true" uuid="4f37e42e-073f-4433-818b-aac200a9737d">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineColor="#ADACAC"/>
+				</graphicElement>
+			</rectangle>
+			<image>
+				<reportElement x="5" y="545" width="90" height="90" uuid="78f3f70f-780e-4197-bb43-e5312a963507">
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				</reportElement>
+				<imageExpression><![CDATA[$P{qrcode}]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement mode="Transparent" x="108" y="611" width="444" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="007ea08a-c7ed-4ea1-a0be-1a8c006efd57">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[!$P{cadenaOriginal}.trim().isEmpty() && $P{cadenaOriginal} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single" leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Cadena Original del Acuse:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="108" y="567" width="444" height="44" uuid="626aab0b-ee36-4019-87c8-dfe91af09360">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Arial" size="6"/>
+					<paragraph leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{selloDigitalIMSS}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="108" y="621" width="444" height="33" forecolor="#000000" backcolor="#FFFFFF" uuid="9d1143a4-df51-4b19-b75e-03313182eedb">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{cadenaOriginal}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="108" y="557" width="444" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="a28eba5c-11e3-4032-95a6-81c3062d0f06">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<printWhenExpression><![CDATA[!$P{selloDigitalIMSS}.trim().isEmpty() && $P{selloDigitalIMSS} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single" leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Sello Digital del Acuse:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="655" width="552" height="20" uuid="dfa9b3c1-e6f3-4aa8-a9f0-5d6251a46e72">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Arial" size="8" isBold="false"/>
+					<paragraph leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[El presente acuse de recibo no prejuzga sobre la veracidad, autenticidad, calidad, características y contenido de la información enviada. Este documento es una reproducción impresa de un trámite electrónico.]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="0" y="59" width="552" height="111" forecolor="#000000" backcolor="#FFFFFF" uuid="a84cd18d-7f16-4cdd-8006-3b61a30ea37a">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA["De conformidad con lo establecido en los artículos 9, segundo párrafo, 16, 251, fracción XXIX, 286 L, 286 M y 286 N, de la Ley del Seguro Social; 17-D, 17-E, 17-I, 19, último párrafo y 19-A del Código Fiscal de la Federación, de aplicación supletoria a la Ley del Seguro Social, así como el numeral 6.2 de las “Reglas de Carácter General para el uso de la Firma Electrónica Avanzada, cuyo certificado digital sea emitido por el Servicio de Administración Tributaria, en los actos que se realicen ante el Instituto Mexicano del Seguro Social”, aprobadas por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número SA2.HCT. 280813/234.P.DIR, publicado en el Diario Oficial de la Federación el día 14 de noviembre de 2013, vigente a partir del 15 del mismo mes y año; se hace constar que en esta fecha se recibió su SOLICITUD DE REACTIVACIÓN EN EL REGISTRO DE CONTADORES PÚBLICOS PARA DICTAMINAR, a que se refiere la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017, correspondiente a:"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="330" width="276" height="42" uuid="f51069e9-9ade-43fb-9e47-b171f326d40a">
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph lineSpacingSize="0.8" leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{razonSocialColegio}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="276" y="330" width="276" height="42" uuid="27f051f1-5a6e-4bc0-b835-201aba155c89">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph lineSpacingSize="0.8" leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{razonSocialDespacho}!=null ? $P{razonSocialDespacho} : "Profesional independiente"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="253" width="552" height="35" uuid="b977cafa-4def-4b5c-90b6-2adfb5a701fe">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{domicilioFiscal}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="212" width="276" height="11" uuid="8a738550-0d3f-4fd7-a145-f12dd7b7db02">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{RFC}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="276" y="212" width="276" height="11" uuid="ec0a3e89-795f-45a2-867e-9f24d35b8ab0">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{CURP}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="276" y="233" width="276" height="10" uuid="cf23c4ad-f2bc-43a9-8c85-1c18b2e60729">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{numeroCedulaProfesional}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="191" width="552" height="11" uuid="f33db98b-651d-4f35-8e4e-e70141f0e1bf">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{nombreCompleto}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="414" width="350" height="10" uuid="c38a71df-bd87-491c-bb8c-3a4e4f1ac27b">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Left">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[I.	Constancia de Membresía]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="424" width="350" height="10" uuid="b1a4af4f-5bf6-4703-9b5a-2ef57321a8c3">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Left">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[II.	Constancia de Acreditación]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="451" y="414" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="45fa889a-268b-4447-9204-a4689818f96c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docMem}==null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="350" y="414" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="6f17a891-97d9-4be4-9e59-0c34b3e5a6ad">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docMem}!=null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="350" y="404" width="101" height="10" uuid="aa43d6ef-1679-42d4-9200-d6860a489d8f">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Si]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="451" y="404" width="101" height="10" uuid="54f9e2d9-175e-409a-a24d-b118d955c215">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[No]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="456" width="552" height="66" forecolor="#000000" backcolor="#FFFFFF" uuid="6f7fb215-477c-4ed0-a2d8-79ce3df86b4a">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA["El C.P. ".concat($P{nombreCompleto}!=null ? $P{nombreCompleto} :"").concat(" manifiesta bajo protesta de decir verdad que los datos y documentos proporcionados en esta solicitud son ciertos, que reúne los requisitos establecidos en el artículo 153 del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización, y que conoce el contenido y alcance de la Ley del Seguro Social, sus reglamentos, así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables; documentación que queda sujeta a revisión, dejando a salvo las facultades del Instituto para verificar su contenido.")]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="181" width="552" height="10" uuid="9b7c66d9-3145-442d-a900-c2832beb996f">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Top">
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Nombre:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="202" width="276" height="10" uuid="c15eab56-9d9f-49de-a6f7-c093b0cb3ba9">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[RFC:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="276" y="202" width="276" height="10" uuid="b772345d-b104-4ed1-bb10-b1a02ba01e6d">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[CURP:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="276" y="223" width="276" height="10" uuid="73dccac5-b799-4c45-9dd2-305642bc53e7">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[No. de cédula profesional:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="319" width="276" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="71ab14ed-f054-4adb-917d-d2aa27d4f847">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Colegio o Asociación a la que pertenece:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="276" y="319" width="276" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="6792f7d5-df17-4ca8-b62c-d431c342fb52">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Despacho en el que labora:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="243" width="552" height="10" uuid="e695dc7e-a4bd-4c3a-b176-1051c58fd780">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Domicilio fiscal:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="350" y="424" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="7e6cbe20-edab-44b2-a693-d22db72c4050">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docAcr}!=null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="451" y="424" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="a72737db-5da1-47ae-b28e-447ce993d7aa">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docAcr}==null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="108" y="532" width="444" height="25" uuid="c56c6517-2790-44c4-bf7f-d76d4a17d4f9">
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Arial" size="6"/>
+					<paragraph leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{firmaElectronica}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="108" y="522" width="444" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="472022b0-03aa-4ef4-9313-ceabb29a11ab">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<printWhenExpression><![CDATA[!$P{firmaElectronica}.trim().isEmpty() && $P{firmaElectronica} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Single" leftIndent="0" rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Firma electrónica avanzada del Contador Público:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="434" width="350" height="10" uuid="5c2e34e8-a074-4123-8f99-8869fda95b04">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Left">
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[III.	Opinión de cumplimiento IMSS]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="350" y="434" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="2b5c13f2-8a74-427d-ae41-11f77f8fae6d">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docOpinion}!=null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="451" y="434" width="101" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="440d1479-0f82-4518-868d-b60c8a43a9f0">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0">
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{docOpinion}==null ? "X" : ""]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="368" y="372" width="184" height="10" uuid="e712342a-3414-4ccf-a7e0-5f6d1e9770c6">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Número de trabajadores:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="382" width="184" height="10" uuid="baad230c-dcc8-4c99-bff2-6ef8adaa8065">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph lineSpacing="Single" leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{cargoDespacho}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="372" width="184" height="10" uuid="3f7e0a68-9431-422c-bbee-686dc8f37517">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Cargo que desempeña:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="184" y="372" width="184" height="10" uuid="0d6a8aaf-da5b-4562-a13d-c84d36a5072a">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Teléfono del Despacho:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="184" y="382" width="184" height="10" uuid="9e4c4d6d-7b10-4c04-89c9-9c4e5cef9807">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{telefonoDespacho}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="368" y="382" width="184" height="10" uuid="a9822083-a882-4ef2-99cc-125b812665a4">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<leftPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph lineSpacing="Single" leftIndent="5" rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{numTrabajadores}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="233" width="276" height="10" uuid="b07ddd65-b513-42b5-8896-692d15359fd3">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{numeroRegistroImss}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="223" width="276" height="10" uuid="e374d5ec-30f2-42a6-a354-d3e2036787c4">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Registro IMSS:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="288" width="276" height="10" uuid="8b2c9e0c-3cc9-4e7b-8ae1-7c967d3071c0">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Teléfono:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="276" y="288" width="276" height="10" uuid="1bedf9be-650d-49d9-b3cd-afecfa21e9eb">
+					<property name="local_mesure_unitx" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="px"/>
+					<property name="local_mesure_unity" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[Correo electrónico:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="276" y="298" width="276" height="21" uuid="63971969-70d3-4618-b21f-c0fd65466b83">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{correo}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="0" y="298" width="276" height="21" uuid="a223ec76-170a-4c01-87aa-467e4dec803f">
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="0.5" lineColor="#ADACAC"/>
+					<rightPen lineWidth="0.5" lineColor="#ADACAC"/>
+				</box>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{telefono}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="552" height="12" forecolor="#000000" backcolor="#EDEBEB" uuid="5a05f0ab-3441-4261-9b3e-ed788203ab05">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" markup="none">
+					<font fontName="Arial" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Contenido del acuse]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="169" width="552" height="12" forecolor="#000000" backcolor="#EDEBEB" uuid="67952f12-5ccf-4695-9d1c-ec4ed14f1148">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" markup="none">
+					<font fontName="Arial" size="10" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Datos del Contador Público]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="392" width="552" height="12" forecolor="#000000" backcolor="#EDEBEB" uuid="7004361d-a684-4648-8741-e94ee306643e">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" markup="none">
+					<font fontName="Arial" size="10" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Documentación sujeta a revisión por el Instituto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="444" width="552" height="12" forecolor="#000000" backcolor="#EDEBEB" uuid="e69b9c2d-3eb9-4bd9-a52f-cc8f45873127">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" markup="none">
+					<font fontName="Arial" size="10" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Manifestación bajo protesta de decir verdad]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="36" width="31" height="12" uuid="3b2c2724-2584-466f-810e-3ccfab397967">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[C.P.A.]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement x="31" y="36" width="320" height="12" uuid="3bc3ae1e-5bac-483f-a85a-c7ec8f00e0ac">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8" isItalic="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{nombreCompleto}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="48" width="552" height="12" uuid="f5961efd-071b-407d-a588-c32dea1fcdde">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Arial" size="8"/>
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<text><![CDATA[P r e s e n t e,]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="351" y="24" width="29" height="12" forecolor="#000000" backcolor="#FFFFFF" uuid="539ed676-93dc-4a62-9fd2-4c254d0e96d5">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Bottom" rotation="None" markup="none">
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Folio:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="380" y="24" width="172" height="12" forecolor="#000000" uuid="cb5ec889-fb78-4c7d-a446-8590b7a5178a">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="Arial" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{numTramiteNotaria}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement x="380" y="12" width="172" height="12" uuid="df82ae9b-700c-4ba8-a2c6-18ab2f5cf5c2">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitx" value="pixel"/>
+				</reportElement>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="Arial" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{fecha}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="351" y="12" width="29" height="12" uuid="c0d1b414-5b07-4ce4-a1bf-5dddd6e0f7ff">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Bottom">
+					<font fontName="Arial" size="8"/>
+				</textElement>
+				<text><![CDATA[Fecha: ]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="71">
+			<rectangle>
+				<reportElement x="0" y="1" width="552" height="5" backcolor="#000000" uuid="f7fb9bf5-45d1-425b-a4ca-160c3eeb9c64">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+			</rectangle>
+			<image>
+				<reportElement x="0" y="6" width="552" height="55" uuid="241eff59-2cf8-4ac4-9fe1-9e832f6ca281">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#ADACAC"/>
+				</box>
+				<imageExpression><![CDATA[$P{imgGobMxFooter}.toString()]]></imageExpression>
+			</image>
+			<staticText>
+				<reportElement mode="Opaque" x="452" y="8" width="100" height="53" backcolor="#EDEBEB" uuid="d93b9101-e675-41e9-8b90-cff1f691eb86">
+					<property name="local_mesure_unitheight" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<property name="local_mesure_unitwidth" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box>
+					<bottomPen lineWidth="1.0" lineColor="#ADACAC"/>
+					<rightPen lineWidth="1.0" lineColor="#ADACAC"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="6"/>
+				</textElement>
+				<text><![CDATA[
+Paseo de la Reforma 476, P.B.
+Col. Juárez, Alcaldía Cuauhtémoc
+C.P. 06600 Ciudad de México.
+Tel. 800 623 23 23
+www.imss.gob.mx/contacto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="452" y="7" width="48" height="10" backcolor="#EDEBEB" uuid="cbc513ff-09ba-4067-a1fc-90df1fe71b37"/>
+				<box>
+					<rightPen lineWidth="0.0" lineColor="#ADACAC"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Arial" size="6" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Contacto:]]></text>
+			</staticText>
+		</band>
+	</columnFooter>
+</jasperReport>
