@@ -195,7 +195,7 @@ public class AcuseServiceImpl implements AcuseService {
 		reportConfig.setForceLineBreakPolicy(false);
 	
 		SimplePdfExporterConfiguration exportConfig = new SimplePdfExporterConfiguration();
-		exportConfig.setMetadataAuthor("Buzón IMSS"); // Puedes configurar metadata del PDF
+		exportConfig.setMetadataAuthor("IMSS"); // Puedes configurar metadata del PDF
 		
 
 		exporter.setConfiguration(reportConfig);
