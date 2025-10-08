@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
-import mx.gob.imss.acuses.model.ButPlantillaDato;
-import mx.gob.imss.acuses.repository.ButPlantillaDatosRepository;
+import mx.gob.imss.acuses.model.PlantillaDato;
+import mx.gob.imss.acuses.repository.PlantillaDatosRepository;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
@@ -38,7 +38,7 @@ public class AcuseServiceImpl implements AcuseService {
 	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
 	
 	@Autowired
-	private ButPlantillaDatosRepository butPlantillaDatosRepository;
+	private PlantillaDatosRepository plantillaDatosRepository;
 	
 	@Autowired
 	private UtileriasService utileriasService;
@@ -73,7 +73,7 @@ public class AcuseServiceImpl implements AcuseService {
 	        Long cveIdPlantillaDatos=Long.parseLong( datos[1]);
 	        logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
 	        
-	        ButPlantillaDato butPlantillaDato=butPlantillaDatosRepository.findById(cveIdPlantillaDatos).get();
+	        PlantillaDato butPlantillaDato=plantillaDatosRepository.findById(cveIdPlantillaDatos).get();
 	        logger.info("butPlantillaDato: " + butPlantillaDato.getDesDatos());
 	        
 	        String nombreDocumento=butPlantillaDato.getNomDocumento();
@@ -111,7 +111,7 @@ public class AcuseServiceImpl implements AcuseService {
 	 * @throws JRException Si ocurre un error durante la generación del reporte Jasper.
 	 * @throws java.io.IOException Si ocurre un error al procesar el JSON.
 	 */
-	private byte[] generarAcuseconDatosJSON(ButPlantillaDato butPlantillaDato) throws JRException, java.io.IOException {
+	private byte[] generarAcuseconDatosJSON(PlantillaDato butPlantillaDato) throws JRException, java.io.IOException {
 		logger.info("private byte[] generarAcuse");
 		String datosJSON = butPlantillaDato.getDesDatos();
 		String desVersionPlantilla = butPlantillaDato.getDesVersion()+".jasper"; // Esto debería ser el path o nombre del archivo .jasper

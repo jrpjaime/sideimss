@@ -1,6 +1,6 @@
-package mx.gob.imss.bi.service;
+package mx.gob.imss.acuses.service;
 
-import mx.gob.imss.bi.dto.DecargarAcuseDto;
+import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 
 public interface AcuseService {
 
