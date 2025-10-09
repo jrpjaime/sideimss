@@ -46,8 +46,6 @@ export  class LayoutComponent  implements OnInit, OnDestroy {
 
   
 
-  private intervalregresivoId:any;
-
 
 public isMenuCollapsed = false;
 

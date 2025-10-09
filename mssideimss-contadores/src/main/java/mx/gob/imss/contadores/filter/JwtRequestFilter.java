@@ -19,9 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException; 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map; 
+
+
+ 
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -30,8 +36,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
     private mx.gob.imss.contadores.service.JwtUtilService jwtUtilService;
-
-    @Override
+  
+    private final WebAuthenticationDetailsSource authenticationDetailsSource = new WebAuthenticationDetailsSource(); 
+    
+       @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         logger.info(":::::::::SEGURIDAD:::::::::");
         logger.info("doFilterInternal ");
@@ -42,52 +50,55 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String jwt = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7); // Extrae el token JWT
+            jwt = authorizationHeader.substring(7);
             logger.info("jwt: "+ jwt);
 
             try {
-                // 1. Validar el token (firma y expiración)
-            if (jwtUtilService.validateToken(jwt)) {
-                username = jwtUtilService.extractUsername(jwt);
-                logger.info("username extraído del token: " + username);
+                if (jwtUtilService.validateToken(jwt)) {
+                    username = jwtUtilService.extractUsername(jwt);
+                    logger.info("username extraído del token: " + username);
 
-                Claims claims = jwtUtilService.extractAllClaims(jwt);
-                
-                // Forma segura de manejar la claim "role"
-                Object roleClaim = claims.get("role");
-                List<String> roles = new java.util.ArrayList<>();
-                
-                if (roleClaim instanceof String) {
-                    // Si el token tiene "role": "Patron" (un solo string)
-                    roles.add((String) roleClaim);
-                } else if (roleClaim instanceof List<?>) {
-                    // Si el token tiene "role": ["Patron", "Administrador"] (una lista)
-                    for (Object item : (List<?>) roleClaim) {
-                        if (item instanceof String) {
-                            roles.add((String) item);
+                    Claims claims = jwtUtilService.extractAllClaims(jwt);
+
+                    Object rolesClaim = claims.get("roles");
+                    List<String> roles = new ArrayList<>();
+
+                    if (rolesClaim instanceof String) {
+                        roles.add((String) rolesClaim);
+                        logger.info("Rol individual detectado: " + rolesClaim);
+                    } else if (rolesClaim instanceof List<?>) {
+                        for (Object item : (List<?>) rolesClaim) {
+                            if (item instanceof String) {
+                                roles.add((String) item);
+                            }
                         }
+                        logger.info("Lista de roles detectada: " + roles);
+                    } else if (rolesClaim == null) {
+                        logger.warn("La claim 'roles' no está presente en el token o es null.");
+                    } else {
+                        logger.warn("La claim 'roles' tiene un tipo inesperado: " + rolesClaim.getClass().getName());
                     }
-                }
-
-                List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(role -> "ROLE_" + role.toUpperCase())
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-                    
-
-                    // String roleFromToken = (String) claims.get("role");
-                    // List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleFromToken.toUpperCase()));
 
 
-                    // 3. Si el token es válido y no hay autenticación previa, establecerla en el SecurityContextHolder
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(role -> "ROLE_" + role.toUpperCase())
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList());
+
                     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        // Creamos un objeto de autenticación usando el nombre de usuario y las autoridades
-                        // extraídas directamente del token. No necesitamos cargar UserDetails
                         UsernamePasswordAuthenticationToken authenticationToken =
-                            new UsernamePasswordAuthenticationToken(username, null, authorities); // `null` para credenciales ya que el token es la credencial
+                            new UsernamePasswordAuthenticationToken(username, null, authorities);
 
-                        // Establecemos los detalles de la solicitud para auditoría o logging
-                        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        // PASO CLAVE: CREAMOS UN HashMap y le añadimos los detalles
+                        // Obtener los detalles originales (sessionId, remoteAddress) como WebAuthenticationDetails
+                        Object originalDetails = authenticationDetailsSource.buildDetails(request);
+
+                        // Crear un HashMap para almacenar todos los detalles
+                        Map<String, Object> customDetails = new HashMap<>();
+                        customDetails.put("jwt", jwt); // <--- Nuestro JWT
+                        customDetails.put("originalDetails", originalDetails); // <--- Los detalles originales
+
+                        authenticationToken.setDetails(customDetails); // <--- Establecemos el mapa como detalles
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                         logger.info("Autenticación establecida para el usuario: " + username + " con roles: " + authorities);
                     }
@@ -96,14 +107,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
             } catch (Exception e) {
                 logger.error("Error al procesar el token JWT: " + e.getMessage(), e);
-            
                 throw new BadCredentialsException("Token inválido o expirado", e);
             }
         } else {
             logger.info("No se encontró encabezado de autorización Bearer o el formato es incorrecto.");
         }
 
-        // Continúa la cadena de filtros
         filterChain.doFilter(request, response);
     }
 }

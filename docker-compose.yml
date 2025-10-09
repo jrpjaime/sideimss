@@ -23,7 +23,11 @@ services:
     ports:
       - "4111:4111"
     container_name: mssideimss-contadores
-    
+    environment:  
+      - SIDEIMSS_DOCUMENTOS_URL=http://documentos:4113/mssideimss-documentos/v1/cargarDocumento  
+    depends_on:  
+      - documentos  
+
   acuses:
     build:
       context: ./mssideimss-acuses

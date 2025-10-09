@@ -40,4 +40,8 @@ management:
   endpoint:
     auditevents:
       enabled: true
-    
+documentos:
+  microservice:
+    # URL base del microservicio de documentos http://localhost:4113/mssideimss-documentos/v1/cargarDocumento
+    url: ${SIDEIMSS_DOCUMENTOS_URL}
+ 
