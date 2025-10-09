@@ -202,7 +202,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
                     this.alertService.error( this.errorMessage);
                   } else if (err.status === 0) {
                     // Manejo de errores de conexión (servidor no alcanzable)
-                    this.errorMessage = 'BBBB Servicio no disponible. Reintente mas tarde';
+                    this.errorMessage = 'Servicio no disponible. Reintente mas tarde';
                     this.alertService.error( this.errorMessage);
                   } else {
                     // Fallback para otros errores inesperados

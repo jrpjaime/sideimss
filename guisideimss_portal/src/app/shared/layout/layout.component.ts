@@ -39,14 +39,12 @@ export  class LayoutComponent  implements OnInit, OnDestroy {
 	cerrarSesion?: boolean;
 
   // Tiempo en minutos para considerar inactividad y mostrar el modal
-  private readonly MINUTOS_PARA_INACTIVIDAD = 1
+  private readonly MINUTOS_PARA_INACTIVIDAD = 10
 
   // Segundos que el modal estará visible antes de cerrar sesión
   private readonly SEGUNDOS_DE_GRACIA = 30;
 
-  private SEGUNDOS_ESPERA:number=30; // Segundos de espera de respuesta antes de cierre de sesión
-  private LIMIT_TIEMPO: number=60000 * 1;  // 60000 * 10; //10 minutos para cierre de sesion,  60000 es igual a un minuto
- 
+  
 
   private intervalregresivoId:any;
 
