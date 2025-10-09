@@ -42,7 +42,7 @@ export  class LayoutComponent  implements OnInit, OnDestroy {
   private readonly MINUTOS_PARA_INACTIVIDAD = 10
 
   // Segundos que el modal estará visible antes de cerrar sesión
-  private readonly SEGUNDOS_DE_GRACIA = 30;
+  private readonly SEGUNDOS_DE_ESPERA = 30;
 
   
 
@@ -112,9 +112,9 @@ public isMenuCollapsed = false;
     // 1. Creamos un observable que emite un valor cada segundo (1000 ms).
     const countdown$ = timer(0, 1000).pipe(
       // 2. Tomamos N+1 valores para ir de N a 0.
-      take(this.SEGUNDOS_DE_GRACIA + 1),
+      take(this.SEGUNDOS_DE_ESPERA + 1),
       // 3. Transformamos el valor emitido (0, 1, 2...) en una cuenta regresiva (30, 29, 28...).
-      map(tick => this.SEGUNDOS_DE_GRACIA - tick)
+      map(tick => this.SEGUNDOS_DE_ESPERA - tick)
     );
 
     // 4. Creamos un observable separado para el texto del botón.
