@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
+import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.model.PlantillaDato;
 import mx.gob.imss.acuses.repository.PlantillaDatosRepository;
 import net.sf.jasperreports.engine.*;
@@ -57,7 +58,7 @@ public class AcuseServiceImpl implements AcuseService {
 			StringTokenizer tokens=new StringTokenizer(filename, "|");
 	        int nDatos=tokens.countTokens();
 	      
-	       String[] datos=new String[nDatos];
+	        String[] datos=new String[nDatos];
 	        Integer i=0;
 	        while(tokens.hasMoreTokens()){
 	            String str=tokens.nextToken();
@@ -209,6 +210,58 @@ public class AcuseServiceImpl implements AcuseService {
 	
 
 
+
+
+
+
+
+	@Override
+	@Transactional
+	public DecargarAcuseDto consultaAcuseByPlantillaDato(PlantillaDatoDto plantillaDatoDto){
+		
+		DecargarAcuseDto decargarAcuseDto=new DecargarAcuseDto();
+		decargarAcuseDto.setCodigo(1); // Por defecto, asume un error
+		decargarAcuseDto.setMensaje("Error en acuse.");
+		
+		try {
+	  		// Crear una instancia de PlantillaDato a partir del DTO
+	        PlantillaDato plantillaDato=new PlantillaDato();
+	        // Asignar los campos del DTO al objeto PlantillaDato
+	
+			plantillaDato.setCveIdPlantillaDatos(null); // O un valor por defecto si es necesario
+			plantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+			plantillaDato.setDesVersion(plantillaDatoDto.getDesVersion());
+          
+
+	        logger.info("plantillaDato.getDesDatos(): " + plantillaDato.getDesDatos());
+	        logger.info("plantillaDato.getNomDocumento(): " + plantillaDato.getNomDocumento());
+	        logger.info("plantillaDato.getDesVersion(): " + plantillaDato.getDesVersion());
+	        
+	        String nombreDocumento = plantillaDato.getNomDocumento();
+	        if (nombreDocumento == null || nombreDocumento.isEmpty()) {
+	            nombreDocumento = "documento_preview"; // Nombre por defecto si no se proporciona
+	        }
+	        logger.info("nombreDocumento: " + nombreDocumento);
+
+			// Generar el acuse y obtener los bytes del PDF
+			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
+
+			// Codificar los bytes del PDF a Base64
+			String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
+
+			// Asignar los valores al DTO
+			decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64); // Formato de URI de datos
+			decargarAcuseDto.setNombreDocumento(nombreDocumento + ".pdf"); // Nombre dinámico
+			decargarAcuseDto.setCodigo(0); // Éxito
+			decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
+	        
+		}catch (Exception e) {
+			logger.error("Error en consultaAcuseByPlantillaDato", e);
+			decargarAcuseDto.setMensaje("Error interno al procesar la solicitud: " + e.getMessage());
+		}
+        
+		return decargarAcuseDto;
+	}
 
 
 }

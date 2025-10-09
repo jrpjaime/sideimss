@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { EPs } from '../../../../global/endPoint';
 import { environment } from '../../../../../environments/environment';
- 
+import { DocumentoIndividualResponseDto } from '../../model/DocumentoIndividualResponseDto ';
+
 
 @Injectable({
   providedIn: 'root'
@@ -13,10 +14,10 @@ export class AcreditacionMembresiaService {
 
   constructor(
     private httpClient: HttpClient,
-    private router: Router ) { } 
+    private router: Router ) { }
 
-  enviarAcreditacionMembresia(formData: FormData): Observable<any> {
-    return this.httpClient.post<any>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, formData);
+  enviarAcreditacionMembresia(formData: FormData): Observable<DocumentoIndividualResponseDto> {
+    return this.httpClient.post<DocumentoIndividualResponseDto>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, formData);
   }
-  
+
 }

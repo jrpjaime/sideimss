@@ -16,6 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ import org.springframework.http.MediaType;
 
 
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
+import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.service.AcuseService;
 
  
@@ -119,6 +122,48 @@ public class AcusesRestController {
 
 
   
+    @PostMapping("/descargarPreviewAcuse")
+    public ResponseEntity<byte[]> descargaPreviewAcuse(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
+
+        DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);
+
+        if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
+            logger.error("Error al obtener el documento o documento vacío para preview. Mensaje: " + decargarAcuseDto.getMensaje());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Retorna 404 Not Found si no se encuentra o hay error
+        }
+
+        try {
+            String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
+            byte[] pdfBytes = Base64.getDecoder().decode(base64Content);
+
+            String fileName = decargarAcuseDto.getNombreDocumento();
+            if (fileName == null || fileName.isEmpty()) {
+                fileName = "preview_acuse.pdf"; // Nombre por defecto para la previsualización
+            }
+            if (!fileName.toLowerCase().endsWith(".pdf")) {
+                fileName += ".pdf";
+            }
+            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replace("+", "%20");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("inline", encodedFileName); // "inline" para que el navegador lo muestre en lugar de descargarlo
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error al decodificar la cadena Base64 del documento de preview: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Error al codificar el nombre del archivo de preview: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            logger.error("Error inesperado al descargar el preview del acuse: " + e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
  
  
  
