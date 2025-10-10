@@ -44,7 +44,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       name: 'Dictamen electrónico', icon: 'bi bi-people-fill', isExpanded: false,
       roles: [Constants.rolePatron, Constants.roleRepresentante], // Visible para Patron o Representante
       children: [
-        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }, // OJO: Las rutas están repetidas, probablemente sean diferentes en el futuro.
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
       ]
     },
@@ -52,7 +52,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       name: 'Consulta al dictamen', icon: 'bi bi-cloud-upload-fill', isExpanded: false,
       roles: [Constants.rolePatron], // Solo visible para el rol Patron
       children: [
-        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }, // OJO: Las rutas están repetidas, probablemente sean diferentes en el futuro.
+        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
       ]
     }
