@@ -16,13 +16,15 @@ export class AcreditacionMembresiaService {
     private httpClient: HttpClient,
     private router: Router ) { }
 
-  enviarAcreditacionMembresia(formData: FormData): Observable<DocumentoIndividualResponseDto> {
-    return this.httpClient.post<DocumentoIndividualResponseDto>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, formData);
+  uploadDocument(formData: FormData): Observable<DocumentoIndividualResponseDto> {
+    return this.httpClient.post<DocumentoIndividualResponseDto>(
+      environment.documentosApiUrl + EPs.documentos.cargarDocumento, // Usa la URL base de documentos y el endpoint específico
+      formData
+    );
   }
 
-
   downloadDocument(fullHdfsPathBase64: string): Observable<HttpResponse<Blob>> {
-    const url = `${environment.documentosApiUrl}${EPs.documentos.descargarDocumento}`;  
+    const url = `${environment.documentosApiUrl}${EPs.documentos.descargarDocumento}`;
     return this.httpClient.get(url, {
       params: { fullHdfsPathBase64: fullHdfsPathBase64 },
       observe: 'response', // Para obtener la respuesta completa con encabezados
@@ -36,6 +38,12 @@ export class AcreditacionMembresiaService {
     return this.httpClient.delete<void>(url, {
       params: { fullHdfsPathBase64: fullHdfsPathBase64 }
     });
+  }
+
+
+    enviarDatosFinales(submitDto: any): Observable<any> {
+
+    return this.httpClient.post<any>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, submitDto);
   }
 
 }

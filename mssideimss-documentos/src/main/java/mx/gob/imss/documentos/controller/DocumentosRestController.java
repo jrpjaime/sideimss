@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
@@ -190,6 +191,67 @@ public class DocumentosRestController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor al procesar la eliminación.", e);
         } finally {
             logger.info("------------- Fin deleteDocumento en Controller -------------");
+        }
+    }
+
+
+
+        /**
+     * Endpoint para cargar un documento individual en Hadoop utilizando MultipartFile.
+     * Recibe el archivo como MultipartFile y los metadatos como parámetros de la solicitud.
+     * Devuelve un objeto DocumentoIndividualDto con el path de HDFS en Base64 y los códigos de confirmación.
+     *
+     * @param archivoRecibido El archivo a subir.
+     * @param desRfc RFC del documento.
+     * @param nomArchivo Nombre original del archivo (puede ser sobrescrito por el nombre del MultipartFile si es nulo/vacío).
+     * @param desPath Subdirectorio adicional dentro de la estructura RFC (opcional).
+     * @param fechaActual Fecha de carga en formato dd/MM/yyyy (opcional, si es nulo se usa la fecha actual).
+     * @return ResponseEntity con el DocumentoIndividualDto actualizado y el estado HTTP.
+     */
+    @PostMapping(value = "/cargarDocumento", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentoIndividualDto> cargarDocumento(
+            @RequestParam("archivo") MultipartFile archivoRecibido,
+            @RequestParam("desRfc") String desRfc,
+            @RequestParam(value = "nomArchivo", required = false) String nomArchivo,
+            @RequestParam(value = "desPath", required = false) String desPath,
+            @RequestParam(value = "fechaActual", required = false) String fechaActual) {
+
+        logger.info("------------- Inicio cargarArchivoMultipart en Controller -------------");
+        logger.info("Archivo recibido: {}", archivoRecibido.getOriginalFilename());
+        logger.debug("Metadatos - RFC: {}, NomArchivo: {}, DesPath: {}, FechaActual: {}", desRfc, nomArchivo, desPath, fechaActual);
+
+        DocumentoIndividualDto responseDto = new DocumentoIndividualDto(); // Objeto para la respuesta
+
+        try {
+            // Llama al nuevo método del servicio que acepta MultipartFile
+            DocumentoIndividualDto resultado = cargaDocumentoService.cargaDocumentoHadoop(
+                    archivoRecibido, desRfc, nomArchivo, desPath, fechaActual);
+
+            logger.info("Archivo cargado exitosamente en HDFS. Código: {}, Mensaje: {}", resultado.getCodigo(), resultado.getMensaje());
+            return new ResponseEntity<>(resultado, HttpStatus.OK);
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error de argumentos al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
+            responseDto.setCodigo(1);
+            responseDto.setMensaje("Error de datos de entrada: " + e.getMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.BAD_REQUEST);
+        } catch (ParseException e) {
+            logger.error("Error de formato de fecha al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
+            responseDto.setCodigo(2);
+            responseDto.setMensaje("Error en el formato de la fecha: " + e.getMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.BAD_REQUEST);
+        } catch (IOException e) {
+            logger.error("Error de I/O al interactuar con Hadoop (MultipartFile): {}", e.getMessage(), e);
+            responseDto.setCodigo(3);
+            responseDto.setMensaje("Error de conexión o I/O con el sistema de almacenamiento: " + e.getMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            logger.error("Error inesperado al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
+            responseDto.setCodigo(99);
+            responseDto.setMensaje("Error interno del servidor al cargar el archivo: " + e.getMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            logger.info("------------- Fin cargarArchivoMultipart en Controller -------------");
         }
     }
 

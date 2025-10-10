@@ -9,7 +9,7 @@ import { AcreditacionMembresiaService } from '../services/services/acreditacion-
 import { CommonModule } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http'; 
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -26,19 +26,22 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
 
   fileUnoUploadSuccess: boolean = false;
   fileDosUploadSuccess: boolean = false;
-  fileUnoHdfsPath: string | null = null;
-  fileDosHdfsPath: string | null = null;
+  fileUnoHdfsPath: string | null = null; // Guardará el path HDFS en Base64
+  fileDosHdfsPath: string | null = null; // Guardará el path HDFS en Base64
   fileUnoError: string | null = null;
   fileDosError: string | null = null;
 
-  // Propiedad para almacenar la respuesta completa
-  responseDto: DocumentoIndividualResponseDto | null = null;
+  loadingFileUno: boolean = false; // Nuevo: Para el spinner del botón Adjuntar
+  loadingFileDos: boolean = false; // Nuevo: Para el spinner del botón Adjuntar
+
+  responseDto: DocumentoIndividualResponseDto | null = null; // Para la respuesta final del submit, si aplica
+
 
   constructor (
     private fb: FormBuilder,
     private router : Router,
     private renderer: Renderer2,
-    private catalogosService: CatalogosService, 
+    private catalogosService: CatalogosService,
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private alertService: AlertService,
     sharedService: SharedService
@@ -48,45 +51,47 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     this.formAcreditacionMembresia = this.fb.group({
       fechaExpedicionAcreditacion: ['', [Validators.required]],
       fechaExpedicionMembresia: ['', [Validators.required]],
-      archivoUno: ['', [Validators.required]],
-      archivoDos: ['', [Validators.required]]
+      // Los campos de archivo ya no son 'required' en la inicialización si se suben individualmente
+      // En su lugar, se validará su estado de carga exitosa
+      archivoUno: [''], // Mantenerlo para almacenar el nombre o un placeholder, pero sin Validators.required inicial
+      archivoDos: ['']
     }, { validators: fechaInicioMenorOigualFechaFin() });
   }
 
-  onFileSelected(event: any, controlName: string) {
-    if (controlName === 'archivoUno') {
-      this.fileUnoUploadSuccess = false;
-      this.fileUnoHdfsPath = null;
-      this.fileUnoError = null;
-    } else if (controlName === 'archivoDos') {
-      this.fileDosUploadSuccess = false;
-      this.fileDosHdfsPath = null;
-      this.fileDosError = null;
-    }
-    this.alertService.clear();
+
+
+
+    onFileSelected(event: any, controlName: string) {
+    this.alertService.clear(); // Limpiar alerts previos
 
     const file: File = event.target.files[0];
+
+    // Limpiar el estado de éxito/error del archivo previo al seleccionar uno nuevo
+    if (controlName === 'archivoUno') {
+        this.fileUnoUploadSuccess = false;
+        this.fileUnoHdfsPath = null;
+        this.fileUnoError = null;
+        this.selectedFileUno = null; // Limpiar si hay un archivo previo
+    } else if (controlName === 'archivoDos') {
+        this.fileDosUploadSuccess = false;
+        this.fileDosHdfsPath = null;
+        this.fileDosError = null;
+        this.selectedFileDos = null; // Limpiar si hay un archivo previo
+    }
+
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         this.alertService.error('El archivo excede el tamaño máximo permitido de 5MB.', { autoClose: true });
         this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'maxSize': true });
-        event.target.value = null;
-        if (controlName === 'archivoUno') {
-          this.selectedFileUno = null;
-        } else if (controlName === 'archivoDos') {
-          this.selectedFileDos = null;
-        }
+        event.target.value = null; // Limpiar el input file
+        // No asignar el archivo si hay error
         return;
       }
       if (file.type !== 'application/pdf') {
         this.alertService.error('Solo se permiten archivos en formato PDF.', { autoClose: true });
         this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'invalidType': true });
-        event.target.value = null;
-        if (controlName === 'archivoUno') {
-          this.selectedFileUno = null;
-        } else if (controlName === 'archivoDos') {
-          this.selectedFileDos = null;
-        }
+        event.target.value = null; // Limpiar el input file
+        // No asignar el archivo si hay error
         return;
       }
 
@@ -95,117 +100,181 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
       } else if (controlName === 'archivoDos') {
         this.selectedFileDos = file;
       }
+      // Actualizar el valor del FormControl, pero sin marcarlo como válido/inválido por la subida
       this.formAcreditacionMembresia.get(controlName)?.setValue(file.name);
-      this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity();
+      this.formAcreditacionMembresia.get(controlName)?.markAsDirty();
+      this.formAcreditacionMembresia.get(controlName)?.markAsTouched();
+      this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity(); // Recalcular validez
     } else {
+      // Si no se selecciona ningún archivo
       this.formAcreditacionMembresia.get(controlName)?.setValue('');
-      this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'required': true });
-      if (controlName === 'archivoUno') {
-        this.selectedFileUno = null;
-      } else if (controlName === 'archivoDos') {
-        this.selectedFileDos = null;
-      }
+      this.formAcreditacionMembresia.get(controlName)?.markAsDirty();
+      this.formAcreditacionMembresia.get(controlName)?.markAsTouched();
+      this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity(); // Recalcular validez
     }
   }
 
-onSubmit() {
-    console.log('Formulario enviado:', this.formAcreditacionMembresia.value);
+
+
+
+    uploadFile(controlName: string) {
     this.alertService.clear();
-    this.fileUnoError = null;
-    this.fileDosError = null;
-    this.fileUnoUploadSuccess = false;
-    this.fileDosUploadSuccess = false;
-    this.fileUnoHdfsPath = null;
-    this.fileDosHdfsPath = null;
-    this.responseDto = null; // Limpiar DTO de respuesta anterior
 
-    if (this.formAcreditacionMembresia.valid && this.selectedFileUno && this.selectedFileDos) {
-      const formData = new FormData();
-      formData.append('fechaExpedicionAcreditacion', this.formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.value);
-      formData.append('fechaExpedicionMembresia', this.formAcreditacionMembresia.get('fechaExpedicionMembresia')?.value);
-      formData.append('archivoUno', this.selectedFileUno, this.selectedFileUno.name);
-      formData.append('archivoDos', this.selectedFileDos, this.selectedFileDos.name);
+    let fileToUpload: File | null = null;
+    let loadingFlag: 'loadingFileUno' | 'loadingFileDos';
+    let fileHdfsPath: 'fileUnoHdfsPath' | 'fileDosHdfsPath';
+    let fileUploadSuccess: 'fileUnoUploadSuccess' | 'fileDosUploadSuccess';
+    let fileError: 'fileUnoError' | 'fileDosError';
+    let documentType: string;
+    let desRfcValue = 'RFCIMSS00001'; // <-- IMPORTANTE: Debes obtener el RFC real del usuario logueado o del formulario
 
-      this.acreditacionMembresiaService.enviarAcreditacionMembresia(formData).subscribe({
-        next: (response: DocumentoIndividualResponseDto) => {
-          console.log('Respuesta del backend:', response);
-          this.responseDto = response; // Almacenar la respuesta completa
+    if (controlName === 'archivoUno') {
+      fileToUpload = this.selectedFileUno;
+      loadingFlag = 'loadingFileUno';
+      fileHdfsPath = 'fileUnoHdfsPath';
+      fileUploadSuccess = 'fileUnoUploadSuccess';
+      fileError = 'fileUnoError';
+      documentType = 'Acreditación';
+    } else if (controlName === 'archivoDos') {
+      fileToUpload = this.selectedFileDos;
+      loadingFlag = 'loadingFileDos';
+      fileHdfsPath = 'fileDosHdfsPath';
+      fileUploadSuccess = 'fileDosUploadSuccess';
+      fileError = 'fileDosError';
+      documentType = 'Membresía';
+    } else {
+      console.error('Control de archivo desconocido:', controlName);
+      return;
+    }
 
-          // Siempre intentar asignar los paths HDFS si vienen en la respuesta,
-          // independientemente del código de éxito o error.
-          this.fileUnoHdfsPath = response.desPathHdfsAcreditacion || null;
-          this.fileUnoUploadSuccess = !!this.fileUnoHdfsPath;
+    // Resetear estados antes de la carga
+    this[fileUploadSuccess] = false;
+    this[fileHdfsPath] = null;
+    this[fileError] = null;
 
-          this.fileDosHdfsPath = response.desPathHdfsMembresia || null;
-          this.fileDosUploadSuccess = !!this.fileDosHdfsPath;
+    if (!fileToUpload) {
+      this.alertService.error(`Por favor, selecciona un archivo para ${documentType}.`, { autoClose: true });
+      this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'required': true });
+      return;
+    }
 
-          if (response.codigo === 0) { // Suponiendo que 0 es éxito
-              this.alertService.success(response.mensaje || 'Acreditación y membresía enviadas exitosamente!', { autoClose: true });
-              this.fileUnoError = null; // Asegurarse de limpiar errores si ahora es éxito
-              this.fileDosError = null;
+    this[loadingFlag] = true; // Activar spinner
+
+    const formData = new FormData();
+    formData.append('archivo', fileToUpload, fileToUpload.name);
+    formData.append('desRfc', desRfcValue); // Usar el RFC real
+    formData.append('nomArchivo', fileToUpload.name);
+    // Puedes enviar desPath si aplica, o dejarlo nulo para que el backend use el default
+    // formData.append('desPath', 'subdirectorio_opcional');
+    // Puedes enviar fechaActual si aplica, o dejarlo nulo
+    // formData.append('fechaActual', 'DD/MM/AAAA');
+
+    this.acreditacionMembresiaService.uploadDocument(formData).subscribe({
+      next: (response: DocumentoIndividualResponseDto) => {
+        this[loadingFlag] = false; // Desactivar spinner
+        console.log(`Respuesta de carga para ${controlName}:`, response);
+
+        if (response.codigo === 0 && response.desPathHdfs) {
+          this[fileUploadSuccess] = true;
+          this[fileHdfsPath] = response.desPathHdfs; // Guardar el path HDFS en Base64
+          this[fileError] = null;
+          this.alertService.success(`${documentType} "${fileToUpload?.name}" cargado exitosamente.`, { autoClose: true });
+          // Opcional: Marcar el control de formulario como válido si la subida fue un éxito
+          this.formAcreditacionMembresia.get(controlName)?.setErrors(null);
+          this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity();
+        } else {
+          this[fileUploadSuccess] = false;
+          this[fileHdfsPath] = null;
+          this[fileError] = response.mensaje || `Error desconocido al cargar el archivo de ${documentType}.`;
+          this.alertService.error(this[fileError] as string, { autoClose: true });
+          this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'uploadFailed': true });
+          this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity();
+        }
+      },
+      error: (errorResponse: HttpErrorResponse) => {
+        this[loadingFlag] = false; // Desactivar spinner
+        console.error(`Error al cargar el archivo de ${documentType}:`, errorResponse);
+        let errorMessage = `Error al cargar el archivo de ${documentType}. Inténtalo de nuevo.`;
+
+        if (errorResponse.error instanceof Object && errorResponse.error.mensaje) {
+          errorMessage = errorResponse.error.mensaje; // Si el backend devuelve un DTO de error estructurado
+        } else if (errorResponse.message) {
+          errorMessage = errorResponse.message;
+        }
+
+        this[fileUploadSuccess] = false;
+        this[fileHdfsPath] = null;
+        this[fileError] = errorMessage;
+        this.alertService.error(errorMessage, { autoClose: true });
+        this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'uploadFailed': true });
+        this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity();
+      }
+    });
+  }
+
+
+   onSubmit() {
+    console.log('Formulario de acreditación y membresía enviado:', this.formAcreditacionMembresia.value);
+    this.alertService.clear();
+
+    // Validar que las fechas sean válidas
+    if (this.formAcreditacionMembresia.invalid) {
+        this.formAcreditacionMembresia.markAllAsTouched();
+        this.alertService.error('Por favor, completa correctamente las fechas requeridas.', { autoClose: true });
+        return;
+    }
+
+    // Validar que ambos archivos hayan sido subidos exitosamente
+    if (!this.fileUnoUploadSuccess || !this.fileDosUploadSuccess) {
+      this.alertService.error('Por favor, adjunta y sube ambos archivos antes de verificar.', { autoClose: true });
+      // Asegurarse de que los controles de archivo reflejen el estado de "requerido" si no se han subido
+      if (!this.fileUnoUploadSuccess) {
+        this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true });
+        this.formAcreditacionMembresia.get('archivoUno')?.markAsTouched();
+      }
+      if (!this.fileDosUploadSuccess) {
+        this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true });
+        this.formAcreditacionMembresia.get('archivoDos')?.markAsTouched();
+      }
+      return;
+    }
+
+    // Crear un DTO para enviar al backend con los paths HDFS
+    const submitDto = {
+      fechaExpedicionAcreditacion: this.formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.value,
+      fechaExpedicionMembresia: this.formAcreditacionMembresia.get('fechaExpedicionMembresia')?.value,
+      desPathHdfsAcreditacion: this.fileUnoHdfsPath, // Envía el path HDFS en Base64
+      desPathHdfsMembresia: this.fileDosHdfsPath     // Envía el path HDFS en Base64
+      // Aquí puedes añadir otros campos si tu DTO final de submit los necesita
+    };
+
+    // Suponiendo que tienes un servicio para enviar estos datos finales
+    // y que el backend tiene un endpoint diferente para la "verificación" final
+    this.acreditacionMembresiaService.enviarDatosFinales(submitDto).subscribe({
+        next: (response: any) => { // Ajusta el tipo de respuesta si tienes un DTO específico para el submit final
+          console.log('Respuesta del backend (Verificación final):', response);
+          if (response.codigo === 0) {
+            this.alertService.success(response.mensaje || 'Verificación final exitosa.', { autoClose: true });
+            // Posiblemente navegar a otra página o mostrar un mensaje de éxito grande
           } else {
-              let errorMessage = response.mensaje || 'Error desconocido al enviar la información.';
-              this.alertService.error(errorMessage, { autoClose: true });
-
-              // Lógica para errores específicos si el backend los detalla
-              if (response.mensaje?.includes('Acreditación (Código:')) {
-                  this.fileUnoError = 'Fallo en la carga del archivo de acreditación.';
-              } else if (!this.fileUnoUploadSuccess) { // Si no hubo path HDFS y hay error general
-                  this.fileUnoError = 'Fallo al cargar archivo de acreditación.';
-              }
-
-              if (response.mensaje?.includes('Membresía (Código:')) {
-                  this.fileDosError = 'Fallo en la carga del archivo de membresía.';
-              } else if (!this.fileDosUploadSuccess) { // Si no hubo path HDFS y hay error general
-                  this.fileDosError = 'Fallo al cargar archivo de membresía.';
-              }
+            this.alertService.error(response.mensaje || 'Error en la verificación final.', { autoClose: true });
           }
         },
-        error: (errorResponse: HttpErrorResponse) => { // Especificar el tipo HttpErrorResponse
-          console.error('Error al enviar al backend:', errorResponse);
-          let errorMessage = 'Hubo un error al enviar la información. Por favor, inténtalo de nuevo.';
-
-          if (errorResponse.error instanceof Object) { // Verificar si errorResponse.error es un objeto
-            const errorDto: DocumentoIndividualResponseDto = errorResponse.error;
-            // Asegúrate de que el objeto de error tenga la estructura de DocumentoIndividualResponseDto
-            if (errorDto.mensaje) {
-                this.responseDto = errorDto; // Almacenar el DTO de error
-
-                // Siempre intentar asignar los paths HDFS si vienen en la respuesta de error
-                this.fileUnoHdfsPath = errorDto.desPathHdfsAcreditacion || null;
-                this.fileUnoUploadSuccess = !!this.fileUnoHdfsPath;
-
-                this.fileDosHdfsPath = errorDto.desPathHdfsMembresia || null;
-                this.fileDosUploadSuccess = !!this.fileDosHdfsPath;
-
-                errorMessage = errorDto.mensaje;
-                 // Lógica para errores específicos basada en el mensaje o código del errorDto
-                if (errorDto.mensaje?.includes('Error al procesar los archivos de entrada')) {
-                    this.fileUnoError = 'Error al procesar el archivo de acreditación.';
-                    this.fileDosError = 'Error al procesar el archivo de membresía.';
-                } else if (!this.fileUnoUploadSuccess) { // Si no se subió exitosamente
-                    this.fileUnoError = 'Error al cargar el archivo de acreditación.';
-                }
-                if (errorDto.mensaje?.includes('No se pudo obtener el token de seguridad')) {
-                    errorMessage = 'Error de autenticación: No se pudo obtener el token de seguridad.';
-                } else if (!this.fileDosUploadSuccess) { // Si no se subió exitosamente
-                    this.fileDosError = 'Error al cargar el archivo de membresía.';
-                }
+        error: (errorResponse: HttpErrorResponse) => {
+            console.error('Error al enviar datos finales al backend:', errorResponse);
+            let errorMessage = 'Hubo un error al realizar la verificación final. Por favor, inténtalo de nuevo.';
+            if (errorResponse.error instanceof Object && errorResponse.error.mensaje) {
+                errorMessage = errorResponse.error.mensaje;
+            } else if (errorResponse.message) {
+                errorMessage = errorResponse.message;
             }
-          } else if (errorResponse.message) {
-            errorMessage = errorResponse.message;
-          }
-          this.alertService.error(errorMessage, { autoClose: true });
+            this.alertService.error(errorMessage, { autoClose: true });
         }
-      });
+    });
+  }
 
-    } else {
-      this.formAcreditacionMembresia.markAllAsTouched();
-      this.alertService.error('Por favor, completa todos los campos requeridos y adjunta los archivos.', { autoClose: true });
-    }
-}
 
-  onReiniciarFormAcreditacionMembresia() {
+onReiniciarFormAcreditacionMembresia() {
     console.log('Botón Cancelar presionado');
     this.formAcreditacionMembresia.reset();
     this.selectedFileUno = null;
@@ -216,8 +285,10 @@ onSubmit() {
     this.fileDosHdfsPath = null;
     this.fileUnoError = null;
     this.fileDosError = null;
+    this.loadingFileUno = false; // Resetear estado de carga
+    this.loadingFileDos = false; // Resetear estado de carga
     this.alertService.clear();
-    this.responseDto = null; // Limpiar el DTO de respuesta
+    this.responseDto = null;
 
     const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
     const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
@@ -225,7 +296,7 @@ onSubmit() {
     if (fileInputDos) fileInputDos.value = '';
 
     Object.keys(this.formAcreditacionMembresia.controls).forEach(key => {
-      this.formAcreditacionMembresia.get(key)?.markAsPristine();
+      this.formAcreditacionMembresia.get(key)?.markAsPristine(); // Fixed here
       this.formAcreditacionMembresia.get(key)?.markAsUntouched();
       this.formAcreditacionMembresia.get(key)?.updateValueAndValidity();
     });
@@ -320,7 +391,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
       return;
     }
 
-    this.alertService.info(`Eliminando "${fileName}"...`, { autoClose: false }); // No autoClose para ver el progreso
+    this.alertService.info(`Eliminando "${fileName}"...`, { autoClose: true }); // No autoClose para ver el progreso
 
     this.acreditacionMembresiaService.deleteDocument(hdfsPathToDelete!).subscribe({
       next: () => {

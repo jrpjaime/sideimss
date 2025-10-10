@@ -8,19 +8,13 @@ import java.util.Locale;
 import java.util.Date; 
 import java.io.IOException; 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64; 
-import java.util.concurrent.Executors; // Para el pool de hilos
-import java.util.concurrent.ExecutorService; // Para el pool de hilos
-import java.util.concurrent.TimeUnit; // Para esperar la terminación de los hilos
+import java.util.Base64;  
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.transaction.Transactional; // Mantener para el contexto de BBDD si aplica
 import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
@@ -34,9 +28,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation; // Para configurar el usuario de Hadoop
 
 import org.springframework.beans.factory.annotation.Value; 
-import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired; // Para inyectar FileSystem
+import org.springframework.core.io.Resource; 
 
 import jakarta.annotation.PostConstruct; // Para inicialización de bean
 import jakarta.annotation.PreDestroy; // Para limpieza de bean
@@ -177,6 +169,106 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
       
 	    return documentoIndividualVO;
 	}
+
+
+   @Override
+    @Transactional
+    public DocumentoIndividualDto cargaDocumentoHadoop(
+            MultipartFile archivo,
+            String desRfc,
+            String nomArchivo,
+            String desPath,
+            String fechaActualStr) throws IOException, IllegalArgumentException, ParseException {
+
+        logger.info("-------------inicio cargaDocumentoHadoop (MultipartFile) -------------");
+
+        DocumentoIndividualDto resultadoDto = new DocumentoIndividualDto();
+        resultadoDto.setDesRfc(desRfc);
+        resultadoDto.setNomArchivo(nomArchivo);
+        resultadoDto.setDesPath(desPath);
+        resultadoDto.setFechaActual(fechaActualStr); // Se establecerá la fecha parseada más adelante
+
+        // 1. Validaciones iniciales
+        if (archivo == null || archivo.isEmpty()) {
+            throw new IllegalArgumentException("El archivo no puede ser nulo o vacío.");
+        }
+        if (desRfc == null || desRfc.trim().isEmpty()) {
+            throw new IllegalArgumentException("El RFC (desRfc) no puede ser nulo o vacío.");
+        }
+        if (nomArchivo == null || nomArchivo.trim().isEmpty()) {
+            // Si nomArchivo viene vacío, intentar usar el original del MultipartFile
+            if (archivo.getOriginalFilename() != null && !archivo.getOriginalFilename().trim().isEmpty()) {
+                nomArchivo = archivo.getOriginalFilename();
+                resultadoDto.setNomArchivo(nomArchivo);
+                logger.warn("El nomArchivo proporcionado estaba vacío, usando el nombre original del archivo: {}", nomArchivo);
+            } else {
+                throw new IllegalArgumentException("El nombre del archivo (nomArchivo) no puede ser nulo o vacío.");
+            }
+        }
+
+
+        // 2. Parsear fecha
+        Date fechaCarga;
+        if (fechaActualStr != null && !fechaActualStr.isEmpty()) {
+            try {
+                SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "MX"));
+                fechaCarga = parser.parse(fechaActualStr);
+            } catch (ParseException e) {
+                logger.error("Error al parsear la fecha del documento: " + fechaActualStr, e);
+                throw new ParseException("Formato de fecha inválido: " + fechaActualStr + ". Se esperaba dd/MM/yyyy", e.getErrorOffset());
+            }
+        } else {
+            fechaCarga = new Date();
+            logger.warn("El campo fechaActual estaba nulo o vacío. Usando fecha actual: " + fechaCarga);
+        }
+        // Actualizar el DTO con la fecha formateada si no se proporcionó o si se parseó correctamente
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "MX"));
+        resultadoDto.setFechaActual(formatter.format(fechaCarga));
+
+
+        // 3. Obtener bytes del archivo
+        byte[] archivoBytes = archivo.getBytes();
+        logger.info("Tamaño del archivo recibido: {} bytes.", archivoBytes.length);
+
+        // 4. Construir el path en HDFS
+        String pattern = "yyyyMMdd";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern, new Locale("es", "MX"));
+        String dateCargaFormatted = simpleDateFormat.format(fechaCarga);
+
+        String baseHdfsPath = dateCargaFormatted + "/" + desRfc + "/";
+        String finalHdfsPath;
+
+        if (desPath != null && !desPath.trim().isEmpty()) {
+            // Asegurarse de que desPath no empiece ni termine con "/" para evitar duplicados
+            String cleanedDesPath = desPath.replaceAll("^/|/$", "");
+            finalHdfsPath = baseHdfsPath + cleanedDesPath + "/";
+        } else {
+            finalHdfsPath = baseHdfsPath;
+        }
+
+        logger.info("Path base en HDFS construido: {}", finalHdfsPath);
+        resultadoDto.setDesPath(finalHdfsPath); // Establecer el path que se usará
+
+
+        // 5. Guardar el documento en HDFS
+        String fullHdfsPath = saveDocumentoHdfs(archivoBytes, finalHdfsPath, nomArchivo);
+
+        // 6. Codificar el path de HDFS a Base64 y asignarlo al DTO
+        String fullHdfsPathBase64 = Base64.getEncoder().encodeToString(fullHdfsPath.getBytes(StandardCharsets.UTF_8));
+        resultadoDto.setDesPathHdfs(fullHdfsPathBase64);
+        logger.info("Path en HDFS (Base64) para {}/{}: {}", desRfc, nomArchivo, fullHdfsPathBase64);
+
+        // 7. Establecer códigos de éxito
+        resultadoDto.setCodigo(0);
+        resultadoDto.setMensaje("Éxito. Documento cargado correctamente en HDFS.");
+
+        logger.info("-------------Fin cargaDocumentoHadoop (MultipartFile) -------------");
+        return resultadoDto;
+    }
+
+
+
+
 
     @Override
     @Transactional // Mantener @Transactional si tienes otras operaciones de BBDD en este método

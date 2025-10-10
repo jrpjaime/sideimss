@@ -3,6 +3,6 @@ export interface DocumentoIndividualResponseDto {
   codigo: number;
   mensaje: string;
   fechaActual: string; // dd/MM/yyyy
-  desPathHdfsAcreditacion: string;
-  desPathHdfsMembresia: string;
+
+  desPathHdfs: string;
 }

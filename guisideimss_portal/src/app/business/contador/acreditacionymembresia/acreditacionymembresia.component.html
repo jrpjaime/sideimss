@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-12">
-        <h3 class="mb-0">Presentación de la acreditación y menbresía</h3>
+        <h3 class="mb-0">Presentación de la acreditación y membresía</h3>
         <hr class="red">
     </div>
 </div>
@@ -58,24 +58,46 @@
 
 
   <!-- SECCIÓN PARA ARCHIVO DE ACREDITACIÓN -->
-  <div class="row">
+  <div class="row mb-3">
     <div class="col-sm-6">
       <div class="form-group">
         <label for="archivoUno" class="form-label">* Archivo de Acreditación:</label>
-        <input type="file" class="form-control" id="archivoUno" (change)="onFileSelected($event, 'archivoUno')" accept="application/pdf" [disabled]="fileUnoUploadSuccess">
+        <div class="input-group">
+          <div class="row 12">
+            <div class="col-sm-8">
+              <input type="file" class="form-control" id="archivoUno" (change)="onFileSelected($event, 'archivoUno')" accept="application/pdf" [disabled]="fileUnoUploadSuccess || loadingFileUno">
+            </div>
+            <div class="col-sm-4">
+              <button type="button" class="btn btn-primary" (click)="uploadFile('archivoUno')"
+                      [disabled]="!selectedFileUno || fileUnoUploadSuccess || loadingFileUno">
+                @if (loadingFileUno) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  Adjuntando...
+                } @else {
+                  Adjuntar
+                }
+              </button>
+            </div>
+          </div>
+
+
+        </div>
 
         @if (formAcreditacionMembresia.get('archivoUno')?.invalid && formAcreditacionMembresia.get('archivoUno')?.touched && !fileUnoUploadSuccess) {
-          <small class="text-danger">Por favor, adjunta el archivo de acreditación (PDF, máximo 5MB).</small>
+          <small class="text-danger">Por favor, selecciona un archivo de acreditación (PDF, máximo 5MB).</small>
+        }
+         @if (selectedFileUno && !fileUnoUploadSuccess && !loadingFileUno) {
+            <small class="text-muted d-block mt-1">Archivo seleccionado: {{ selectedFileUno.name }}</small>
         }
 
-        <!-- Mensaje de éxito para archivoUno (se mantiene local para ver los enlaces) -->
+
+        <!-- Mensaje de éxito para archivoUno -->
         @if (fileUnoUploadSuccess) {
           <div class="alert alert-success mt-2 d-flex align-items-center">
             <i class="bi bi-check-circle-fill me-2"></i>
             Archivo de acreditación cargado exitosamente.
-            <!-- MODIFICACIÓN AQUÍ -->
             <div class="action-icons ms-3">
-              <a href="javascript:void(0)" (click)="downloadFile(fileUnoHdfsPath, selectedFileUno?.name || 'archivoUno')" class="icon-link" title="Descargar">
+              <a href="javascript:void(0)" (click)="downloadFile(fileUnoHdfsPath, selectedFileUno?.name || 'archivo_acreditacion')" class="icon-link" title="Descargar">
                 <i class="bi bi-download"></i>
                 <span class="icon-text"> </span>
               </a>
@@ -98,24 +120,46 @@
   </div>
 
   <!-- SECCIÓN PARA ARCHIVO DE MEMBRESÍA -->
-  <div class="row">
+  <div class="row mb-3">
     <div class="col-sm-6">
       <div class="form-group">
         <label for="archivoDos" class="form-label">* Archivo de Membresía:</label>
-        <input type="file" class="form-control" id="archivoDos" (change)="onFileSelected($event, 'archivoDos')" accept="application/pdf" [disabled]="fileDosUploadSuccess">
+        <div class="input-group">
+          <div class="row 12">
+            <div class="col-sm-8">
+              <input type="file" class="form-control" id="archivoDos" (change)="onFileSelected($event, 'archivoDos')" accept="application/pdf" [disabled]="fileDosUploadSuccess || loadingFileDos">
+            </div>
+            <div class="col-sm-4">
+              <button type="button" class="btn btn-primary" (click)="uploadFile('archivoDos')"
+                      [disabled]="!selectedFileDos || fileDosUploadSuccess || loadingFileDos">
+                @if (loadingFileDos) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  Adjuntando...
+                } @else {
+                  Adjuntar
+                }
+              </button>
+            </div>
+          </div>
+
+
+
+        </div>
 
         @if (formAcreditacionMembresia.get('archivoDos')?.invalid && formAcreditacionMembresia.get('archivoDos')?.touched && !fileDosUploadSuccess) {
-          <small class="text-danger">Por favor, adjunta el archivo de membresía (PDF, máximo 5MB).</small>
+          <small class="text-danger">Por favor, selecciona un archivo de membresía (PDF, máximo 5MB).</small>
+        }
+        @if (selectedFileDos && !fileDosUploadSuccess && !loadingFileDos) {
+            <small class="text-muted d-block mt-1">Archivo seleccionado: {{ selectedFileDos.name }}</small>
         }
 
-        <!-- Mensaje de éxito para archivoDos (se mantiene local para ver los enlaces) -->
+        <!-- Mensaje de éxito para archivoDos -->
         @if (fileDosUploadSuccess) {
           <div class="alert alert-success mt-2 d-flex align-items-center">
             <i class="bi bi-check-circle-fill me-2"></i>
             Archivo de membresía cargado exitosamente.
-            <!-- MODIFICACIÓN AQUÍ -->
             <div class="action-icons ms-3">
-              <a href="javascript:void(0)" (click)="downloadFile(fileDosHdfsPath, selectedFileDos?.name || 'archivoDos')" class="icon-link" title="Descargar">
+              <a href="javascript:void(0)" (click)="downloadFile(fileDosHdfsPath, selectedFileDos?.name || 'archivo_membresia')" class="icon-link" title="Descargar">
                 <i class="bi bi-download"></i>
                 <span class="icon-text"> </span>
               </a>
@@ -145,14 +189,11 @@
     </div>
   </div>
 
-  <!-- overallSubmissionError ya no se muestra aquí, lo manejará el AlertComponent global -->
-
   <!-- Botones alineados a la derecha -->
   <div class="pull-right">
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="onReiniciarFormAcreditacionMembresia()">Cancelar</button>
-      <button type="submit" class="btn btn-primary">Verificar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="!formAcreditacionMembresia.valid || !fileUnoUploadSuccess || !fileDosUploadSuccess">Verificar</button>
     </div>
   </div>
 </form>
-

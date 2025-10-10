@@ -37,15 +37,17 @@ export const EPs = {
     contadores: {
       info: "/v1/info",
       list: "/v1/list",
-      acreditacionmembresia: "/v1/acreditacionMembresia", 
+      acreditacionmembresia: "/v1/acreditacionMembresia",
 
     },
 
     documentos: {
       info: "/v1/info",
-      list: "/v1/list", 
+      list: "/v1/list",
       descargarDocumento: "/v1/descargarDocumento",
       eliminarDocumento: "/v1/eliminarDocumento",
+
+      cargarDocumento: "/v1/cargarDocumento",
     }
 
 
