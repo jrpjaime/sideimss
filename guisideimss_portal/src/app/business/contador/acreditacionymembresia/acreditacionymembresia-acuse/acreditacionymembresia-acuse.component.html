@@ -1,0 +1,63 @@
+<p>acreditacionymembresia-acuse works!</p>
+
+
+
+<h3>Datos del Formulario Anterior:</h3>
+
+@if (datosFormularioPrevio && Object.keys(datosFormularioPrevio).length > 0) {
+  <div>
+    <p><strong>Fecha de Expedición Acreditación:</strong>
+      @if (datosFormularioPrevio.fechaExpedicionAcreditacion) {
+        <span>
+          {{ datosFormularioPrevio.fechaExpedicionAcreditacion | date:'fullDate' }}
+        </span>
+      } @else {
+        <span>
+          (No disponible)
+        </span>
+      }
+    </p>
+
+    <p><strong>Fecha de Expedición Membresía:</strong>
+      @if (datosFormularioPrevio.fechaExpedicionMembresia) {
+        <span>
+          {{ datosFormularioPrevio.fechaExpedicionMembresia | date:'fullDate' }}
+        </span>
+      } @else {
+        <span>
+          (No disponible)
+        </span>
+      }
+    </p>
+
+    <p><strong>Path HDFS Acreditación:</strong>
+      @if (datosFormularioPrevio.desPathHdfsAcreditacion) {
+        <span>
+          {{ datosFormularioPrevio.desPathHdfsAcreditacion }}
+        </span>
+      } @else {
+        <span>
+          (No disponible)
+        </span>
+      }
+    </p>
+
+    <p><strong>Path HDFS Membresía:</strong>
+      @if (datosFormularioPrevio.desPathHdfsMembresia) {
+        <span>
+          {{ datosFormularioPrevio.desPathHdfsMembresia }}
+        </span>
+      } @else {
+        <span>
+          (No disponible)
+        </span>
+      }
+    </p>
+
+    <!-- Si tienes más datos en datosFormularioPrevio, puedes mostrarlos aquí con @if -->
+  </div>
+} @else {
+  <div>
+    No se recibieron datos adicionales del formulario de acreditación/membresía.
+  </div>
+}

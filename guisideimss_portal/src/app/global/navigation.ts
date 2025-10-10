@@ -7,6 +7,7 @@ export const NAV = {
 
 
   contadoracreditacionymembresia: CONTEXT + '/contador/acreditacionymembresia',
+  contadoracreditacionymembresiaacuse: CONTEXT + '/contador/acreditacionymembresiaacuse',
   contadormodificaciondatos: CONTEXT + '/contador/modificaciondatos',
   contadorsolicitudbaja: CONTEXT + '/contador/solicitudbaja',
 

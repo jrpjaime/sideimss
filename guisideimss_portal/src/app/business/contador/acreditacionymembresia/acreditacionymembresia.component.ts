@@ -5,13 +5,15 @@ import { Router } from '@angular/router';
 import { CatalogosService } from '../../../shared/catalogos/services/catalogos.service';
 import { SharedService } from '../../../shared/services/shared.service';
 import { fechaInicioMenorOigualFechaFin } from '../../../global/validators';
-import { AcreditacionMembresiaService } from '../services/services/acreditacion-membresia.service';
+import { AcreditacionMembresiaService } from '../services/acreditacion-membresia.service';
 import { CommonModule } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModalService } from '../../../shared/services/modal.service';
 import { catchError, forkJoin, of } from 'rxjs';
+import { AcreditacionMembresiaDataService } from '../services/acreditacion-membresia-data.service';
+import { NAV } from '../../../global/navigation';
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -47,6 +49,8 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     private modalService: ModalService,
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private alertService: AlertService,
+    private acreditacionMembresiaDataService: AcreditacionMembresiaDataService,
+
     sharedService: SharedService
   ) {
     super(sharedService);
@@ -216,65 +220,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
   }
 
 
-   onSubmit() {
-    console.log('Formulario de acreditación y membresía enviado:', this.formAcreditacionMembresia.value);
-    this.alertService.clear();
 
-    // Validar que las fechas sean válidas
-    if (this.formAcreditacionMembresia.invalid) {
-        this.formAcreditacionMembresia.markAllAsTouched();
-        this.alertService.error('Por favor, completa correctamente las fechas requeridas.', { autoClose: true });
-        return;
-    }
-
-    // Validar que ambos archivos hayan sido subidos exitosamente
-    if (!this.fileUnoUploadSuccess || !this.fileDosUploadSuccess) {
-      this.alertService.error('Por favor, adjunta y sube ambos archivos antes de verificar.', { autoClose: true });
-      // Asegurarse de que los controles de archivo reflejen el estado de "requerido" si no se han subido
-      if (!this.fileUnoUploadSuccess) {
-        this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true });
-        this.formAcreditacionMembresia.get('archivoUno')?.markAsTouched();
-      }
-      if (!this.fileDosUploadSuccess) {
-        this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true });
-        this.formAcreditacionMembresia.get('archivoDos')?.markAsTouched();
-      }
-      return;
-    }
-
-    // Crear un DTO para enviar al backend con los paths HDFS
-    const submitDto = {
-      fechaExpedicionAcreditacion: this.formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.value,
-      fechaExpedicionMembresia: this.formAcreditacionMembresia.get('fechaExpedicionMembresia')?.value,
-      desPathHdfsAcreditacion: this.fileUnoHdfsPath, // Envía el path HDFS en Base64
-      desPathHdfsMembresia: this.fileDosHdfsPath     // Envía el path HDFS en Base64
-      // Aquí puedes añadir otros campos si tu DTO final de submit los necesita
-    };
-
-    // Suponiendo que tienes un servicio para enviar estos datos finales
-    // y que el backend tiene un endpoint diferente para la "verificación" final
-    this.acreditacionMembresiaService.enviarDatosFinales(submitDto).subscribe({
-        next: (response: any) => { // Ajusta el tipo de respuesta si tienes un DTO específico para el submit final
-          console.log('Respuesta del backend (Verificación final):', response);
-          if (response.codigo === 0) {
-            this.alertService.success(response.mensaje || 'Verificación final exitosa.', { autoClose: true });
-            // Posiblemente navegar a otra página o mostrar un mensaje de éxito grande
-          } else {
-            this.alertService.error(response.mensaje || 'Error en la verificación final.', { autoClose: true });
-          }
-        },
-        error: (errorResponse: HttpErrorResponse) => {
-            console.error('Error al enviar datos finales al backend:', errorResponse);
-            let errorMessage = 'Hubo un error al realizar la verificación final. Por favor, inténtalo de nuevo.';
-            if (errorResponse.error instanceof Object && errorResponse.error.mensaje) {
-                errorMessage = errorResponse.error.mensaje;
-            } else if (errorResponse.message) {
-                errorMessage = errorResponse.message;
-            }
-            this.alertService.error(errorMessage, { autoClose: true });
-        }
-    });
-  }
 
 
   onReiniciarFormAcreditacionMembresia() {
@@ -532,4 +478,34 @@ downloadFile(hdfsPath: string | null, fileName: string) {
       'Cancelar'  // Texto para el botón de cancelar
     );
   }
+
+
+
+
+  continuarConAcuse(): void {
+    if (this.formAcreditacionMembresia.valid && this.fileUnoUploadSuccess && this.fileDosUploadSuccess) {
+
+      // Obtener los datos actuales del formulario
+      const datosDelFormulario = this.formAcreditacionMembresia.value;
+
+      // ¡Aquí está el cambio! Combinar los datos del formulario con los paths HDFS
+      const datosCompletosParaAcuse = {
+        ...datosDelFormulario, // Extiende todos los campos del formulario  usando el operador spread (...) para incluir los campos del formulario
+        desPathHdfsAcreditacion: this.fileUnoHdfsPath, // Añade el path del archivo uno
+        desPathHdfsMembresia: this.fileDosHdfsPath      // Añade el path del archivo dos
+      };
+
+      // Guardar los datos completos en el servicio
+      this.acreditacionMembresiaDataService.setDatosFormularioPrevio(datosCompletosParaAcuse);
+
+      // 3. Navegar al componente de acuse
+      this.router.navigate([NAV.contadoracreditacionymembresiaacuse]);
+    } else {
+      console.warn('El formulario no es válido o los archivos no se han subido correctamente.');
+      // Opcional: Mostrar un mensaje al usuario para indicar qué falta.
+      this.alertService.error('Por favor, completa todos los campos requeridos y carga ambos archivos antes de continuar.', { autoClose: true });
+    }
+  }
+
+
 }

@@ -9,6 +9,7 @@ import { AcreditacionymembresiaComponent } from './business/contador/acreditacio
 import { ModificaciondatosComponent } from './business/contador/modificaciondatos/modificaciondatos.component';
 import { SolicitudbajaComponent } from './business/contador/solicitudbaja/solicitudbaja.component';
 import { ContadorGuard } from './core/guards/contador.guard';
+import { AcreditacionymembresiaAcuseComponent } from './business/contador/acreditacionymembresia/acreditacionymembresia-acuse/acreditacionymembresia-acuse.component';
 
 
 
@@ -28,6 +29,11 @@ export const routes: Routes = [
       {
         path: 'contador/acreditacionymembresia',
         component: AcreditacionymembresiaComponent,
+        canActivate: [ContadorGuard],
+      },
+      {
+        path: 'contador/acreditacionymembresiaacuse',
+        component: AcreditacionymembresiaAcuseComponent,
         canActivate: [ContadorGuard],
       },
       {
