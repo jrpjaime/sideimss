@@ -17,9 +17,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation; 
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+
 import jakarta.transaction.Transactional; // Mantener para el contexto de BBDD si aplica
 import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
+import mx.gob.imss.documentos.dto.DownloadFileDto;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.conf.Configuration;
@@ -30,6 +35,7 @@ import org.apache.hadoop.security.UserGroupInformation; // Para configurar el us
 
 import org.springframework.beans.factory.annotation.Value; 
 import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired; // Para inyectar FileSystem
 
 import jakarta.annotation.PostConstruct; // Para inicialización de bean
@@ -267,4 +273,99 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
         }
 		return resource;
     }
+
+
+
+    @Override
+    public DownloadFileDto downloadDocumentoHdfs(String fullHdfsPathBase64) throws IOException, IllegalArgumentException {
+        logger.info("Iniciando downloadDocumentoHdfs en Service.");
+        String fullHdfsPath = null;
+        try {
+            // 1. Decodificar la ruta Base64
+            byte[] decodedBytes = Base64.getDecoder().decode(fullHdfsPathBase64);
+            fullHdfsPath = new String(decodedBytes, StandardCharsets.UTF_8);
+            logger.debug("Ruta HDFS decodificada para descarga: {}", fullHdfsPath);
+
+            // 2. Obtener el Resource del archivo
+            Resource resource = readFileHdfs(fullHdfsPath);
+
+            if (resource == null || !resource.exists() || !resource.isReadable()) {
+                logger.warn("El archivo no se encontró o no se pudo leer en HDFS: {}", fullHdfsPath);
+                throw new IOException("El documento solicitado no fue encontrado o no es accesible.");
+            }
+
+            // 3. Obtener el nombre del archivo de la ruta HDFS
+            String filename = new Path(fullHdfsPath).getName();
+            logger.info("Archivo recuperado para descarga: {}", filename);
+
+            // 4. Construir y devolver el DTO de descarga
+            return DownloadFileDto.builder()
+                        .resource(resource)
+                        .filename(filename)
+                       
+                        //.mediaType(inferMediaType(filename))
+                        .build();
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error al decodificar la ruta Base64 para descarga: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Formato de ruta de documento inválido.", e);
+        } catch (IOException e) {
+            logger.error("Error de I/O al descargar el documento de HDFS ({}): {}", fullHdfsPath, e.getMessage(), e);
+            throw e; // Re-lanzar o envolver según sea necesario para el controlador
+        } catch (Exception e) {
+            logger.error("Error inesperado en downloadDocumentoHdfs para ({}): {}", fullHdfsPath, e.getMessage(), e);
+            throw new IOException("Error inesperado al preparar el documento para descarga.", e);
+        } finally {
+            logger.info("Finalizando downloadDocumentoHdfs en Service.");
+        }
+    }
+
+
+
+
+        @Override
+    public void deleteDocumentoHdfs(String fullHdfsPathBase64) throws IOException, IllegalArgumentException {
+        logger.info("Iniciando deleteDocumentoHdfs en Service.");
+        String fullHdfsPath = null;
+        try {
+            // 1. Decodificar la ruta Base64
+            byte[] decodedBytes = Base64.getDecoder().decode(fullHdfsPathBase64);
+            fullHdfsPath = new String(decodedBytes, StandardCharsets.UTF_8);
+            logger.debug("Ruta HDFS decodificada para eliminación: {}", fullHdfsPath);
+
+            Path hdfsPath = new Path(fullHdfsPath);
+
+            // 2. Verificar si el archivo existe antes de intentar eliminarlo (opcional, pero buena práctica)
+            if (!hadoopFileSystem.exists(hdfsPath)) {
+                logger.warn("Intento de eliminar archivo no existente en HDFS: {}", fullHdfsPath);
+                throw new IOException("El documento a eliminar no fue encontrado en HDFS: " + fullHdfsPath);
+            }
+
+            // 3. Eliminar el archivo de HDFS
+            // 'false' significa que no será recursivo (solo elimina el archivo, no directorios)
+            boolean deleted = hadoopFileSystem.delete(hdfsPath, false);
+
+            if (deleted) {
+                logger.info("Documento eliminado exitosamente de HDFS: {}", fullHdfsPath);
+            } else {
+                logger.error("Fallo la eliminación del documento en HDFS (el archivo podría no haber existido o hubo un permiso): {}", fullHdfsPath);
+                throw new IOException("No se pudo eliminar el documento de HDFS: " + fullHdfsPath);
+            }
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error al decodificar la ruta Base64 para eliminación: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Formato de ruta de documento inválido para eliminación.", e);
+        } catch (IOException e) {
+            logger.error("Error de I/O al eliminar el documento de HDFS ({}): {}", fullHdfsPath, e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error inesperado en deleteDocumentoHdfs para ({}): {}", fullHdfsPath, e.getMessage(), e);
+            throw new IOException("Error inesperado al intentar eliminar el documento de HDFS.", e);
+        } finally {
+            logger.info("Finalizando deleteDocumentoHdfs en Service.");
+        }
+    }
+
+
+
 }

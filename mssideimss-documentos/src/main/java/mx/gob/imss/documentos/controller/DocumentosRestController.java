@@ -2,9 +2,14 @@ package mx.gob.imss.documentos.controller;
 
  
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.util.Base64; // Importar Base64
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.MediaType; 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,16 +17,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity; 
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
+import mx.gob.imss.documentos.dto.DownloadFileDto;
 import mx.gob.imss.documentos.service.CargaDocumentoService;
  
-
+import org.springframework.core.io.Resource;  
+import org.springframework.http.HttpHeaders;
+import org.apache.hadoop.fs.Path;
+ 
 
 @RestController   
 @CrossOrigin("*") 
@@ -110,9 +122,76 @@ public class DocumentosRestController {
 
  
  
+ 
+    /**
+     * Endpoint para descargar un documento almacenado en Hadoop.
+     * Recibe el fullHdfsPathBase64 del documento en la URL.
+     * Delega la lógica de obtención del Resource y nombre del archivo al servicio.
+     *
+     * @param fullHdfsPathBase64 La ruta completa del archivo en HDFS, codificada en Base64.
+     * @return ResponseEntity con el Resource del documento y los encabezados adecuados para descarga.
+     */
+    @GetMapping("/descargarDocumento")
+    public ResponseEntity<Resource> descargarDocumento(@RequestParam String fullHdfsPathBase64) {
+        logger.info("------------- Inicio descargarDocumento en Controller -------------");
+        try {
+            // Llamada al nuevo método del servicio que maneja toda la lógica de descarga
+            DownloadFileDto downloadFileDto = cargaDocumentoService.downloadDocumentoHdfs(fullHdfsPathBase64);
 
- 
- 
- 
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadFileDto.getFilename() + "\"");
+            // Usa el mediaType del DTO si lo has inferido, de lo contrario usa el genérico
+            headers.add(HttpHeaders.CONTENT_TYPE, downloadFileDto.getMediaType() != null && !downloadFileDto.getMediaType().isEmpty()  ? downloadFileDto.getMediaType() : MediaType.APPLICATION_OCTET_STREAM_VALUE);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(downloadFileDto.getResource());
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error de argumentos al descargar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de ruta de documento inválido.", e);
+        } catch (IOException e) {
+            logger.error("Error de I/O al descargar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento en el sistema de almacenamiento.", e);
+        } catch (Exception e) {
+            logger.error("Error inesperado al descargar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor al procesar la descarga.", e);
+        } finally {
+            logger.info("------------- Fin descargarDocumento en Controller -------------");
+        }
+    }
+
+
+
+    /**
+     * Endpoint para eliminar un documento de Hadoop.
+     * Recibe el fullHdfsPathBase64 del documento en la URL.
+     * Devuelve una respuesta vacía con estado 204 No Content si la eliminación fue exitosa.
+     *
+     * @param fullHdfsPathBase64 La ruta completa del archivo en HDFS, codificada en Base64.
+     * @return ResponseEntity vacía y estado HTTP.
+     */
+    @DeleteMapping("/eliminarDocumento")
+    public ResponseEntity<Void> deleteDocumento(@RequestParam String fullHdfsPathBase64) {
+        logger.info("------------- Inicio deleteDocumento en Controller -------------");
+        try {
+            cargaDocumentoService.deleteDocumentoHdfs(fullHdfsPathBase64);
+            logger.info("Documento eliminado exitosamente.");
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Error de argumentos al eliminar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de ruta de documento inválido para eliminación.", e);
+        } catch (IOException e) {
+            logger.error("Error de I/O al eliminar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento en el sistema de almacenamiento para eliminación.", e);
+        } catch (Exception e) {
+            logger.error("Error inesperado al eliminar el documento: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor al procesar la eliminación.", e);
+        } finally {
+            logger.info("------------- Fin deleteDocumento en Controller -------------");
+        }
+    }
+
 
 }

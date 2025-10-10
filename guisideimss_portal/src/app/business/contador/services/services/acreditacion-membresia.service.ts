@@ -20,4 +20,22 @@ export class AcreditacionMembresiaService {
     return this.httpClient.post<DocumentoIndividualResponseDto>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, formData);
   }
 
+
+  downloadDocument(fullHdfsPathBase64: string): Observable<HttpResponse<Blob>> {
+    const url = `${environment.documentosApiUrl}${EPs.documentos.descargarDocumento}`;  
+    return this.httpClient.get(url, {
+      params: { fullHdfsPathBase64: fullHdfsPathBase64 },
+      observe: 'response', // Para obtener la respuesta completa con encabezados
+      responseType: 'blob' // Para que la respuesta sea un objeto Blob
+    });
+  }
+
+
+  deleteDocument(fullHdfsPathBase64: string): Observable<void> {
+    const url = `${environment.documentosApiUrl}${EPs.documentos.eliminarDocumento}`;
+    return this.httpClient.delete<void>(url, {
+      params: { fullHdfsPathBase64: fullHdfsPathBase64 }
+    });
+  }
+
 }

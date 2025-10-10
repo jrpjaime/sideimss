@@ -14,7 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([tokenInterceptor, loaderInterceptor ])  // Cambia a la función interceptor
+      withInterceptors([tokenInterceptor, loaderInterceptor ])  
     ),
     provideAnimationsAsync(),
 

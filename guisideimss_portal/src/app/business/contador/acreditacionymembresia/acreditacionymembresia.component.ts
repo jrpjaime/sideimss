@@ -9,7 +9,7 @@ import { AcreditacionMembresiaService } from '../services/services/acreditacion-
 import { CommonModule } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
-import { HttpErrorResponse } from '@angular/common/http'; 
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http'; 
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -231,39 +231,135 @@ onSubmit() {
     });
   }
 
-  downloadFile(hdfsPath: string | null, fileName: string) {
+downloadFile(hdfsPath: string | null, fileName: string) {
     if (hdfsPath) {
-      this.alertService.info(`Simulando descarga de "${fileName}" desde: ${hdfsPath}`, { autoClose: true });
-      // Aquí integrarías la lógica real para descargar el archivo.
-      // Ejemplo: this.acreditacionMembresiaService.downloadDocument(hdfsPath).subscribe(...)
+      this.alertService.info(`Iniciando descarga de "${fileName}"...`, { autoClose: true });
+
+      this.acreditacionMembresiaService.downloadDocument(hdfsPath).subscribe({
+        next: (response: HttpResponse<Blob>) => {
+          if (response.body) {
+            // 1. Obtener el nombre del archivo del Content-Disposition si está disponible
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let actualFileName = fileName; // Usar el nombre que se pasó por defecto
+            if (contentDisposition) {
+              const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+              if (matches != null && matches[1]) {
+                actualFileName = matches[1].replace(/['"]/g, '');
+              }
+            }
+
+            // 2. Crear un objeto URL para el Blob
+            const url = window.URL.createObjectURL(response.body);
+
+            // 3. Crear un enlace (<a>) en el DOM
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = actualFileName; // Establecer el nombre de archivo para la descarga
+            document.body.appendChild(a); // Es necesario que el enlace esté en el DOM para poder hacer click programáticamente
+
+            // 4. Hacer clic programáticamente en el enlace para iniciar la descarga
+            a.click();
+
+            // 5. Limpiar: remover el enlace y revocar la URL del objeto Blob
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            this.alertService.success(`"${actualFileName}" descargado exitosamente.`, { autoClose: true });
+          } else {
+            this.alertService.error('La respuesta de descarga no contiene datos.', { autoClose: true });
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          console.error('Error al descargar el archivo:', error);
+          let errorMessage = 'Error al descargar el archivo. Inténtalo de nuevo.';
+          if (error.status === 404) {
+            errorMessage = 'El documento solicitado no fue encontrado.';
+          } else if (error.error instanceof Blob) {
+              // Si el error es un Blob (ej: un JSON de error devuelto como blob),
+              // intentar leerlo como texto. Esto es común en Spring Boot.
+              const reader = new FileReader();
+              reader.onload = () => {
+                  try {
+                      const errorBody = JSON.parse(reader.result as string);
+                      errorMessage = errorBody.message || errorBody.error || errorMessage;
+                  } catch (e) {
+                      console.warn('No se pudo parsear el error como JSON:', reader.result);
+                  }
+                  this.alertService.error(errorMessage, { autoClose: true });
+              };
+              reader.readAsText(error.error);
+              return; // Salir para que el alert se muestre después de leer el Blob
+          } else if (error.message) {
+              errorMessage = error.message;
+          }
+          this.alertService.error(errorMessage, { autoClose: true });
+        }
+      });
     } else {
       this.alertService.error('No hay una ruta HDFS para descargar este archivo.', { autoClose: true });
     }
   }
 
   deleteFile(controlName: string) {
-    this.alertService.info(`Simulando eliminación del archivo para: ${controlName}`, { autoClose: true });
-    if (controlName === 'archivoUno') {
-      this.fileUnoUploadSuccess = false;
-      this.fileUnoHdfsPath = null;
-      this.selectedFileUno = null;
-      const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
-      if (fileInputUno) fileInputUno.value = '';
-      this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
-      this.formAcreditacionMembresia.get('archivoUno')?.markAsUntouched();
-      this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true });
-      this.fileUnoError = null;
-    } else if (controlName === 'archivoDos') {
-      this.fileDosUploadSuccess = false;
-      this.fileDosHdfsPath = null;
-      this.selectedFileDos = null;
-      const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
-      if (fileInputDos) fileInputDos.value = '';
-      this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
-      this.formAcreditacionMembresia.get('archivoDos')?.markAsUntouched();
-      this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true });
-      this.fileDosError = null;
+    let hdfsPathToDelete: string | null = null;
+    let fileName: string = '';
+
+    if (controlName === 'archivoUno' && this.fileUnoHdfsPath) {
+      hdfsPathToDelete = this.fileUnoHdfsPath;
+      fileName = this.selectedFileUno?.name || 'Archivo de Acreditación';
+    } else if (controlName === 'archivoDos' && this.fileDosHdfsPath) {
+      hdfsPathToDelete = this.fileDosHdfsPath;
+      fileName = this.selectedFileDos?.name || 'Archivo de Membresía';
+    } else {
+      this.alertService.error('No hay un archivo cargado para eliminar o no se encontró la ruta HDFS.', { autoClose: true });
+      return;
     }
-    this.alertService.clear();
+
+    // Confirmación opcional antes de eliminar
+    if (!confirm(`¿Estás seguro de que quieres eliminar "${fileName}"?`)) {
+      return;
+    }
+
+    this.alertService.info(`Eliminando "${fileName}"...`, { autoClose: false }); // No autoClose para ver el progreso
+
+    this.acreditacionMembresiaService.deleteDocument(hdfsPathToDelete!).subscribe({
+      next: () => {
+        this.alertService.success(`"${fileName}" eliminado exitosamente.`, { autoClose: true });
+        // Lógica para resetear el estado del archivo en el frontend
+        if (controlName === 'archivoUno') {
+          this.fileUnoUploadSuccess = false;
+          this.fileUnoHdfsPath = null;
+          this.selectedFileUno = null;
+          const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
+          if (fileInputUno) fileInputUno.value = '';
+          this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
+          this.formAcreditacionMembresia.get('archivoUno')?.markAsUntouched();
+          this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true });
+          this.fileUnoError = null;
+        } else if (controlName === 'archivoDos') {
+          this.fileDosUploadSuccess = false;
+          this.fileDosHdfsPath = null;
+          this.selectedFileDos = null;
+          const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
+          if (fileInputDos) fileInputDos.value = '';
+          this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
+          this.formAcreditacionMembresia.get('archivoDos')?.markAsUntouched();
+          this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true });
+          this.fileDosError = null;
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Error al eliminar el archivo:', error);
+        let errorMessage = `Error al eliminar "${fileName}". Por favor, inténtalo de nuevo.`;
+        if (error.status === 400) {
+          errorMessage = 'Solicitud inválida para eliminar el documento.';
+        } else if (error.status === 404) {
+          errorMessage = 'El documento a eliminar no fue encontrado en el servidor.';
+        } else if (error.error && error.error.message) { // Si el backend envía un mensaje de error en el cuerpo
+          errorMessage = error.error.message;
+        }
+        this.alertService.error(errorMessage, { autoClose: true });
+      }
+    });
   }
 }
