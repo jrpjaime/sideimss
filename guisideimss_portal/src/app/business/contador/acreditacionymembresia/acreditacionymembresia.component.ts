@@ -369,7 +369,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
         }
       });
     } else {
-      this.alertService.error('No hay una ruta HDFS para descargar este archivo.', { autoClose: true });
+      this.alertService.error('No hay una ruta para descargar este archivo.', { autoClose: true });
     }
   }
 
@@ -387,7 +387,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
       fileName = this.selectedFileDos?.name || 'Archivo de Membresía';
       documentType = 'Membresía';
     } else {
-      this.alertService.error('No hay un archivo cargado para eliminar o no se encontró la ruta HDFS.', { autoClose: true });
+      this.alertService.error('No hay un archivo cargado para eliminar.', { autoClose: true });
       return;
     }
 
