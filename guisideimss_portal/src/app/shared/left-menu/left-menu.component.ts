@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ModalService } from '../services/modal.service';
 
 import { Subscription } from 'rxjs'; // Para gestionar las suscripciones
 import { Constants } from '../../global/Constants';
@@ -63,7 +62,6 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
   private rolesSubscription!: Subscription; // Para gestionar la desuscripción
 
   constructor(
-    private modalService: ModalService,
     private router: Router,
     private sharedService: SharedService // Inyectamos SharedService
   ) { }

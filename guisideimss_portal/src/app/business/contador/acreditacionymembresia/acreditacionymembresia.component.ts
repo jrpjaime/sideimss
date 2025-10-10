@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ModalService } from '../../../shared/services/modal.service';
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -42,6 +43,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     private router : Router,
     private renderer: Renderer2,
     private catalogosService: CatalogosService,
+    private modalService: ModalService,
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private alertService: AlertService,
     sharedService: SharedService
@@ -371,66 +373,79 @@ downloadFile(hdfsPath: string | null, fileName: string) {
     }
   }
 
-  deleteFile(controlName: string) {
+ deleteFile(controlName: string) {
     let hdfsPathToDelete: string | null = null;
     let fileName: string = '';
+    let documentType: string = '';
 
     if (controlName === 'archivoUno' && this.fileUnoHdfsPath) {
       hdfsPathToDelete = this.fileUnoHdfsPath;
       fileName = this.selectedFileUno?.name || 'Archivo de Acreditación';
+      documentType = 'Acreditación';
     } else if (controlName === 'archivoDos' && this.fileDosHdfsPath) {
       hdfsPathToDelete = this.fileDosHdfsPath;
       fileName = this.selectedFileDos?.name || 'Archivo de Membresía';
+      documentType = 'Membresía';
     } else {
       this.alertService.error('No hay un archivo cargado para eliminar o no se encontró la ruta HDFS.', { autoClose: true });
       return;
     }
 
-    // Confirmación opcional antes de eliminar
-    if (!confirm(`¿Estás seguro de que quieres eliminar "${fileName}"?`)) {
-      return;
-    }
+    this.modalService.showDialog(
+      'confirm',
+      'warning',
+      'Confirmar Eliminación',
+      `¿Estás seguro de que quieres eliminar el archivo de ${documentType} "${fileName}"? Esta acción no se puede deshacer.`,
+      (confirmed: boolean) => {
+        if (confirmed) {
+          this.alertService.info(`Eliminando "${fileName}"...`, { autoClose: true });
 
-    this.alertService.info(`Eliminando "${fileName}"...`, { autoClose: true }); // No autoClose para ver el progreso
-
-    this.acreditacionMembresiaService.deleteDocument(hdfsPathToDelete!).subscribe({
-      next: () => {
-        this.alertService.success(`"${fileName}" eliminado exitosamente.`, { autoClose: true });
-        // Lógica para resetear el estado del archivo en el frontend
-        if (controlName === 'archivoUno') {
-          this.fileUnoUploadSuccess = false;
-          this.fileUnoHdfsPath = null;
-          this.selectedFileUno = null;
-          const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
-          if (fileInputUno) fileInputUno.value = '';
-          this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
-          this.formAcreditacionMembresia.get('archivoUno')?.markAsUntouched();
-          this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true });
-          this.fileUnoError = null;
-        } else if (controlName === 'archivoDos') {
-          this.fileDosUploadSuccess = false;
-          this.fileDosHdfsPath = null;
-          this.selectedFileDos = null;
-          const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
-          if (fileInputDos) fileInputDos.value = '';
-          this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
-          this.formAcreditacionMembresia.get('archivoDos')?.markAsUntouched();
-          this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true });
-          this.fileDosError = null;
+          this.acreditacionMembresiaService.deleteDocument(hdfsPathToDelete!).subscribe({
+            next: () => {
+              this.alertService.success(`"${fileName}" eliminado exitosamente.`, { autoClose: true });
+              // Lógica para resetear el estado del archivo en el frontend
+              if (controlName === 'archivoUno') {
+                this.fileUnoUploadSuccess = false;
+                this.fileUnoHdfsPath = null;
+                this.selectedFileUno = null;
+                const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
+                if (fileInputUno) fileInputUno.value = '';
+                this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
+                this.formAcreditacionMembresia.get('archivoUno')?.markAsUntouched();
+                this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true }); // Marcarlo como requerido nuevamente
+                this.fileUnoError = null;
+              } else if (controlName === 'archivoDos') {
+                this.fileDosUploadSuccess = false;
+                this.fileDosHdfsPath = null;
+                this.selectedFileDos = null;
+                const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
+                if (fileInputDos) fileInputDos.value = '';
+                this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
+                this.formAcreditacionMembresia.get('archivoDos')?.markAsUntouched();
+                this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true }); // Marcarlo como requerido nuevamente
+                this.fileDosError = null;
+              }
+            },
+            error: (error: HttpErrorResponse) => {
+              console.error('Error al eliminar el archivo:', error);
+              let errorMessage = `Error al eliminar "${fileName}". Por favor, inténtalo de nuevo.`;
+              if (error.status === 400) {
+                errorMessage = 'Solicitud inválida para eliminar el documento.';
+              } else if (error.status === 404) {
+                errorMessage = 'El documento a eliminar no fue encontrado en el servidor.';
+              } else if (error.error && error.error.message) {
+                errorMessage = error.error.message;
+              }
+              this.alertService.error(errorMessage, { autoClose: true });
+            }
+          });
+        } else {
+          // El usuario canceló la eliminación
+          this.alertService.info('La eliminación del archivo ha sido cancelada.', { autoClose: true });
         }
       },
-      error: (error: HttpErrorResponse) => {
-        console.error('Error al eliminar el archivo:', error);
-        let errorMessage = `Error al eliminar "${fileName}". Por favor, inténtalo de nuevo.`;
-        if (error.status === 400) {
-          errorMessage = 'Solicitud inválida para eliminar el documento.';
-        } else if (error.status === 404) {
-          errorMessage = 'El documento a eliminar no fue encontrado en el servidor.';
-        } else if (error.error && error.error.message) { // Si el backend envía un mensaje de error en el cuerpo
-          errorMessage = error.error.message;
-        }
-        this.alertService.error(errorMessage, { autoClose: true });
-      }
-    });
+      'Eliminar', // Texto para el botón de confirmar
+      'Cancelar'  // Texto para el botón de cancelar
+    );
   }
 }
