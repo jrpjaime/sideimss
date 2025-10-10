@@ -106,13 +106,13 @@ public class ContadoresRestController {
         String archivoDosBase64;
 
         try {
-            archivoUnoBase64 = utileriasService.convertMultipartFileToBase64(archivoUno, "archivoUno").block();
-            archivoDosBase64 = utileriasService.convertMultipartFileToBase64(archivoDos, "archivoDos").block();
+            archivoUnoBase64 = utileriasService.convertMultipartFileToBase64(archivoUno, archivoUno.getOriginalFilename()).block();
+            archivoDosBase64 = utileriasService.convertMultipartFileToBase64(archivoDos, archivoDos.getOriginalFilename()).block();
         } catch (Exception e) {
-            logger.error("Error al procesar los archivos de entrada (Base64): {}", e.getMessage(), e);
+            logger.error("Error al procesar el archivo: {}", e.getMessage(), e);
             DocumentoIndividualResponseDto errorDto = new DocumentoIndividualResponseDto();
             errorDto.setCodigo(500);
-            errorDto.setMensaje("Error al procesar los archivos de entrada (Base64): " + e.getMessage());
+            errorDto.setMensaje("Error al procesar el archivo: " + e.getMessage());
             errorDto.setFechaActual(fechaActualFormateada);
             return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
         }

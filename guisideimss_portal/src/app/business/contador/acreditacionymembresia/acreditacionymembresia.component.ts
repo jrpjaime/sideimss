@@ -9,7 +9,7 @@ import { AcreditacionMembresiaService } from '../services/services/acreditacion-
 import { CommonModule } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http'; 
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -38,7 +38,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     private fb: FormBuilder,
     private router : Router,
     private renderer: Renderer2,
-    private catalogosService: CatalogosService,
+    private catalogosService: CatalogosService, 
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private alertService: AlertService,
     sharedService: SharedService

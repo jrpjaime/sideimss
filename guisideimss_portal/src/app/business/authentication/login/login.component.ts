@@ -8,8 +8,7 @@ import { NAV } from '../../../global/navigation';
 import { Constants } from '../../../global/Constants';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from '../../../shared/services/alert.service';
-import { LoaderService } from '../../../shared/services/loader.service';
+import { AlertService } from '../../../shared/services/alert.service'; 
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -38,8 +37,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private sharedService: SharedService,
     private router: Router,
     private sanitizer: DomSanitizer,
-     public alertService: AlertService,
-     private loaderService: LoaderService,
+     public alertService: AlertService, 
     private cdRef: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
@@ -82,7 +80,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
      console.log("LoginComponent entro en login");
     if (this.loginForm.valid) {
       const { user, password } = this.loginForm.value;
-      this.loaderService.showLoader();
+     
       this.authService.login(user, password).subscribe({
         next: (response) => {
           this.sharedService.initializeUserData();
@@ -120,7 +118,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       complete:() => {
-        this.loaderService.closeLoader();
+         
       }
 
 
@@ -211,7 +209,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
                   }
                 },
                 complete:() => {
-                  this.loaderService.closeLoader();
+                   
                 }
         });
 

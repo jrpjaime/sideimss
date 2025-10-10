@@ -44,13 +44,13 @@ public class UtileriasServiceImpl implements UtileriasService {
         return Mono.fromCallable(() -> {
             logger.debug("Convirtiendo {} a Base64...", fileName);
             if (file.isEmpty()) {
-                throw new IOException("El archivo " + fileName + " está vacío.");
+                throw new IOException("El archivo está vacío.");
             }
             return Base64.getEncoder().encodeToString(file.getBytes());
         })
         .subscribeOn(Schedulers.boundedElastic()) // Ejecuta la operación bloqueante en un hilo separado
-        .doOnError(IOException.class, e -> logger.error("Error de I/O al convertir {} a Base64: {}", fileName, e.getMessage(), e))
-        .onErrorResume(e -> Mono.error(new RuntimeException("Fallo al convertir " + fileName + " a Base64: " + e.getMessage(), e)));
+        .doOnError(IOException.class, e -> logger.error("Error de I/O: {}", fileName, e.getMessage(), e))
+        .onErrorResume(e -> Mono.error(new RuntimeException( fileName + " - " +  e.getMessage(), e)));
     }
     
 }

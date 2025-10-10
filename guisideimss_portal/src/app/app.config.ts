@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { tokenInterceptor } from './core/interceptor/token-interceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { loaderInterceptor } from './core/interceptor/loader.interceptor';
 
 
 export const appConfig: ApplicationConfig = {
@@ -13,7 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([tokenInterceptor])  // Cambia a la función interceptor
+      withInterceptors([tokenInterceptor, loaderInterceptor ])  // Cambia a la función interceptor
     ),
     provideAnimationsAsync(),
 
