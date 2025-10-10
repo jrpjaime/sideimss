@@ -11,6 +11,7 @@ import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModalService } from '../../../shared/services/modal.service';
+import { catchError, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -276,8 +277,86 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
   }
 
 
-onReiniciarFormAcreditacionMembresia() {
+  onReiniciarFormAcreditacionMembresia() {
     console.log('Botón Cancelar presionado');
+    this.alertService.clear(); // Limpiar alerts previos
+
+    // Verificar si hay archivos cargados
+    const hasUploadedFiles = this.fileUnoHdfsPath !== null || this.fileDosHdfsPath !== null;
+
+    const message = hasUploadedFiles
+      ? 'Se detectaron archivos cargados. ¿Estás seguro de que deseas cancelar la solicitud de Acreditación y Membresía? Los archivos se eliminarán permanentemente.'
+      : '¿Estás seguro de que deseas cancelar la solicitud de Acreditación y Membresía?';
+
+    this.modalService.showDialog(
+      'confirm',
+      'warning',
+      'Confirmar Cancelación',
+      message,
+      (confirmed: boolean) => {
+        if (confirmed) {
+          this.alertService.info('Cancelando proceso...', { autoClose: true });
+
+          const deleteObservables = [];
+
+          if (this.fileUnoHdfsPath) {
+            deleteObservables.push(
+              this.acreditacionMembresiaService.deleteDocument(this.fileUnoHdfsPath).pipe(
+                catchError(error => {
+                  console.error('Error al eliminar archivo de Acreditación:', error);
+                  this.alertService.error('Error al eliminar el archivo de Acreditación. Continuar con la cancelación.', { autoClose: true });
+                  return of(null); // Retorna un observable que emite null para que forkJoin no se detenga
+                })
+              )
+            );
+          }
+
+          if (this.fileDosHdfsPath) {
+            deleteObservables.push(
+              this.acreditacionMembresiaService.deleteDocument(this.fileDosHdfsPath).pipe(
+                catchError(error => {
+                  console.error('Error al eliminar archivo de Membresía:', error);
+                  this.alertService.error('Error al eliminar el archivo de Membresía. Continuar con la cancelación.', { autoClose: true });
+                  return of(null); // Retorna un observable que emite null para que forkJoin no se detenga
+                })
+              )
+            );
+          }
+
+          if (deleteObservables.length > 0) {
+            forkJoin(deleteObservables).subscribe({
+              next: () => {
+                this.performResetAndRedirect();
+                this.alertService.success('Archivos eliminados y cancelación confirmada.', { autoClose: true });
+              },
+              error: (err) => {
+                // Este error solo se capturaría si forkJoin falla completamente sin catchError en los pipes individuales
+                console.error('Error general al eliminar archivos:', err);
+                this.alertService.error('Ocurrió un error al intentar eliminar algunos archivos. Se procederá con la cancelación.', { autoClose: true });
+                this.performResetAndRedirect();
+              }
+            });
+          } else {
+            // No hay archivos para eliminar, simplemente resetear y redirigir
+            this.performResetAndRedirect();
+            this.alertService.success('Cancelación confirmada.', { autoClose: true });
+          }
+
+        } else {
+          // El usuario canceló la operación en la modal
+          this.alertService.info('La cancelación ha sido anulada.', { autoClose: true });
+        }
+      },
+      'Si', // Texto para el botón de confirmar
+      'No'  // Texto para el botón de cancelar
+    );
+  }
+
+  /**
+   * Método auxiliar para resetear el formulario y redirigir,
+   * para evitar duplicación de código.
+   */
+  private performResetAndRedirect() {
     this.formAcreditacionMembresia.reset();
     this.selectedFileUno = null;
     this.selectedFileDos = null;
@@ -287,22 +366,27 @@ onReiniciarFormAcreditacionMembresia() {
     this.fileDosHdfsPath = null;
     this.fileUnoError = null;
     this.fileDosError = null;
-    this.loadingFileUno = false; // Resetear estado de carga
-    this.loadingFileDos = false; // Resetear estado de carga
-    this.alertService.clear();
+    this.loadingFileUno = false;
+    this.loadingFileDos = false;
     this.responseDto = null;
 
+    // Limpiar inputs de tipo file en el DOM
     const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
     const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
     if (fileInputUno) fileInputUno.value = '';
     if (fileInputDos) fileInputDos.value = '';
 
+    // Restablecer el estado de los controles del formulario
     Object.keys(this.formAcreditacionMembresia.controls).forEach(key => {
-      this.formAcreditacionMembresia.get(key)?.markAsPristine(); // Fixed here
+      this.formAcreditacionMembresia.get(key)?.markAsPristine();
       this.formAcreditacionMembresia.get(key)?.markAsUntouched();
       this.formAcreditacionMembresia.get(key)?.updateValueAndValidity();
     });
+
+    // Redirigir a la página inicial
+    this.router.navigate(['/home']);
   }
+
 
 downloadFile(hdfsPath: string | null, fileName: string) {
     if (hdfsPath) {
