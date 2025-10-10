@@ -1,15 +1,9 @@
- <div class="row">
+<div class="row">
     <div class="col-12">
         <h3 class="mb-0">Presentación de la acreditación y menbresía</h3>
         <hr class="red">
     </div>
-  </div>
-
-
-
-
-
-
+</div>
 
 <form [formGroup]="formAcreditacionMembresia" (ngSubmit)="onSubmit()">
   <div class="row">
@@ -79,8 +73,17 @@
           <div class="alert alert-success mt-2 d-flex align-items-center">
             <i class="bi bi-check-circle-fill me-2"></i>
             Archivo de acreditación cargado exitosamente.
-            <a href="javascript:void(0)" (click)="downloadFile(fileUnoHdfsPath, selectedFileUno?.name || 'archivoUno')" class="ms-3 me-2">Descargar</a>
-            <a href="javascript:void(0)" (click)="deleteFile('archivoUno')" class="text-danger">Eliminar</a>
+            <!-- MODIFICACIÓN AQUÍ -->
+            <div class="action-icons ms-3">
+              <a href="javascript:void(0)" (click)="downloadFile(fileUnoHdfsPath, selectedFileUno?.name || 'archivoUno')" class="icon-link" title="Descargar">
+                <i class="bi bi-download"></i>
+                <span class="icon-text"> </span>
+              </a>
+              <a href="javascript:void(0)" (click)="deleteFile('archivoUno')" class="icon-link text-danger" title="Eliminar">
+                <i class="bi bi-trash"></i>
+                <span class="icon-text"> </span>
+              </a>
+            </div>
           </div>
         }
         <!-- Mensaje de error específico para archivoUno -->
@@ -110,8 +113,17 @@
           <div class="alert alert-success mt-2 d-flex align-items-center">
             <i class="bi bi-check-circle-fill me-2"></i>
             Archivo de membresía cargado exitosamente.
-            <a href="javascript:void(0)" (click)="downloadFile(fileDosHdfsPath, selectedFileDos?.name || 'archivoDos')" class="ms-3 me-2">Descargar</a>
-            <a href="javascript:void(0)" (click)="deleteFile('archivoDos')" class="text-danger">Eliminar</a>
+            <!-- MODIFICACIÓN AQUÍ -->
+            <div class="action-icons ms-3">
+              <a href="javascript:void(0)" (click)="downloadFile(fileDosHdfsPath, selectedFileDos?.name || 'archivoDos')" class="icon-link" title="Descargar">
+                <i class="bi bi-download"></i>
+                <span class="icon-text"> </span>
+              </a>
+              <a href="javascript:void(0)" (click)="deleteFile('archivoDos')" class="icon-link text-danger" title="Eliminar">
+                <i class="bi bi-trash"></i>
+                <span class="icon-text"> </span>
+              </a>
+            </div>
           </div>
         }
         <!-- Mensaje de error específico para archivoDos -->
@@ -143,5 +155,4 @@
     </div>
   </div>
 </form>
-
 

@@ -1,0 +1,39 @@
+.action-icons {
+  display: flex; /* Para alinear los íconos horizontalmente */
+  gap: 10px; /* Espacio entre los íconos */
+  align-items: center;
+}
+
+.icon-link {
+  position: relative; /* Necesario para posicionar el texto del tooltip */
+  display: flex;
+  align-items: center;
+  color: #007bff; /* Color por defecto de Bootstrap para enlaces */
+  text-decoration: none; /* Quitar subrayado por defecto */
+  padding: 5px; /* Pequeño padding alrededor del ícono */
+  border-radius: 4px; /* Bordes ligeramente redondeados */
+  transition: background-color 0.2s ease-in-out; /* Transición suave para el fondo */
+}
+
+.icon-link.text-danger {
+  color: #dc3545 !important; /* Color rojo de Bootstrap para eliminar */
+}
+
+.icon-link:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Fondo ligeramente oscuro al pasar el mouse */
+  text-decoration: none; /* Asegurar que no haya subrayado al hacer hover */
+}
+
+.icon-link i {
+  /* MODIFICACIÓN AQUÍ: Aumentar el tamaño de la fuente */
+  font-size: 1.5rem;  
+  margin-right: 5px; /* Espacio entre el ícono y el texto (cuando visible) */
+  pointer-events: none; /* Permite que el hover se aplique al enlace completo */
+}
+
+ 
+
+/* Ajustes para el ícono de check de éxito, si es necesario */
+.alert-success .bi-check-circle-fill {
+    font-size: 1.5rem;  
+}
