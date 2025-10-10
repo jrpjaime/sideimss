@@ -34,7 +34,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       name: 'Contador', icon: 'bi bi-building-fill', isExpanded: false,
       roles: [Constants.roleContador], // Solo visible para el rol Contador
       children: [
-        { name: 'Presentación de acreditación y menbresía', icon: 'bi bi-file-text-fill', route: '/contador/acreditacionymembresia' },
+        { name: 'Presentación de acreditación y membresía', icon: 'bi bi-file-text-fill', route: '/contador/acreditacionymembresia' },
         { name: 'Modificación de datos', icon: 'bi bi-arrow-repeat', route: '/contador/modificaciondatos' },
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
       ]
