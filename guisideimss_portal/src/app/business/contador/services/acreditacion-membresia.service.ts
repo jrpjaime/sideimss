@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { EPs } from '../../../global/endPoint';
 import { environment } from '../../../../environments/environment';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
+import { PlantillaDatoDto } from '../model/PlantillaDatoDto';
 
 
 @Injectable({
@@ -44,6 +45,18 @@ export class AcreditacionMembresiaService {
     enviarDatosFinales(submitDto: any): Observable<any> {
 
     return this.httpClient.post<any>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, submitDto);
+  }
+
+
+ 
+
+  // Nuevo método para descargar el preview del acuse
+  descargarAcusePreview(plantillaDatoDto: PlantillaDatoDto): Observable<HttpResponse<Blob>> {
+    const url = `${environment.acusesApiUrl}${EPs.acuses.descargarAcusePreview}`;
+    return this.httpClient.post(url, plantillaDatoDto, {
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 
 }

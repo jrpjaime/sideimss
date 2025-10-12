@@ -96,25 +96,25 @@ public class DocumentosRestController {
             // Error en los datos de entrada (Base64 inválido, campo nulo, etc.)
             logger.error("Error de argumentos al cargar el documento: {}", e.getMessage(), e);
             documentoIndividualVO.setCodigo(1); // O un código de error específico para argumentos inválidos
-            documentoIndividualVO.setMensaje("Error de datos de entrada: ");
+            documentoIndividualVO.setMensaje("Error de datos. ");
             return new ResponseEntity<>(documentoIndividualVO, HttpStatus.BAD_REQUEST); // 400 Bad Request
         } catch (ParseException e) {
             // Error en el formato de la fecha
             logger.error("Error de formato de fecha al cargar el documento: {}", e.getMessage(), e);
             documentoIndividualVO.setCodigo(2); // Código de error específico para formato de fecha
-            documentoIndividualVO.setMensaje("Error en el formato de la fecha");
+            documentoIndividualVO.setMensaje("Error en el formato de la fecha.");
             return new ResponseEntity<>(documentoIndividualVO, HttpStatus.BAD_REQUEST); // 400 Bad Request
         } catch (IOException e) {
             // Error de comunicación o I/O con Hadoop
             logger.error("Error de I/O al interactuar con Hadoop: {}", e.getMessage(), e);
             documentoIndividualVO.setCodigo(3); // Código de error específico para I/O con Hadoop
-            documentoIndividualVO.setMensaje("Error de conexión o I/O con el sistema de almacenamiento" );
+            documentoIndividualVO.setMensaje("Error en el sistema de almacenamiento." );
             return new ResponseEntity<>(documentoIndividualVO, HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
         } catch (Exception e) {
             // Cualquier otra excepción inesperada
             logger.error("Error inesperado al cargar el documento: {}", e.getMessage(), e);
             documentoIndividualVO.setCodigo(99); // Código de error genérico
-            documentoIndividualVO.setMensaje("Error interno del servidor al cargar el documento");
+            documentoIndividualVO.setMensaje("Error al cargar el documento.");
             return new ResponseEntity<>(documentoIndividualVO, HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
         } finally {
             logger.info("------------- Fin cargarDocumento en Controller -------------");
@@ -150,13 +150,13 @@ public class DocumentosRestController {
 
         } catch (IllegalArgumentException e) {
             logger.error("Error de argumentos al descargar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de ruta de documento inválido.", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Documento inválido.", e);
         } catch (IOException e) {
             logger.error("Error de I/O al descargar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento en el sistema de almacenamiento.", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento.", e);
         } catch (Exception e) {
             logger.error("Error inesperado al descargar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor al procesar la descarga.", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al procesar la descarga.", e);
         } finally {
             logger.info("------------- Fin descargarDocumento en Controller -------------");
         }
@@ -182,13 +182,13 @@ public class DocumentosRestController {
 
         } catch (IllegalArgumentException e) {
             logger.error("Error de argumentos al eliminar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de ruta de documento inválido para eliminación.", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Documento inválido para eliminación.", e);
         } catch (IOException e) {
             logger.error("Error de I/O al eliminar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento en el sistema de almacenamiento para eliminación.", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al acceder al documento para eliminación.", e);
         } catch (Exception e) {
             logger.error("Error inesperado al eliminar el documento: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor al procesar la eliminación.", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al procesar la eliminación.", e);
         } finally {
             logger.info("------------- Fin deleteDocumento en Controller -------------");
         }
@@ -233,22 +233,22 @@ public class DocumentosRestController {
         } catch (IllegalArgumentException e) {
             logger.error("Error de argumentos al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
             responseDto.setCodigo(1);
-            responseDto.setMensaje("Error de datos de entrada: " + e.getMessage());
+            responseDto.setMensaje("Error de datos.");
             return new ResponseEntity<>(responseDto, HttpStatus.BAD_REQUEST);
         } catch (ParseException e) {
             logger.error("Error de formato de fecha al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
             responseDto.setCodigo(2);
-            responseDto.setMensaje("Error en el formato de la fecha: " + e.getMessage());
+            responseDto.setMensaje("Error en el formato de la fecha." );
             return new ResponseEntity<>(responseDto, HttpStatus.BAD_REQUEST);
         } catch (IOException e) {
             logger.error("Error de I/O al interactuar con Hadoop (MultipartFile): {}", e.getMessage(), e);
             responseDto.setCodigo(3);
-            responseDto.setMensaje("Error de conexión o I/O con el sistema de almacenamiento: " + e.getMessage());
+            responseDto.setMensaje("Error en el sistema de almacenamiento.");
             return new ResponseEntity<>(responseDto, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             logger.error("Error inesperado al cargar el archivo (MultipartFile): {}", e.getMessage(), e);
             responseDto.setCodigo(99);
-            responseDto.setMensaje("Error interno del servidor al cargar el archivo: " + e.getMessage());
+            responseDto.setMensaje("Error al cargar el archivo." );
             return new ResponseEntity<>(responseDto, HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             logger.info("------------- Fin cargarArchivoMultipart en Controller -------------");

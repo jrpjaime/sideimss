@@ -1,63 +1,42 @@
-<p>acreditacionymembresia-acuse works!</p>
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-0">Acuse de Acreditación y Membresía</h3>
+        <hr class="red">
+    </div>
+</div>
 
+<div class="row">
+    <div class="col-12">
+        <h3>Previo acuse:</h3>
 
+        @if (loadingAcusePreview) {
+            <div class="alert alert-info d-flex align-items-center">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Generando previsualización del acuse...
+            </div>
+        } @else if (acusePreviewError) {
+            <div class="alert alert-danger d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ acusePreviewError }}
+            </div>
+        } @else if (acusePdfUrl) {
+            <!-- Contenedor para el iframe con altura definida -->
+            <div style="width: 100%; height: 600px; border: 1px solid #ccc; margin-bottom: 20px;">
+                <iframe [src]="acusePdfUrl" width="100%" height="100%" frameborder="0" title="Previsualización del Acuse"></iframe>
+            </div>
+        } @else {
+            <div class="alert alert-warning">
+                No hay previsualización disponible.
+            </div>
+        }
+    </div>
+</div>
 
-<h3>Datos del Formulario Anterior:</h3>
-
-@if (datosFormularioPrevio && Object.keys(datosFormularioPrevio).length > 0) {
-  <div>
-    <p><strong>Fecha de Expedición Acreditación:</strong>
-      @if (datosFormularioPrevio.fechaExpedicionAcreditacion) {
-        <span>
-          {{ datosFormularioPrevio.fechaExpedicionAcreditacion | date:'fullDate' }}
-        </span>
-      } @else {
-        <span>
-          (No disponible)
-        </span>
-      }
-    </p>
-
-    <p><strong>Fecha de Expedición Membresía:</strong>
-      @if (datosFormularioPrevio.fechaExpedicionMembresia) {
-        <span>
-          {{ datosFormularioPrevio.fechaExpedicionMembresia | date:'fullDate' }}
-        </span>
-      } @else {
-        <span>
-          (No disponible)
-        </span>
-      }
-    </p>
-
-    <p><strong>Path HDFS Acreditación:</strong>
-      @if (datosFormularioPrevio.desPathHdfsAcreditacion) {
-        <span>
-          {{ datosFormularioPrevio.desPathHdfsAcreditacion }}
-        </span>
-      } @else {
-        <span>
-          (No disponible)
-        </span>
-      }
-    </p>
-
-    <p><strong>Path HDFS Membresía:</strong>
-      @if (datosFormularioPrevio.desPathHdfsMembresia) {
-        <span>
-          {{ datosFormularioPrevio.desPathHdfsMembresia }}
-        </span>
-      } @else {
-        <span>
-          (No disponible)
-        </span>
-      }
-    </p>
-
-    <!-- Si tienes más datos en datosFormularioPrevio, puedes mostrarlos aquí con @if -->
+<div class="pull-right">
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="volver()">Volver</button>
+      <button type="button" class="btn btn-primary" (click)="enviarSolicitudFinal()" [disabled]="!acusePdfUrl">
+        Enviar Solicitud
+      </button>
+    </div>
   </div>
-} @else {
-  <div>
-    No se recibieron datos adicionales del formulario de acreditación/membresía.
-  </div>
-}

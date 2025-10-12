@@ -67,7 +67,7 @@ public class AcusesRestController {
 	}
 
  
-/*
+ 
 	@RequestMapping("/descargarAcuse/{urlDocumento}")
 	public ResponseEntity<byte[]> descargarAcuse (@PathVariable("urlDocumento")  String urlDocumento, HttpServletRequest request) {
  
@@ -119,11 +119,11 @@ public class AcusesRestController {
 	}
  
  
-*/
+ 
 
    
-    @PostMapping("/descargarPreviewAcuse")
-    public ResponseEntity<byte[]> descargaPreviewAcuse(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+    @PostMapping("/descargarAcusePreview")
+    public ResponseEntity<byte[]> descargarAcusePreview(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);

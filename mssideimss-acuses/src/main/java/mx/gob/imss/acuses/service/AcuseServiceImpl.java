@@ -209,7 +209,7 @@ public class AcuseServiceImpl implements AcuseService {
             decargarAcuseDto.setMensaje("Acuse generado exitosamente sin conexión a BD.");
 
         } catch (Exception e) {
-            logger.error("❌ Error al generar el acuse sin BD: {}", e.getMessage(), e);
+            logger.error("Error al generar el acuse: {}", e.getMessage(), e);
             decargarAcuseDto.setMensaje("Error al generar acuse: " + e.getMessage());
         }
 
