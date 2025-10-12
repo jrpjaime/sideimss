@@ -67,7 +67,7 @@ public class AcusesRestController {
 	}
 
  
-
+/*
 	@RequestMapping("/descargarAcuse/{urlDocumento}")
 	public ResponseEntity<byte[]> descargarAcuse (@PathVariable("urlDocumento")  String urlDocumento, HttpServletRequest request) {
  
@@ -119,20 +119,22 @@ public class AcusesRestController {
 	}
  
  
+*/
 
-
-  
+   
     @PostMapping("/descargarPreviewAcuse")
     public ResponseEntity<byte[]> descargaPreviewAcuse(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);
 
+        logger.info("RdecargarAcuseDto: " + decargarAcuseDto.toString());
+
         if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
             logger.error("Error al obtener el documento o documento vacío para preview. Mensaje: " + decargarAcuseDto.getMensaje());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Retorna 404 Not Found si no se encuentra o hay error
         }
-
+        logger.info(" String base64Content = " );
         try {
             String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
             byte[] pdfBytes = Base64.getDecoder().decode(base64Content);

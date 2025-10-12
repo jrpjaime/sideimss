@@ -13,19 +13,10 @@ public class PlantillaDatoDto implements Serializable {
     private String desVersion; // Corresponde a desVersion de PlantillaDato
     private String datosJson; // Aquí se pasará la cadena JSON
 
-    // Constructor vacío
+
     public PlantillaDatoDto() {
     }
 
- 
 
-    @Override
-    public String toString() {
-        return "PlantillaDatoDto{" +
-               "cveIdPlantillaDatos=" + cveIdPlantillaDatos +
-               ", nomDocumento='" + nomDocumento + '\'' +
-               ", desVersion='" + desVersion + '\'' +
-               ", datosJson='" + datosJson + '\'' +
-               '}';
-    }
 }
+

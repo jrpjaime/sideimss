@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Base64; // Importar Base64
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -38,11 +39,15 @@ import org.springframework.stereotype.Service;
 public class AcuseServiceImpl implements AcuseService {
 	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
 	
+ 
+	@Autowired
+	private UtileriasService utileriasService;
+
+
 	@Autowired
 	private PlantillaDatosRepository plantillaDatosRepository;
 	
-	@Autowired
-	private UtileriasService utileriasService;
+
 	
 	@Override
 	@Transactional
@@ -101,7 +106,7 @@ public class AcuseServiceImpl implements AcuseService {
         
 		return decargarAcuseDto;
 	}
-	
+	 
 	
 	
 	/**
@@ -112,156 +117,103 @@ public class AcuseServiceImpl implements AcuseService {
 	 * @throws JRException Si ocurre un error durante la generación del reporte Jasper.
 	 * @throws java.io.IOException Si ocurre un error al procesar el JSON.
 	 */
-	private byte[] generarAcuseconDatosJSON(PlantillaDato plantillaDato) throws JRException, java.io.IOException {
-		logger.info("private byte[] generarAcuse");
-		String datosJSON = plantillaDato.getDesDatos();
-		String desVersionPlantilla = plantillaDato.getDesVersion()+".jasper"; // Esto debería ser el path o nombre del archivo .jasper
+	 private byte[] generarAcuseconDatosJSON(PlantillaDato plantillaDato) throws JRException, java.io.IOException {
+        logger.info("Iniciando generación de acuse con datos JSON...");
 
-		 
-		logger.info("desVersionPlantilla: "+ desVersionPlantilla);
-		logger.info("Datos JSON para la plantilla: " + datosJSON);
+        String datosJSON = plantillaDato.getDesDatos();
+        String desVersionPlantilla = plantillaDato.getDesVersion() + ".jasper"; // Ruta completa del .jasper
 
-		// 1. Cargar la plantilla Jasper
-		// Asegúrate de que la plantilla .jasper esté accesible en el classpath
-		// Por ejemplo, si está en src/main/resources/reportes/mi_plantilla.jasper
-		InputStream jasperStream = this.getClass().getClassLoader().getResourceAsStream(desVersionPlantilla);
-		if (jasperStream == null) {
-			logger.error("No se encontró la plantilla Jasper: reportes/" + desVersionPlantilla);
-			throw new JRException("No se encontró la plantilla Jasper: " + desVersionPlantilla);
-		}
-		
-		logger.error("Se genera documento con la plantilla: " + desVersionPlantilla);
-		JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
+        logger.info("Plantilla Jasper a usar: {}", desVersionPlantilla);
+        logger.info("Datos JSON recibidos: {}", datosJSON);
 
+        // 1️⃣ Cargar la plantilla Jasper del classpath
+        InputStream jasperStream = this.getClass().getClassLoader().getResourceAsStream(desVersionPlantilla);
+        if (jasperStream == null) {
+            logger.error("No se encontró la plantilla Jasper: {}", desVersionPlantilla);
+            throw new JRException("No se encontró la plantilla Jasper: " + desVersionPlantilla);
+        }
 
-		// 2. Procesar los datos JSON
-		ObjectMapper objectMapper = new ObjectMapper();
-		JRDataSource dataSource;
-		logger.info("Parámetros para el reporte  ");
-		Map<String, Object> parameters = Collections.emptyMap(); // Parámetros para el reporte  
-		logger.info("paso Map<String, Object> parameters = Coll  ");
-		try {
-			// Intenta parsear el JSON como una lista de objetos (para tablas)
-			logger.info("Intenta parsear el JSON como una lista de objetos (para tablas)");
-			List<Map<String, Object>> dataList = objectMapper.readValue(datosJSON, new TypeReference<List<Map<String, Object>>>(){});
-			dataSource = new JRBeanCollectionDataSource(dataList);
-			logger.info("Datos JSON parseados como lista de objetos.");
-		} catch (Exception e) {
-			// Si no es una lista, intenta parsearlo como un solo objeto (para datos generales)
-			try {
-				logger.info("intenta parsearlo como un solo objeto (para datos generales");
-				Map<String, Object> dataMap = objectMapper.readValue(datosJSON, new TypeReference<Map<String, Object>>(){});
-				//dataSource = new JRBeanCollectionDataSource(Collections.singletonList(dataMap)); // Envuelve el mapa en una lista para el datasource
-				parameters = dataMap;
-				 
-		        // 1. Obtener la cadena de datos para el QR del parámetro "image" que fue cargado del JSON.
-		        String datosQR = (String) parameters.get("image");
-		        logger.info("Datos para QR: " + datosQR);
+        JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
 
-		        if (datosQR != null && !datosQR.isEmpty()) {
-		            logger.info("Datos para generar QR obtenidos del parámetro 'image': " + datosQR);
+        // 2️⃣ Parsear el JSON recibido
+        ObjectMapper objectMapper = new ObjectMapper();
+        JRDataSource dataSource;
+        Map<String, Object> parameters = new HashMap<>();
 
-		            // 2. Generar la imagen QR
-		            BufferedImage qrImage = utileriasService.generaQRImage(datosQR);
-		            
-		            // 3. Reemplazar la cadena original en 'parameters' con el BufferedImage generado
-		            parameters.put("image", qrImage);
-		            logger.info("Imagen QR generada y reemplazada en los parámetros del reporte bajo la clave 'image'.");
-		        } else {
-		            logger.warn("El parámetro 'image' en el JSON estaba vacío o nulo. No se generará imagen QR.");
-		            // Si el QR es opcional y no se desea generar si la cadena está vacía.
-		            
-		        }
-		        
-		        
-				logger.info("Datos JSON parseados como un solo objeto. Se usará como datasource y parámetros.");
-			} catch (Exception ex) {
-				logger.error("Error al parsear el JSON: " + datosJSON, ex);
-				throw new java.io.IOException("Error al parsear el JSON: " + datosJSON, ex);
-			}
-		}
-		logger.info("Llenar el reporte");
-		// 3. Llenar el reporte
-		JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, new JREmptyDataSource(1));
-		logger.info("Exportar a PDF");
-		// 4. Exportar a PDF
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		JRPdfExporter exporter = new JRPdfExporter();
+        try {
+            // Si el JSON es una lista (para reportes tipo tabla)
+            List<Map<String, Object>> dataList = objectMapper.readValue(datosJSON, new TypeReference<List<Map<String, Object>>>(){});
+            dataSource = new JRBeanCollectionDataSource(dataList);
+            logger.info("JSON interpretado como lista de objetos.");
+        } catch (Exception e) {
+            // Si el JSON es un solo objeto
+            logger.info("JSON interpretado como objeto único.");
+            Map<String, Object> dataMap = objectMapper.readValue(datosJSON, new TypeReference<Map<String, Object>>() {});
+            parameters.putAll(dataMap);
+            dataSource = new JREmptyDataSource(1);
+        }
 
-		exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-		exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(baos));
+        // 3️⃣ Llenar el reporte Jasper con los parámetros y/o datasource
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
 
-		SimplePdfReportConfiguration reportConfig = new SimplePdfReportConfiguration();
-		reportConfig.setSizePageToContent(true);
-		reportConfig.setForceLineBreakPolicy(false);
-	
-		SimplePdfExporterConfiguration exportConfig = new SimplePdfExporterConfiguration();
-		exportConfig.setMetadataAuthor("IMSS"); // Puedes configurar metadata del PDF
-		
+        // 4️⃣ Exportar el reporte a PDF
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        JRPdfExporter exporter = new JRPdfExporter();
+        exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+        exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(baos));
 
-		exporter.setConfiguration(reportConfig);
-		exporter.setConfiguration(exportConfig);
+        SimplePdfReportConfiguration reportConfig = new SimplePdfReportConfiguration();
+        reportConfig.setSizePageToContent(true);
 
-		exporter.exportReport();
+        SimplePdfExporterConfiguration exportConfig = new SimplePdfExporterConfiguration();
+        exportConfig.setMetadataAuthor("IMSS");
 
-		logger.info("Acuse generado exitosamente para plantilla: " + desVersionPlantilla);
-		return baos.toByteArray();
-	}
+        exporter.setConfiguration(reportConfig);
+        exporter.setConfiguration(exportConfig);
+        exporter.exportReport();
+
+        logger.info("✅ Acuse generado exitosamente.");
+        return baos.toByteArray();
+    }
 	
 
+ 
 
 
 
+    @Override
+    public DecargarAcuseDto consultaAcuseByPlantillaDato(PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Procesando consultaAcuseByPlantillaDato sin conexión a BD...");
 
+        DecargarAcuseDto decargarAcuseDto = new DecargarAcuseDto();
+        decargarAcuseDto.setCodigo(1); // Por defecto error
 
+        try {
+            // Crear el objeto PlantillaDato desde el DTO
+            PlantillaDato plantillaDato = new PlantillaDato();
+            plantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+            plantillaDato.setDesVersion(plantillaDatoDto.getDesVersion());
+            plantillaDato.setDesDatos(plantillaDatoDto.getDatosJson()); // ✅ clave para no requerir BD
 
-	@Override
-	@Transactional
-	public DecargarAcuseDto consultaAcuseByPlantillaDato(PlantillaDatoDto plantillaDatoDto){
-		
-		DecargarAcuseDto decargarAcuseDto=new DecargarAcuseDto();
-		decargarAcuseDto.setCodigo(1); // Por defecto, asume un error
-		decargarAcuseDto.setMensaje("Error en acuse.");
-		
-		try {
-	  		// Crear una instancia de PlantillaDato a partir del DTO
-	        PlantillaDato plantillaDato=new PlantillaDato();
-	        // Asignar los campos del DTO al objeto PlantillaDato
-	
-			plantillaDato.setCveIdPlantillaDatos(null); // O un valor por defecto si es necesario
-			plantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
-			plantillaDato.setDesVersion(plantillaDatoDto.getDesVersion());
-          
+            logger.info("Generando PDF con la plantilla: {}", plantillaDato.getDesVersion());
 
-	        logger.info("plantillaDato.getDesDatos(): " + plantillaDato.getDesDatos());
-	        logger.info("plantillaDato.getNomDocumento(): " + plantillaDato.getNomDocumento());
-	        logger.info("plantillaDato.getDesVersion(): " + plantillaDato.getDesVersion());
-	        
-	        String nombreDocumento = plantillaDato.getNomDocumento();
-	        if (nombreDocumento == null || nombreDocumento.isEmpty()) {
-	            nombreDocumento = "documento_preview"; // Nombre por defecto si no se proporciona
-	        }
-	        logger.info("nombreDocumento: " + nombreDocumento);
+            // Generar el PDF
+            byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
 
-			// Generar el acuse y obtener los bytes del PDF
-			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
+            // Codificar a Base64 para enviar al frontend
+            String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
-			// Codificar los bytes del PDF a Base64
-			String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
+            decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
+            decargarAcuseDto.setNombreDocumento(plantillaDato.getNomDocumento());
+            decargarAcuseDto.setCodigo(0);
+            decargarAcuseDto.setMensaje("Acuse generado exitosamente sin conexión a BD.");
 
-			// Asignar los valores al DTO
-			decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64); // Formato de URI de datos
-			decargarAcuseDto.setNombreDocumento(nombreDocumento + ".pdf"); // Nombre dinámico
-			decargarAcuseDto.setCodigo(0); // Éxito
-			decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
-	        
-		}catch (Exception e) {
-			logger.error("Error en consultaAcuseByPlantillaDato", e);
-			decargarAcuseDto.setMensaje("Error interno al procesar la solicitud: " + e.getMessage());
-		}
-        
-		return decargarAcuseDto;
-	}
+        } catch (Exception e) {
+            logger.error("❌ Error al generar el acuse sin BD: {}", e.getMessage(), e);
+            decargarAcuseDto.setMensaje("Error al generar acuse: " + e.getMessage());
+        }
 
+        return decargarAcuseDto;
+    }
 
 }
