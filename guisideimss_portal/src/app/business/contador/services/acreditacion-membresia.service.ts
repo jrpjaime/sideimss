@@ -48,9 +48,9 @@ export class AcreditacionMembresiaService {
   }
 
 
- 
 
-  // Nuevo método para descargar el preview del acuse
+
+  // método para descargar el preview del acuse
   descargarAcusePreview(plantillaDatoDto: PlantillaDatoDto): Observable<HttpResponse<Blob>> {
     const url = `${environment.acusesApiUrl}${EPs.acuses.descargarAcusePreview}`;
     return this.httpClient.post(url, plantillaDatoDto, {

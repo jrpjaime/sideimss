@@ -2,3 +2,26 @@
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
 
+.modal-firma-amplio .modal-dialog {
+    width: 1200px;
+    max-width: 1200px; /* Importante para anular el max-width predeterminado de Bootstrap */
+    height: 622px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.modal-firma-amplio .modal-content {
+    width: 1200px;
+    height: 820px;
+}
+
+.modal-firma-amplio .modal-body {
+    width: 1200px;
+    height: 420px; /* Ajusta según sea necesario para el iframe */
+}
+
+/* Opcional: Si el iframe necesita ser más grande */
+.modal-firma-amplio iframe {
+    width: 1000px; /* Ejemplo */
+    height: 500px; /* Ejemplo */
+}

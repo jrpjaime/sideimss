@@ -14,27 +14,27 @@ export class BaseComponent implements OnInit {
 
 
   rfcSesion: string = '';
-			   
-																		  
+
+
 
   nombreSesion: string = '';
   primerApellidoSesion: string = '';
   segundoApellidoSesion: string = '';
   curpSesion: string = '';
 
-	   
-																 
-										  
-															 
-										 
+
+
+
+
+
 
   roles: string[] = [];
   indPatron: boolean = false;
-									   
-										   
-						  
-										
-				 
+
+
+
+
+
 
   indFase: number = 1;
 
@@ -50,17 +50,17 @@ export class BaseComponent implements OnInit {
       cveNss: '^[0-9]{11}$'
 
     };
-																	  
+
 
   constructor(
      protected sharedService: SharedService) {}
 
-																					 
-																	   
-																							
-																			  
-																		  
-																	   
+
+
+
+
+
+
 
 
   ngOnInit(): void {
@@ -75,7 +75,7 @@ export class BaseComponent implements OnInit {
       this.rfc = rfc;
       console.log('this.rfc: ', this.rfc);
     });
-																			
+
 
     this.sharedService.currentRfcSesion.subscribe(rfcSesion => {
       this.rfcSesion = rfcSesion;
@@ -85,7 +85,7 @@ export class BaseComponent implements OnInit {
     this.sharedService.currentCurpSesion.subscribe(curpSesion => {
       this.curpSesion = curpSesion;
     });
-   
+
 
     this.sharedService.currentNombreSesion.subscribe(nombreSesion => {
       this.nombreSesion = nombreSesion;
@@ -108,23 +108,23 @@ export class BaseComponent implements OnInit {
     } else {
      this.indPatron = false;
     }
-																	   
-	
-																													  
-																							   
+
+
+
+
 
     console.log('this.roles: ' + this.roles.join(', '));
     });
 
-																		
-														   
 
-														   
-																											 
-								   
-																						 
-																								 
-		 
+
+
+
+
+
+
+
+
 
     this.sharedService.currentSubdelegacionSesion.subscribe(desDelegacionSesion => {
       this.desDelegacionSesion = desDelegacionSesion;
@@ -133,29 +133,29 @@ export class BaseComponent implements OnInit {
     this.sharedService.currentDelegacionSesion.subscribe(desSubdelegacionSesion => {
       this.desSubdelegacionSesion = desSubdelegacionSesion;
     });
-														 
 
-			 
-																 
-																																	 
-																  
-																	
-							   
-										   
-																 
-																														 
-									   
-												  
-		 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   }
-																									 
+
 
 /*
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     const maxSize = 5 * 1024 * 1024; // 5MB en bytes
-																			   
+
 
     if (file) {
       if (file.size > maxSize) {
@@ -168,8 +168,8 @@ export class BaseComponent implements OnInit {
     }
   }*/
 
-																						   
-											   
+
+
 
 // Método para formatear la fecha
 formatDate(date: string): string {
@@ -184,9 +184,9 @@ formatDate(date: string): string {
 
 
 
-			 
-																							 
-																					 
+
+
+
 
   // Este  método configura un Observable para el nombre completo
   // que se actualizará automáticamente cuando cambie cualquiera de sus partes.
@@ -206,12 +206,12 @@ formatDate(date: string): string {
     );
   }
 
-			 
-													 
-																		 
 
-														 
-																			
+
+
+
+
+
 
   get nombreCompletoSync(): string {
       const nombre = this.nombreSesion || '';
@@ -224,10 +224,10 @@ formatDate(date: string): string {
       return partes.join(' ').trim();
   }
 
-							   
-																			 
-																					 
-		 
+
+
+
+
 
 
 
@@ -239,6 +239,15 @@ formatDate(date: string): string {
     };
     console.log('Datos para el acuse:', datosAcuse);
     return datosAcuse;
+  }
+
+
+
+    ngOnDestroy(): void {
+    // Aquí es donde el BaseComponent limpiaría sus propias suscripciones
+    // Por ejemplo:
+    // this.subscriptions.forEach(sub => sub.unsubscribe());
+    // console.log('BaseComponent ngOnDestroy executed.');
   }
 
 }

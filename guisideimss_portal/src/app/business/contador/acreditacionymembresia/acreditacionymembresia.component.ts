@@ -6,7 +6,7 @@ import { CatalogosService } from '../../../shared/catalogos/services/catalogos.s
 import { SharedService } from '../../../shared/services/shared.service';
 import { fechaInicioMenorOigualFechaFin } from '../../../global/validators';
 import { AcreditacionMembresiaService } from '../services/acreditacion-membresia.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,6 +14,7 @@ import { ModalService } from '../../../shared/services/modal.service';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AcreditacionMembresiaDataService } from '../services/acreditacion-membresia-data.service';
 import { NAV } from '../../../global/navigation';
+
 
 @Component({
   selector: 'app-acreditacionymembresia',
@@ -35,8 +36,8 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
   fileUnoError: string | null = null;
   fileDosError: string | null = null;
 
-  loadingFileUno: boolean = false; // Nuevo: Para el spinner del botón Adjuntar
-  loadingFileDos: boolean = false; // Nuevo: Para el spinner del botón Adjuntar
+  loadingFileUno: boolean = false; //  Para el spinner del botón Adjuntar
+  loadingFileDos: boolean = false; //  Para el spinner del botón Adjuntar
 
   responseDto: DocumentoIndividualResponseDto | null = null; // Para la respuesta final del submit, si aplica
 
@@ -50,11 +51,11 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private alertService: AlertService,
     private acreditacionMembresiaDataService: AcreditacionMembresiaDataService,
-
+    private datePipe: DatePipe,
     sharedService: SharedService
   ) {
     super(sharedService);
-
+    this.recargaParametros();
     this.formAcreditacionMembresia = this.fb.group({
       fechaExpedicionAcreditacion: ['', [Validators.required]],
       fechaExpedicionMembresia: ['', [Validators.required]],
@@ -127,13 +128,20 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     uploadFile(controlName: string) {
     this.alertService.clear();
 
+    let desRfcValue = this.rfcSesion;
+
+    if (!desRfcValue) {
+      this.alertService.error('No se pudo obtener el RFC. Por favor, recarga la página o inténtalo más tarde.', { autoClose: true });
+      return;
+    }
+
     let fileToUpload: File | null = null;
     let loadingFlag: 'loadingFileUno' | 'loadingFileDos';
     let fileHdfsPath: 'fileUnoHdfsPath' | 'fileDosHdfsPath';
     let fileUploadSuccess: 'fileUnoUploadSuccess' | 'fileDosUploadSuccess';
     let fileError: 'fileUnoError' | 'fileDosError';
     let documentType: string;
-    let desRfcValue = 'RFCIMSS00001'; // <-- IMPORTANTE: Debes obtener el RFC real del usuario logueado o del formulario
+    //let desRfcValue = this.rfcSesion; // <-- IMPORTANTE: Debes obtener el RFC real del usuario logueado o del formulario
 
     if (controlName === 'archivoUno') {
       fileToUpload = this.selectedFileUno;
@@ -171,10 +179,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
     formData.append('archivo', fileToUpload, fileToUpload.name);
     formData.append('desRfc', desRfcValue); // Usar el RFC real
     formData.append('nomArchivo', fileToUpload.name);
-    // Puedes enviar desPath si aplica, o dejarlo nulo para que el backend use el default
-    // formData.append('desPath', 'subdirectorio_opcional');
-    // Puedes enviar fechaActual si aplica, o dejarlo nulo
-    // formData.append('fechaActual', 'DD/MM/AAAA');
+
 
     this.acreditacionMembresiaService.uploadDocument(formData).subscribe({
       next: (response: DocumentoIndividualResponseDto) => {
@@ -483,29 +488,89 @@ downloadFile(hdfsPath: string | null, fileName: string) {
 
 
   continuarConAcuse(): void {
-    if (this.formAcreditacionMembresia.valid && this.fileUnoUploadSuccess && this.fileDosUploadSuccess) {
+    // Verificar la validez del formulario y si los archivos han sido cargados exitosamente
+    if (this.formAcreditacionMembresia.valid) {
 
-      // Obtener los datos actuales del formulario
-      const datosDelFormulario = this.formAcreditacionMembresia.value;
+      // Inicializar docMem y docAcr como null por defecto
+      let docMem: string | null = null;
+      let docAcr: string | null = null;
 
-      // ¡Aquí está el cambio! Combinar los datos del formulario con los paths HDFS
-      const datosCompletosParaAcuse = {
-        ...datosDelFormulario, // Extiende todos los campos del formulario  usando el operador spread (...) para incluir los campos del formulario
-        desPathHdfsAcreditacion: this.fileUnoHdfsPath, // Añade el path del archivo uno
-        desPathHdfsMembresia: this.fileDosHdfsPath      // Añade el path del archivo dos
-      };
+      // Validar si this.fileUnoHdfsPath fue cargado
+      if (this.fileUnoHdfsPath) {
+        docAcr = "Si";
+      }
 
-      // Guardar los datos completos en el servicio
-      this.acreditacionMembresiaDataService.setDatosFormularioPrevio(datosCompletosParaAcuse);
+      // Validar si this.fileDosHdfsPath fue cargado
+      if (this.fileDosHdfsPath) {
+        docMem = "Si";
+      }
 
-      // 3. Navegar al componente de acuse
-      this.router.navigate([NAV.contadoracreditacionymembresiaacuse]);
+      // Si ambos archivos fueron cargados exitosamente, proceed
+      if (this.fileUnoUploadSuccess && this.fileDosUploadSuccess) {
+        // Obtener los datos actuales del formulario
+        const datosDelFormulario = this.formAcreditacionMembresia.value;
+
+        let fechaDocMem: string | null = null;
+        let fechaDocAcr: string | null = null;
+
+        // Formatear fechaExpedicionMembresia si se proporcionó
+        if (datosDelFormulario.fechaExpedicionMembresia) {
+          fechaDocMem = this.datePipe.transform(datosDelFormulario.fechaExpedicionMembresia, 'dd/MM/yyyy');
+        }
+
+        // Formatear fechaExpedicionAcreditacion si se proporcionó
+        if (datosDelFormulario.fechaExpedicionAcreditacion) {
+          fechaDocAcr = this.datePipe.transform(datosDelFormulario.fechaExpedicionAcreditacion, 'dd/MM/yyyy');
+        }
+
+
+        const nombreCompletoSesion = this.nombreCompletoSync; // Usa el getter síncrono del BaseComponent
+        const rfcSesion = this.rfcSesion;
+        const curpSesion = this.curpSesion;
+
+
+
+
+       const cadenaOriginal = `${nombreCompletoSesion}|${this.rfcSesion}|${this.curpSesion}`;
+
+        console.warn('nombreCompletoSesion: '+ nombreCompletoSesion);
+        console.warn('rfcSesion: '+ curpSesion);
+        console.warn('curpSesion'+ curpSesion );
+        console.warn('cadenaOriginal: '+ cadenaOriginal);
+
+        const datosCompletosParaAcuse = {
+          ...datosDelFormulario, // Extiende todos los campos del formulario
+          desPathHdfsAcreditacion: this.fileUnoHdfsPath, // Añade el path del archivo uno
+          desPathHdfsMembresia: this.fileDosHdfsPath,      // Añade el path del archivo dos
+          docMem: docMem, // Agrega el valor de docMem
+          docAcr: docAcr,  // Agrega el valor de docAcr
+          fechaDocMem: fechaDocMem, // Agrega la fecha de membresía formateada
+          fechaDocAcr: fechaDocAcr,  // Agrega la fecha de acreditación formateada
+          nombreCompleto: nombreCompletoSesion, // Añade el nombre completo
+          RFC: rfcSesion,  // Añade el RFC
+          CURP: curpSesion,// Añade el CURP
+          cadenaOriginal: cadenaOriginal
+        };
+
+        // Guardar los datos completos en el servicio
+        this.acreditacionMembresiaDataService.setDatosFormularioPrevio(datosCompletosParaAcuse);
+
+        // Navegar al componente de acuse
+        this.router.navigate([NAV.contadoracreditacionymembresiaacuse]);
+      } else {
+        // Si el formulario es válido pero faltan archivos o no se cargaron correctamente
+        console.warn('Faltan archivos por cargar o la carga no fue exitosa.');
+        this.alertService.error('Por favor, asegúrate de que ambos archivos estén cargados correctamente antes de continuar.', { autoClose: true });
+      }
     } else {
-      console.warn('El formulario no es válido o los archivos no se han subido correctamente.');
-      // Opcional: Mostrar un mensaje al usuario para indicar qué falta.
-      this.alertService.error('Por favor, completa todos los campos requeridos y carga ambos archivos antes de continuar.', { autoClose: true });
+      // Si el formulario no es válido
+      console.warn('El formulario no es válido.');
+      // Opcional: Marcar todos los campos como "touched" para que se muestren los mensajes de error de validación
+      this.formAcreditacionMembresia.markAllAsTouched();
+      this.alertService.error('Por favor, completa todos los campos requeridos del formulario antes de continuar.', { autoClose: true });
     }
   }
+
 
 
 }

@@ -20,7 +20,6 @@
                 {{ acusePreviewError }}
             </div>
         } @else if (acusePdfUrl) {
-            <!-- Contenedor para el iframe con altura definida -->
             <div style="width: 100%; height: 600px; border: 1px solid #ccc; margin-bottom: 20px;">
                 <iframe [src]="acusePdfUrl" width="100%" height="100%" frameborder="0" title="Previsualización del Acuse"></iframe>
             </div>
@@ -35,8 +34,36 @@
 <div class="pull-right">
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" (click)="volver()">Volver</button>
+      <!-- El botón de enviar ahora inicia el proceso de firma -->
       <button type="button" class="btn btn-primary" (click)="enviarSolicitudFinal()" [disabled]="!acusePdfUrl">
         Enviar Solicitud
       </button>
     </div>
-  </div>
+</div>
+
+<!-- Modal para la Firma Electrónica -->
+@if (isFirmaModalVisible) {
+    <div class="modal fade show modal-firma-amplio" tabindex="-1" role="dialog" [ngStyle]="{'display': 'block'}" aria-modal="true">
+        <!-- Elimina los estilos inline de aquí, ahora la clase `modal-firma-amplio` los maneja -->
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Firma Electrónica Avanzada</h4>
+                    <button type="button" class="close" aria-label="Close" (click)="closeFirmaModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div align="center">
+                        <p>
+                            <!-- Ajusta el width/height del iframe si lo necesitas, o déjalo que el CSS de arriba lo maneje -->
+                            <iframe id="formFirmaDigital" name="formFirmaDigital" [src]="firmaWidgetUrl" width="850" height="370" frameborder="0">
+                            </iframe>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
