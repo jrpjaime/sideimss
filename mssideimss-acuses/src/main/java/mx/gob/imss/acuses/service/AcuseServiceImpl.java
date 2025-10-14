@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
+import mx.gob.imss.acuses.dto.AcuseConfig;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.model.PlantillaDato;
@@ -20,8 +21,10 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Base64; // Importar Base64
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,7 @@ import org.springframework.stereotype.Service;
 @Service("acuseService")
 public class AcuseServiceImpl implements AcuseService {
 	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
+    public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
 
 
 	@Autowired
@@ -48,132 +52,186 @@ public class AcuseServiceImpl implements AcuseService {
 	private PlantillaDatosRepository plantillaDatosRepository;
 
 
-	@Override
-	@Transactional
-	public DecargarAcuseDto consultaAcuseByUrlDocumento(String urlDocumento){
+    @Autowired
+    private AcuseConfigService acuseConfigService; // Inyecta el nuevo servicio
 
-		DecargarAcuseDto decargarAcuseDto=new DecargarAcuseDto();
-		decargarAcuseDto.setCodigo(1); // Por defecto, asume un error
-		decargarAcuseDto.setMensaje("Error en acuse.");
+    @Override
+    @Transactional
+    public DecargarAcuseDto consultaAcuseByUrlDocumento(String urlDocumento) {
+        DecargarAcuseDto decargarAcuseDto = new DecargarAcuseDto();
+        decargarAcuseDto.setCodigo(1); 
+        decargarAcuseDto.setMensaje("Error en acuse.");
 
-		try {
-	  		String filename=utileriasService.desencriptar(urlDocumento);
-			logger.info("1filename: " + filename );
-			StringTokenizer tokens=new StringTokenizer(filename, "|");
-	        int nDatos=tokens.countTokens();
+        try {
+            String filename = utileriasService.desencriptar(urlDocumento);
+            logger.info("1filename: " + filename );
+            StringTokenizer tokens = new StringTokenizer(filename, "|");
+            int nDatos = tokens.countTokens();
 
-	        String[] datos=new String[nDatos];
-	        Integer i=0;
-	        while(tokens.hasMoreTokens()){
-	            String str=tokens.nextToken();
-	            datos[i]=str;
-	            logger.info("str: " + str);
-	            i++;
+            String[] datos = new String[nDatos];
+            Integer i = 0;
+            while(tokens.hasMoreTokens()){
+                String str = tokens.nextToken();
+                datos[i] = str;
+                logger.info("str: " + str);
+                i++;
+            }
 
-	        }
+            String rfc = datos[0];
+            logger.info("rfc: " + rfc);
+            Long cveIdPlantillaDatos = Long.parseLong( datos[1]);
+            logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
 
+            PlantillaDato plantillaDato = plantillaDatosRepository.findById(cveIdPlantillaDatos)
+                                            .orElseThrow(() -> new RuntimeException("PlantillaDato no encontrada con ID: " + cveIdPlantillaDatos));
+            logger.info("plantillaDato: " + plantillaDato.getDesDatos());
 
-	        String rfc=datos[0];
-	        logger.info("rfc: " + rfc);
-	        Long cveIdPlantillaDatos=Long.parseLong( datos[1]);
-	        logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
+            // Aquí necesitarás inferir el TipoAcuse basado en el registro de PlantillaDato
+            // Esto puede ser un nuevo campo en PlantillaDato o una lógica para determinarlo.
+            // Por ahora, asumiré que PlantillaDato.getDesVersion() o similar te da una pista.
+            // Lo ideal es tener un campo 'tipoAcuse' en la tabla PlantillaDato también.
+            // Para el ejemplo, usaré un valor fijo, pero esto debe ser dinámico.
+            // Podrías tener un método en PlantillaDato que devuelva TipoAcuse.
+            // O, si `desVersion` tiene un prefijo claro, podrías parsearlo.
+            // Ejemplo (necesitarás implementar la lógica real):
+            // TipoAcuse tipoAcuse = inferirTipoAcuseDePlantillaDato(plantillaDato); 
+            // AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuse);
+            
+            // **IMPORTANTE:** Aquí necesitas una manera de obtener el TipoAcuse
+            // desde la `PlantillaDato` que recuperaste de la base de datos.
+            // Si no tienes un campo `tipoAcuse` en `PlantillaDato`, puedes:
+            // 1. Añadirlo a la tabla `PlantillaDato` y a la entidad.
+            // 2. Inferirlo de `plantillaDato.getDesVersion()` si sigue un patrón.
+            // Por ejemplo, si `desVersion` contiene "acreditacionmenbresia", es `ACREDITACION_MEMBRESIA`.
+            
+            // Para este ejemplo, simularé la obtención del tipo de acuse:
+            // Esto es solo un placeholder, la lógica real debe venir de tu modelo/BD.
+            String desVersionPlantilla = plantillaDato.getDesVersion();
+            mx.gob.imss.acuses.enums.TipoAcuse tipoAcuseDeterminado;
+            if (desVersionPlantilla.contains("acreditacionmenbresia")) {
+                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.ACREDITACION_MEMBRESIA;
+            } else if (desVersionPlantilla.contains("solicitudes\\cambio")) {
+                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.ACUSE_SOLICITUD_CAMBIO;
+            } else {
+                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.DEFAULT; // O lanza un error
+            }
+            // Fin del placeholder.
 
-	        PlantillaDato plantillaDato=plantillaDatosRepository.findById(cveIdPlantillaDatos).get();
-	        logger.info("plantillaDato: " + plantillaDato.getDesDatos());
-
-	        String nombreDocumento=plantillaDato.getNomDocumento();
-	        logger.info("nombreDocumento: " + nombreDocumento);
+            AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseDeterminado);
 
             // Convertir PlantillaDato a PlantillaDatoDto para el método actualizado
             PlantillaDatoDto plantillaDatoDto = new PlantillaDatoDto();
             plantillaDatoDto.setCveIdPlantillaDatos(plantillaDato.getCveIdPlantillaDatos());
-            plantillaDatoDto.setNomDocumento(plantillaDato.getNomDocumento());
-            plantillaDatoDto.setDesVersion(plantillaDato.getDesVersion());
+            // Estos campos ahora vendrán de la configuración, no directamente del DTO/BD para `generarAcuseconDatosJSON`
+            // plantillaDatoDto.setNomDocumento(plantillaDato.getNomDocumento()); // Ya no se usa directamente
+            // plantillaDatoDto.setDesVersion(plantillaDato.getDesVersion()); // Ya no se usa directamente
             plantillaDatoDto.setDatosJson(plantillaDato.getDesDatos());
+            plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado); // Asignar el tipo de acuse determinado
 
+            // Generar el acuse y obtener los bytes del PDF, usando el DTO
+            byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
-			// Generar el acuse y obtener los bytes del PDF, usando el DTO
-			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
+            String nombreDocumento = config.getNomDocumento(); // Usar el nombre del documento de la configuración
+            String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
-			// Codificar los bytes del PDF a Base64
-			String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
+            decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
+            decargarAcuseDto.setNombreDocumento(nombreDocumento + ".pdf");
+            decargarAcuseDto.setCodigo(0);
+            decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
 
-			// Asignar los valores al DTO
-			decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64); // Formato de URI de datos
-			decargarAcuseDto.setNombreDocumento(nombreDocumento + ".pdf"); // Nombre dinámico
-			decargarAcuseDto.setCodigo(0); // Éxito
-			decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
+        } catch (Exception e) {
+            logger.error("Error en consultaAcuseByUrlDocumento: {}", e.getMessage(), e);
+            decargarAcuseDto.setCodigo(1);
+            decargarAcuseDto.setMensaje("Error al procesar el acuse: " + e.getMessage());
+        }
+        return decargarAcuseDto;
+    }
 
-
-
-		}catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
-		}
-
-
-		return decargarAcuseDto;
-	}
-
-
-
-	/**
-	 * Genera un acuse en formato PDF utilizando una plantilla JasperReports y datos JSON.
-	 *
-	 * @param plantillaDatoDto El objeto PlantillaDatoDto que contiene los datos JSON y la versión de la plantilla.
-	 * @return Un array de bytes que representa el documento PDF generado.
-	 * @throws JRException Si ocurre un error durante la generación del reporte Jasper.
-	 * @throws java.io.IOException Si ocurre un error al procesar el JSON.
-	 */
-	 private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException {
+    private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException, Exception {
         logger.info("Iniciando generación de acuse con datos JSON desde PlantillaDatoDto...");
 
-        String datosJSON = plantillaDatoDto.getDatosJson();
-        String desVersionPlantilla = plantillaDatoDto.getDesVersion() + ".jasper"; // Ruta completa del .jasper
-
-        logger.info("Plantilla Jasper a usar: {}", desVersionPlantilla);
-        logger.info("Datos JSON recibidos: {}", datosJSON);
-
-        // 1️⃣ Cargar la plantilla Jasper del classpath
-        InputStream jasperStream = this.getClass().getClassLoader().getResourceAsStream(desVersionPlantilla);
-        if (jasperStream == null) {
-            logger.error("No se encontró la plantilla Jasper: {}", desVersionPlantilla);
-            throw new JRException("No se encontró la plantilla Jasper: " + desVersionPlantilla);
+        // 1. Obtener la configuración específica del acuse
+        AcuseConfig config = acuseConfigService.getConfigForType(plantillaDatoDto.getTipoAcuse());
+        if (config == null) {
+            logger.error("No se encontró configuración para el tipo de acuse: {}", plantillaDatoDto.getTipoAcuse());
+            throw new JRException("No se encontró configuración para el tipo de acuse: " + plantillaDatoDto.getTipoAcuse());
         }
 
-        
+        String datosJSON = plantillaDatoDto.getDatosJson();
+        // Usar desVersion de la configuración
+        String desVersionPlantillaPath = config.getDesVersion().replace("\\", "/") + ".jasper"; 
+
+        logger.info("Plantilla Jasper a usar: {}", desVersionPlantillaPath);
+        logger.info("Datos JSON recibidos: {}", datosJSON);
+
+        InputStream jasperStream = this.getClass().getClassLoader().getResourceAsStream(desVersionPlantillaPath);
+        if (jasperStream == null) {
+            logger.error("No se encontró la plantilla Jasper: {}", desVersionPlantillaPath);
+            throw new JRException("No se encontró la plantilla Jasper: " + desVersionPlantillaPath);
+        }
 
         JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
 
-        // 2️⃣ Parsear el JSON recibido
         ObjectMapper objectMapper = new ObjectMapper();
         JRDataSource dataSource;
         Map<String, Object> parameters = new HashMap<>();
+        String cadenaOriginal = null;
 
         try {
-            // Si el JSON es una lista (para reportes tipo tabla)
             List<Map<String, Object>> dataList = objectMapper.readValue(datosJSON, new TypeReference<List<Map<String, Object>>>(){});
             dataSource = new JRBeanCollectionDataSource(dataList);
             logger.info("JSON interpretado como lista de objetos.");
         } catch (Exception e) {
-            // Si el JSON es un solo objeto
             logger.info("JSON interpretado como objeto único.");
             Map<String, Object> dataMap = objectMapper.readValue(datosJSON, new TypeReference<Map<String, Object>>() {});
+
+ 
+
+            if (dataMap.containsKey("cadenaOriginal")) {
+                Object value = dataMap.get("cadenaOriginal"); // Obtiene el valor
+                if (value instanceof String) {
+                    cadenaOriginal = (String) value;
+                    logger.info("Cadena Original obtenida del JSON  : {}", cadenaOriginal);
+                } else {
+                    logger.warn("El valor de 'cadenaOriginal' no es un String en el JSON.");
+                }
+            }
+
+
+
             parameters.putAll(dataMap);
             dataSource = new JREmptyDataSource(1);
         }
 
-        parameters.put("imgLogoImss", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\logoImss.jpg");
-        parameters.put("imgGobiernoRepublica", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\gobiernoMexico.png");
-        parameters.put("imgEscudoNacional", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\escudoNacional.jpg");
-        parameters.put("imgGobMx", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\gobmx.png");
-        parameters.put("imgGobMxFooter", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\imssGobmx.png");
-        parameters.put("imgMarcaAgua", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\watermark.png");
 
-        // 3️⃣ Llenar el reporte Jasper con los parámetros y/o datasource
+        SimpleDateFormat formatter = new SimpleDateFormat(FORMATO_dd_MM_yyyy_HH_mm_ss);
+        
+        // Obtener la fecha actual formateada
+        String fechaActual = formatter.format(new Date());
+
+        parameters.put("fecha", fechaActual);
+       // parameters.put("vistaPrevia", "SI");
+
+
+        if (cadenaOriginal != null) {
+            InputStream qrImage = utileriasService.generaQRImageInputStream(cadenaOriginal);
+
+ 
+            parameters.put("qrcode", qrImage);
+            logger.info("Parámetro 'cadenaOriginal' añadido a JasperReports." + cadenaOriginal);
+        }
+
+
+
+
+        // 2. Añadir los parámetros de imágenes y otros textos desde la configuración
+        config.getImagePaths().forEach((key, value) -> 
+            parameters.put(key, value.replace("\\", "/"))
+        );
+        logger.info("Parámetros de configuración añadidos al reporte: {}", config.getImagePaths());
+
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
 
-        // 4️⃣ Exportar el reporte a PDF
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         JRPdfExporter exporter = new JRPdfExporter();
         exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
@@ -193,8 +251,6 @@ public class AcuseServiceImpl implements AcuseService {
         return baos.toByteArray();
     }
 
-
-
     @Override
     public DecargarAcuseDto consultaAcuseByPlantillaDato(PlantillaDatoDto plantillaDatoDto) {
         logger.info("Procesando consultaAcuseByPlantillaDato sin conexión a BD...");
@@ -203,14 +259,20 @@ public class AcuseServiceImpl implements AcuseService {
         decargarAcuseDto.setCodigo(1); // Por defecto error
 
         try {
-            // Ahora se llama directamente con el DTO
+            // Obtener la configuración para el tipo de acuse recibido en el DTO
+            AcuseConfig config = acuseConfigService.getConfigForType(plantillaDatoDto.getTipoAcuse());
+            if (config == null) {
+                 throw new RuntimeException("No se encontró configuración para el tipo de acuse: " + plantillaDatoDto.getTipoAcuse());
+            }
+
+            // Aquí el PlantillaDatoDto ya debería tener el tipoAcuse
             byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
-            // Codificar a Base64 para enviar al frontend
             String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
             decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
-            decargarAcuseDto.setNombreDocumento(plantillaDatoDto.getNomDocumento() + ".pdf"); // Añadir .pdf
+            // Usar el nomDocumento de la configuración centralizada
+            decargarAcuseDto.setNombreDocumento(config.getNomDocumento() + ".pdf");
             decargarAcuseDto.setCodigo(0);
             decargarAcuseDto.setMensaje("Acuse generado exitosamente sin conexión a BD.");
 
@@ -221,5 +283,4 @@ public class AcuseServiceImpl implements AcuseService {
 
         return decargarAcuseDto;
     }
-
 }

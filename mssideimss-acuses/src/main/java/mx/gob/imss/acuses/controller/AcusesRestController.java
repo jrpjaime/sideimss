@@ -128,10 +128,14 @@ public class AcusesRestController {
     public ResponseEntity<byte[]> descargarAcusePreview(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
         
+        if (plantillaDatoDto.getTipoAcuse() == null  ) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);
 
-        logger.info("RdecargarAcuseDto: " + decargarAcuseDto.toString());
+        logger.info("getMensaje: " + decargarAcuseDto.getMensaje());
 
         if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
             logger.error("Error al obtener el documento o documento vacío para preview. Mensaje: " + decargarAcuseDto.getMensaje());

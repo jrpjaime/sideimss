@@ -13,6 +13,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { take } from 'rxjs';
+ 
 
 @Component({
   selector: 'app-acreditacionymembresia-acuse',
@@ -55,7 +56,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.datosFormularioPrevio = this.acreditacionMembresiaDataService.datosFormularioPrevio;
 
     // 2. Suscribirse al nombreCompleto$ del BaseComponent y esperar el primer valor
-    this.nombreCompleto$.pipe(take(1)).subscribe(nombre => {
+      this.nombreCompleto$.pipe(take(1)).subscribe(nombre => {
       this.datosFormularioPrevio.nombreCompleto = nombre; // Cuando tengamos el nombre completo, lo añadimos a datosFormularioPrevio
       this.datosFormularioPrevio.RFC = this.rfcSesion; // rfcSesion ya debería estar actualizado por recargaParametros
       this.datosFormularioPrevio.CURP = this.curpSesion; // curpSesion ya debería estar actualizado por recargaParametros
@@ -77,6 +78,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         this.alertService.warn('No se encontraron datos para generar el acuse. Por favor, regresa y completa la información.', { autoClose: false });
       }
     });
+    
   }
 
 
@@ -85,17 +87,19 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.acusePreviewError = null;
     this.alertService.clear();
 
+    this.datosFormularioPrevio.vistaPrevia = "SI"; 
+
     // Asegúrate de que los datos de sesión ya estén en datosFormularioPrevio aquí
     // El nombreCompleto, RFC y CURP se habrán añadido en el subscribe de ngOnInit
     const datosJson = JSON.stringify(this.datosFormularioPrevio);
 
+ 
     // Crear el DTO para enviar al backend
     const plantillaDatoDto: PlantillaDatoDto = {
       cveIdPlantillaDatos: null,
-      nomDocumento: "prueba.pdf",
-      desVersion: "reportes\\contadores\\acreditacionmenbresia\\v202512\\SolicitudAcreditacionContador",
+ 
       datosJson: datosJson,
-      tipoAcuse: "ACREDITACION_MEMBRESIA"
+      tipoAcuse: "ACREDITACION_MEMBRESIA" 
     };
 
     console.log('PlantillaDatoDto enviado para preview:', plantillaDatoDto);
