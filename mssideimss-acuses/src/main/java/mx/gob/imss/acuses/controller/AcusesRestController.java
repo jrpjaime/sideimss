@@ -44,6 +44,8 @@ public class AcusesRestController {
 	@Autowired
 	private AcuseService acuseService;
   
+
+    public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
  
     @GetMapping("/info")
 	public ResponseEntity<List<String>> info() {
@@ -125,6 +127,7 @@ public class AcusesRestController {
     @PostMapping("/descargarAcusePreview")
     public ResponseEntity<byte[]> descargarAcusePreview(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
+        
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);
 

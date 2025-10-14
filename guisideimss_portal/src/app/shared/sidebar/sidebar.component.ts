@@ -14,7 +14,7 @@ import { BaseComponent } from '../base/base.component';
 })
 export class SidebarComponent extends BaseComponent implements OnInit {
   // Propiedades para mostrar en la pantalla
-  nombreCompleto: string = '';
+  nombreCompletoDisplay: string = '';
 
   constructor(
     private authService: AuthService,
@@ -23,23 +23,43 @@ export class SidebarComponent extends BaseComponent implements OnInit {
     super(sharedService); // Llama al constructor de BaseComponent
   }
 
- 
+
 
   logout(): void {
     this.authService.logout();
   }
 
   override ngOnInit(): void {
+    super.ngOnInit(); // Llama al ngOnInit del BaseComponent para inicializar los Observables
 
     this.recargaParametros(); // Carga los parámetros del usuario del BaseComponent
 
-    this.nombreCompleto = `${this.nombreSesion} ${this.primerApellidoSesion} ${this.segundoApellidoSesion}`;
+    // Suscríbete al Observable del nombre completo
+    this.nombreCompleto$.subscribe(nombre => {
+      this.nombreCompletoDisplay = nombre;
+      console.log('Sidebar - nombreCompletoDisplay actualizado:', this.nombreCompletoDisplay);
+    });
+
+    // Si necesitas el RFC y CURP también de forma reactiva en SidebarComponent:
+    this.sharedService.currentRfcSesion.subscribe(rfc => {
+      this.rfcSesion = rfc; // Las variables de clase del BaseComponent se actualizarán
+      console.log('Sidebar - RFC de sesión actualizado:', this.rfcSesion);
+    });
+
+    this.sharedService.currentCurpSesion.subscribe(curp => {
+      this.curpSesion = curp; // Las variables de clase del BaseComponent se actualizarán
+      console.log('Sidebar - CURP de sesión actualizado:', this.curpSesion);
+    });
+
+    // O si los necesitas en el template, puedes acceder directamente a las variables del padre
+    // o al Observable nombreCompleto$ con el pipe async.
   }
 
 
- 
+
 
 }
+
 
 
 

@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-acreditacionymembresia-acuse',
@@ -25,6 +26,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   acusePdfUrl: SafeResourceUrl | null = null; // Para la URL segura del PDF
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
+  nombreCompleto: string = '';
+
 
   public Object = Object;
 
@@ -45,17 +48,35 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
 
   override ngOnInit(): void {
-    // Obtener los datos del servicio
+    super.ngOnInit(); // Importante: Asegura que BaseComponent inicie sus Observables
+    this.recargaParametros(); // Inicia la carga de datos del usuario desde el SharedService
+
+    // 1. Obtener los datos previos
     this.datosFormularioPrevio = this.acreditacionMembresiaDataService.datosFormularioPrevio;
 
-    console.log('Datos del formulario previo en Acuse:', this.datosFormularioPrevio);
+    // 2. Suscribirse al nombreCompleto$ del BaseComponent y esperar el primer valor
+    this.nombreCompleto$.pipe(take(1)).subscribe(nombre => {
+      this.datosFormularioPrevio.nombreCompleto = nombre; // Cuando tengamos el nombre completo, lo añadimos a datosFormularioPrevio
+      this.datosFormularioPrevio.RFC = this.rfcSesion; // rfcSesion ya debería estar actualizado por recargaParametros
+      this.datosFormularioPrevio.CURP = this.curpSesion; // curpSesion ya debería estar actualizado por recargaParametros
 
-    // Llamar al método para descargar y previsualizar el acuse
-    if (Object.keys(this.datosFormularioPrevio).length > 0) {
-      this.descargarAcusePreview();
-    } else {
-      this.alertService.warn('No se encontraron datos para generar el acuse. Por favor, regresa y completa la información.', { autoClose: false });
-    }
+      console.log('Datos del formulario previo en Acuse (con datos de sesión):', this.datosFormularioPrevio);
+
+      if (nombre && this.rfcSesion && this.curpSesion) {
+        this.datosFormularioPrevio.cadenaOriginal = `${nombre}|${this.rfcSesion}|${this.curpSesion}`;
+      } else {
+        console.warn('Faltan datos para generar la cadenaOriginal (nombreCompleto, RFC o CURP).');
+        this.datosFormularioPrevio.cadenaOriginal = ''; // O manejar el error de otra manera
+      }
+
+
+      // 3. Después de añadir los datos de sesión, procede con la lógica del acuse
+      if (Object.keys(this.datosFormularioPrevio).length > 0) {
+        this.descargarAcusePreview();
+      } else {
+        this.alertService.warn('No se encontraron datos para generar el acuse. Por favor, regresa y completa la información.', { autoClose: false });
+      }
+    });
   }
 
 
@@ -64,14 +85,17 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.acusePreviewError = null;
     this.alertService.clear();
 
+    // Asegúrate de que los datos de sesión ya estén en datosFormularioPrevio aquí
+    // El nombreCompleto, RFC y CURP se habrán añadido en el subscribe de ngOnInit
     const datosJson = JSON.stringify(this.datosFormularioPrevio);
 
     // Crear el DTO para enviar al backend
     const plantillaDatoDto: PlantillaDatoDto = {
-      cveIdPlantillaDatos: null, // Como indicaste, va null
+      cveIdPlantillaDatos: null,
       nomDocumento: "prueba.pdf",
       desVersion: "reportes\\contadores\\acreditacionmenbresia\\v202512\\SolicitudAcreditacionContador",
-      datosJson: datosJson
+      datosJson: datosJson,
+      tipoAcuse: "ACREDITACION_MEMBRESIA"
     };
 
     console.log('PlantillaDatoDto enviado para preview:', plantillaDatoDto);
@@ -82,7 +106,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         if (response.body) {
           const blob = new Blob([response.body], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
-          this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url); // Sanitizar la URL
+          this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
           this.alertService.success('Acuse previsualizado correctamente.', { autoClose: true });
         } else {
           this.acusePreviewError = 'No se recibió ningún documento para previsualizar.';
@@ -97,7 +121,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         if (errorResponse.status === 404) {
           errorMessage = 'No se encontró el acuse para los datos proporcionados o la plantilla no existe.';
         } else if (errorResponse.error instanceof Blob) {
-            // Intenta leer el Blob de error si es un mensaje de error del backend
+																				  
             const reader = new FileReader();
             reader.onload = () => {
                 try {
@@ -110,7 +134,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
                 this.alertService.error(this.acusePreviewError, { autoClose: false });
             };
             reader.readAsText(errorResponse.error);
-            return; // Salir para que el alert se muestre después de leer el Blob
+            return;
         } else if (errorResponse.message) {
           errorMessage = errorResponse.message;
         }

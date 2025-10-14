@@ -3,22 +3,38 @@ import { SharedService } from '../services/shared.service';
 
 import { AuthService } from '../../core/services/auth.service';
 import { Constants } from '../../global/Constants';
+import { combineLatest, map, Observable, startWith } from 'rxjs';
 
 @Directive()
 export class BaseComponent implements OnInit {
+
+
+  nombreCompleto$: Observable<string> = new Observable<string>();
   rfc: string = '';
 
-  
+
   rfcSesion: string = '';
+			   
+																		  
 
   nombreSesion: string = '';
   primerApellidoSesion: string = '';
   segundoApellidoSesion: string = '';
   curpSesion: string = '';
-   
+
+	   
+																 
+										  
+															 
+										 
 
   roles: string[] = [];
   indPatron: boolean = false;
+									   
+										   
+						  
+										
+				 
 
   indFase: number = 1;
 
@@ -34,14 +50,21 @@ export class BaseComponent implements OnInit {
       cveNss: '^[0-9]{11}$'
 
     };
+																	  
 
   constructor(
      protected sharedService: SharedService) {}
 
+																					 
+																	   
+																							
+																			  
+																		  
+																	   
 
 
   ngOnInit(): void {
-   // this.recargaParametros();
+   this.setupUserDataObservers();
   }
 
   recargaParametros(): void {
@@ -52,6 +75,7 @@ export class BaseComponent implements OnInit {
       this.rfc = rfc;
       console.log('this.rfc: ', this.rfc);
     });
+																			
 
     this.sharedService.currentRfcSesion.subscribe(rfcSesion => {
       this.rfcSesion = rfcSesion;
@@ -61,6 +85,7 @@ export class BaseComponent implements OnInit {
     this.sharedService.currentCurpSesion.subscribe(curpSesion => {
       this.curpSesion = curpSesion;
     });
+   
 
     this.sharedService.currentNombreSesion.subscribe(nombreSesion => {
       this.nombreSesion = nombreSesion;
@@ -83,11 +108,23 @@ export class BaseComponent implements OnInit {
     } else {
      this.indPatron = false;
     }
+																	   
+	
+																													  
+																							   
 
     console.log('this.roles: ' + this.roles.join(', '));
     });
 
+																		
+														   
 
+														   
+																											 
+								   
+																						 
+																								 
+		 
 
     this.sharedService.currentSubdelegacionSesion.subscribe(desDelegacionSesion => {
       this.desDelegacionSesion = desDelegacionSesion;
@@ -96,14 +133,29 @@ export class BaseComponent implements OnInit {
     this.sharedService.currentDelegacionSesion.subscribe(desSubdelegacionSesion => {
       this.desSubdelegacionSesion = desSubdelegacionSesion;
     });
+														 
 
+			 
+																 
+																																	 
+																  
+																	
+							   
+										   
+																 
+																														 
+									   
+												  
+		 
 
   }
+																									 
 
 /*
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     const maxSize = 5 * 1024 * 1024; // 5MB en bytes
+																			   
 
     if (file) {
       if (file.size > maxSize) {
@@ -116,6 +168,8 @@ export class BaseComponent implements OnInit {
     }
   }*/
 
+																						   
+											   
 
 // Método para formatear la fecha
 formatDate(date: string): string {
@@ -130,7 +184,62 @@ formatDate(date: string): string {
 
 
 
+			 
+																							 
+																					 
 
+  // Este  método configura un Observable para el nombre completo
+  // que se actualizará automáticamente cuando cambie cualquiera de sus partes.
+  private setupUserDataObservers(): void {
+    this.nombreCompleto$ = combineLatest([
+      this.sharedService.currentNombreSesion.pipe(startWith('')), // Asegura un valor inicial
+      this.sharedService.currentPrimerApellidoSesion.pipe(startWith('')),
+      this.sharedService.currentSegundoApellidoSesion.pipe(startWith(''))
+    ]).pipe(
+      map(([nombre, primerApellido, segundoApellido]) => {
+        let partes: string[] = [];
+        if (nombre) partes.push(nombre);
+        if (primerApellido) partes.push(primerApellido);
+        if (segundoApellido) partes.push(segundoApellido);
+        return partes.join(' ').trim();
+      })
+    );
+  }
+
+			 
+													 
+																		 
+
+														 
+																			
+
+  get nombreCompletoSync(): string {
+      const nombre = this.nombreSesion || '';
+      const primerApellido = this.primerApellidoSesion || '';
+      const segundoApellido = this.segundoApellidoSesion || '';
+      let partes: string[] = [];
+      if (nombre) partes.push(nombre);
+      if (primerApellido) partes.push(primerApellido);
+      if (segundoApellido) partes.push(segundoApellido);
+      return partes.join(' ').trim();
+  }
+
+							   
+																			 
+																					 
+		 
+
+
+
+  getDatosParaAcuse(): any {
+    const datosAcuse = {
+      nombreCompleto: this.nombreCompletoSync, // Usar el getter síncrono si necesitas el valor actual
+      RFC: this.rfcSesion, // Ya está suscrito en recargaParametros
+      CURP: this.curpSesion // Ya está suscrito en recargaParametros
+    };
+    console.log('Datos para el acuse:', datosAcuse);
+    return datosAcuse;
+  }
 
 }
 

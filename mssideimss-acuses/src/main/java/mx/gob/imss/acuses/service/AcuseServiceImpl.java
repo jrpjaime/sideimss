@@ -38,31 +38,30 @@ import org.springframework.stereotype.Service;
 @Service("acuseService")
 public class AcuseServiceImpl implements AcuseService {
 	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
-	
- 
+
+
 	@Autowired
 	private UtileriasService utileriasService;
 
 
 	@Autowired
 	private PlantillaDatosRepository plantillaDatosRepository;
-	
 
-	
+
 	@Override
 	@Transactional
 	public DecargarAcuseDto consultaAcuseByUrlDocumento(String urlDocumento){
-		
+
 		DecargarAcuseDto decargarAcuseDto=new DecargarAcuseDto();
 		decargarAcuseDto.setCodigo(1); // Por defecto, asume un error
 		decargarAcuseDto.setMensaje("Error en acuse.");
-		
+
 		try {
-	  		String filename=utileriasService.desencriptar(urlDocumento); 
+	  		String filename=utileriasService.desencriptar(urlDocumento);
 			logger.info("1filename: " + filename );
 			StringTokenizer tokens=new StringTokenizer(filename, "|");
 	        int nDatos=tokens.countTokens();
-	      
+
 	        String[] datos=new String[nDatos];
 	        Integer i=0;
 	        while(tokens.hasMoreTokens()){
@@ -70,22 +69,31 @@ public class AcuseServiceImpl implements AcuseService {
 	            datos[i]=str;
 	            logger.info("str: " + str);
 	            i++;
-	            
+
 	        }
-	        
-	    
+
+
 	        String rfc=datos[0];
 	        logger.info("rfc: " + rfc);
 	        Long cveIdPlantillaDatos=Long.parseLong( datos[1]);
 	        logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
-	        
+
 	        PlantillaDato plantillaDato=plantillaDatosRepository.findById(cveIdPlantillaDatos).get();
 	        logger.info("plantillaDato: " + plantillaDato.getDesDatos());
-	        
+
 	        String nombreDocumento=plantillaDato.getNomDocumento();
 	        logger.info("nombreDocumento: " + nombreDocumento);
-			// Generar el acuse y obtener los bytes del PDF
-			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
+
+            // Convertir PlantillaDato a PlantillaDatoDto para el método actualizado
+            PlantillaDatoDto plantillaDatoDto = new PlantillaDatoDto();
+            plantillaDatoDto.setCveIdPlantillaDatos(plantillaDato.getCveIdPlantillaDatos());
+            plantillaDatoDto.setNomDocumento(plantillaDato.getNomDocumento());
+            plantillaDatoDto.setDesVersion(plantillaDato.getDesVersion());
+            plantillaDatoDto.setDatosJson(plantillaDato.getDesDatos());
+
+
+			// Generar el acuse y obtener los bytes del PDF, usando el DTO
+			byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
 			// Codificar los bytes del PDF a Base64
 			String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
@@ -95,33 +103,33 @@ public class AcuseServiceImpl implements AcuseService {
 			decargarAcuseDto.setNombreDocumento(nombreDocumento + ".pdf"); // Nombre dinámico
 			decargarAcuseDto.setCodigo(0); // Éxito
 			decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
-	        
-	        
-	        
+
+
+
 		}catch (Exception e) {
 			e.printStackTrace();
 			// TODO: handle exception
 		}
-        
-        
+
+
 		return decargarAcuseDto;
 	}
-	 
-	
-	
+
+
+
 	/**
 	 * Genera un acuse en formato PDF utilizando una plantilla JasperReports y datos JSON.
 	 *
-	 * @param plantillaDato El objeto PlantillaDato que contiene los datos JSON y la versión de la plantilla.
+	 * @param plantillaDatoDto El objeto PlantillaDatoDto que contiene los datos JSON y la versión de la plantilla.
 	 * @return Un array de bytes que representa el documento PDF generado.
 	 * @throws JRException Si ocurre un error durante la generación del reporte Jasper.
 	 * @throws java.io.IOException Si ocurre un error al procesar el JSON.
 	 */
-	 private byte[] generarAcuseconDatosJSON(PlantillaDato plantillaDato) throws JRException, java.io.IOException {
-        logger.info("Iniciando generación de acuse con datos JSON...");
+	 private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException {
+        logger.info("Iniciando generación de acuse con datos JSON desde PlantillaDatoDto...");
 
-        String datosJSON = plantillaDato.getDesDatos();
-        String desVersionPlantilla = plantillaDato.getDesVersion() + ".jasper"; // Ruta completa del .jasper
+        String datosJSON = plantillaDatoDto.getDatosJson();
+        String desVersionPlantilla = plantillaDatoDto.getDesVersion() + ".jasper"; // Ruta completa del .jasper
 
         logger.info("Plantilla Jasper a usar: {}", desVersionPlantilla);
         logger.info("Datos JSON recibidos: {}", datosJSON);
@@ -132,6 +140,8 @@ public class AcuseServiceImpl implements AcuseService {
             logger.error("No se encontró la plantilla Jasper: {}", desVersionPlantilla);
             throw new JRException("No se encontró la plantilla Jasper: " + desVersionPlantilla);
         }
+
+        
 
         JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
 
@@ -152,6 +162,13 @@ public class AcuseServiceImpl implements AcuseService {
             parameters.putAll(dataMap);
             dataSource = new JREmptyDataSource(1);
         }
+
+        parameters.put("imgLogoImss", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\logoImss.jpg");
+        parameters.put("imgGobiernoRepublica", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\gobiernoMexico.png");
+        parameters.put("imgEscudoNacional", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\escudoNacional.jpg");
+        parameters.put("imgGobMx", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\gobmx.png");
+        parameters.put("imgGobMxFooter", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\imssGobmx.png");
+        parameters.put("imgMarcaAgua", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\watermark.png");
 
         // 3️⃣ Llenar el reporte Jasper con los parámetros y/o datasource
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
@@ -175,9 +192,6 @@ public class AcuseServiceImpl implements AcuseService {
         logger.info("✅ Acuse generado exitosamente.");
         return baos.toByteArray();
     }
-	
-
- 
 
 
 
@@ -189,22 +203,14 @@ public class AcuseServiceImpl implements AcuseService {
         decargarAcuseDto.setCodigo(1); // Por defecto error
 
         try {
-            // Crear el objeto PlantillaDato desde el DTO
-            PlantillaDato plantillaDato = new PlantillaDato();
-            plantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
-            plantillaDato.setDesVersion(plantillaDatoDto.getDesVersion());
-            plantillaDato.setDesDatos(plantillaDatoDto.getDatosJson()); // ✅ clave para no requerir BD
-
-            logger.info("Generando PDF con la plantilla: {}", plantillaDato.getDesVersion());
-
-            // Generar el PDF
-            byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDato);
+            // Ahora se llama directamente con el DTO
+            byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
             // Codificar a Base64 para enviar al frontend
             String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
             decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
-            decargarAcuseDto.setNombreDocumento(plantillaDato.getNomDocumento());
+            decargarAcuseDto.setNombreDocumento(plantillaDatoDto.getNomDocumento() + ".pdf"); // Añadir .pdf
             decargarAcuseDto.setCodigo(0);
             decargarAcuseDto.setMensaje("Acuse generado exitosamente sin conexión a BD.");
 
