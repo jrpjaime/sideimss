@@ -13,7 +13,7 @@ export const EPs = {
   // ********** CATALOGOS /mssideimss-catalogos**********
   catalogo: {
     info: "/v1/info",
-    list: "/v1/list", 
+    list: "/v1/list",
   },
 
   // ********** CONTADORES /mssideimss-contadores**********
@@ -39,7 +39,8 @@ export const EPs = {
     info: "/v1/info",
     list: "/v1/list",
     descargarAcuse: "/v1/descargarAcuse",
-    descargarAcusePreview: "/v1/descargarAcusePreview", 
+    descargarAcusePreview: "/v1/descargarAcusePreview",
+    generaRequestJSONFirmaAcuse:"/v1/generaRequestJSONFirmaAcuse",
   }
 
 

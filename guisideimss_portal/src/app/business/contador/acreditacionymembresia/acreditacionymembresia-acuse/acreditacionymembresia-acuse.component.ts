@@ -15,6 +15,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription, take } from 'rxjs';
 
 
+export interface FirmaRequestBackendResponse { // <--- Asegúrate de que esto existe
+  cad_original: string;
+  peticionJSON: string;
+  error: boolean;
+  mensaje?: string; // Opcional, para mensajes de éxito/error
+}
+
 @Component({
   selector: 'app-acreditacionymembresia-acuse',
   standalone: true,
@@ -61,7 +68,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
 
   override ngOnInit(): void {
-    super.ngOnInit(); // Importante: Asegura que BaseComponent inicie sus Observables
+    super.ngOnInit(); // Asegura que BaseComponent inicie sus Observables
     this.recargaParametros(); // Inicia la carga de datos del usuario desde el SharedService
 
     // 1. Obtener los datos previos
@@ -91,7 +98,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.alertService.clear();
 
     this.datosFormularioPrevio.vistaPrevia = "SI";
-     this.datosFormularioPrevio.vistaPrevia = null;
 
     // Asegúrate de que los datos de sesión ya estén en datosFormularioPrevio aquí
     // El nombreCompleto, RFC y CURP se habrán añadido en el subscribe de ngOnInit
@@ -101,7 +107,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     // Crear el DTO para enviar al backend
     const plantillaDatoDto: PlantillaDatoDto = {
       cveIdPlantillaDatos: null,
-
       datosJson: datosJson,
       tipoAcuse: "ACREDITACION_MEMBRESIA"
     };
@@ -127,7 +132,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         let errorMessage = 'Error al generar la previsualización del acuse. Inténtalo de nuevo más tarde.';
 
         if (errorResponse.status === 404) {
-          errorMessage = 'No se encontró el acuse para los datos proporcionados o la plantilla no existe.';
+          errorMessage = 'No se encontró el acuse para los datos proporcionados.';
         } else if (errorResponse.error instanceof Blob) {
 
             const reader = new FileReader();
@@ -157,44 +162,47 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
 
   iniciarProcesoFirma(): void {
-    console.log("iniciarProcesoFirma ");
+    console.log("iniciarProcesoFirma - Solicitando JSON de firma al backend.");
     this.alertService.clear();
 
+    const rfcUsuario = this.rfcSesion; // Obtener el RFC del usuario de la sesión
 
-    // Replicar la lógica de la cadena original del backend
-    const fechaActual = new Date();
-    const formattedDate = fechaActual.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    if (!rfcUsuario) {
+      this.alertService.error('No se pudo obtener el RFC del usuario. Por favor, inténtalo de nuevo.', { autoClose: false });
+      return;
+    }
 
-    //this.alertService.info('Preparando proceso de firma electrónica...', { autoClose: true });
+    this.alertService.info('Preparando proceso de firma electrónica...', { autoClose: true });
 
+    this.acreditacionMembresiaService.generarRequestJsonFirma(rfcUsuario).subscribe({
+      next: (response: FirmaRequestBackendResponse) => {
+        if (!response.error) {
+          this.cadenaOriginalFirmada = response.cad_original; // Almacenar la cadena original del backend
+          let peticionJSON = response.peticionJSON;
 
-    const desFolio = `BI-`+ formattedDate;
-    const rfcUsuario = this.rfcSesion;
+          console.log("Cadena Original recibida del backend:", this.cadenaOriginalFirmada);
+          console.log("Peticion JSON recibida del backend:", peticionJSON);
 
-    console.log("desFolio: "+ desFolio);
-    console.log("rfcUsuario: "+ rfcUsuario);
+          // El reemplazo de caracteres especiales ya lo hace el backend,
+          // pero si quieres ser doblemente seguro, podrías mantenerlo aquí.
+          // peticionJSON = peticionJSON.replaceAll("ñ", "\\u00d1").replaceAll("Ñ", "\\u00D1");
 
-
-    this.cadenaOriginalFirmada = `|Folio del acuse:${desFolio}|Rfc:${rfcUsuario}|Tipo de trámite:Acuse|Fecha de elaboración:${formattedDate}|`;
-
-    // Replicar la lógica del JSON para el widget
-    const jsonWidget: any = {
-      operacion: "firmaCMS",
-      aplicacion: "buzonTributario",
-      rfc: rfcUsuario,
-      acuse: "BZN_ACUSE_NOT",
-      cad_original: this.cadenaOriginalFirmada,
-      salida: "cert,rfc,curp,rfc_rl,curp_rl,vigIni,vigFin,acuse,cadori,folio,firmas",
-      desFolio: desFolio
-    };
-
-    let peticionJSON = JSON.stringify(jsonWidget);
-    peticionJSON = peticionJSON.replaceAll("ñ", "\\u00d1").replaceAll("Ñ", "\\u00D1");
-
-    this.displayFirmaModalAndSubmitForm(peticionJSON);
+          this.displayFirmaModalAndSubmitForm(peticionJSON);
+        } else {
+          console.error('Error del backend al generar JSON de firma:', response.mensaje);
+          this.alertService.error(response.mensaje || 'Error al generar la petición de firma electrónica desde el backend.', { autoClose: false });
+        }
+      },
+      error: (errorResponse: HttpErrorResponse) => {
+        console.error('Error al conectar con el backend para generar JSON de firma:', errorResponse);
+        let errorMessage = 'Error de comunicación con el servicio de firma. Por favor, inténtalo de nuevo más tarde.';
+        if (errorResponse.error && typeof errorResponse.error === 'object' && errorResponse.error.mensaje) {
+          errorMessage = errorResponse.error.mensaje;
+        }
+        this.alertService.error(errorMessage, { autoClose: false });
+      }
+    });
   }
-
-
   displayFirmaModalAndSubmitForm(params: string): void {
     const URL_FIRMA_DIGITAL =  'http://172.16.23.224'; // Asegúrate de que esta URL sea correcta y accesible
     const widgetActionUrl = `${URL_FIRMA_DIGITAL}/firmaElectronicaWeb/widget/chfecyn`;
@@ -258,8 +266,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     }, 500); // Un pequeño retraso para asegurar que el iframe esté renderizado. Ajusta si es necesario.
   }
 
+
   // Esta función ahora será llamada por el event listener de window
-  respuestaCHFECyN(event: MessageEvent): void {
+   respuestaCHFECyN(event: MessageEvent): void {
     console.log("respuestaCHFECyN - Mensaje recibido.");
     console.log("Origin:", event.origin);
     console.log("Data:", event.data);
@@ -311,7 +320,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
     const datosParaEnviar = {
       ...this.datosFormularioPrevio,
-      cadenaOriginal: this.cadenaOriginalFirmada, // La que generamos en el frontend
+      cadenaOriginal: this.cadenaOriginalFirmada, // La que generamos en el backend y almacenamos aquí
       firmaDigital: this.firmaDigital,
       folioFirma: this.folioFirma,
       curp: this.curpFirma,
@@ -354,6 +363,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   }
 
   enviarSolicitudFinal(): void {
+    // Aquí es donde se inicia el proceso de firma, que a su vez llama al backend
     this.iniciarProcesoFirma();
   }
 

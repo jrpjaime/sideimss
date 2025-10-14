@@ -1,10 +1,13 @@
 package mx.gob.imss.acuses.dto;
 
+
+import mx.gob.imss.acuses.enums.TipoAcuse;
+
 import java.io.Serializable;
 import java.util.Map;
 
 import lombok.Data;
-import mx.gob.imss.acuses.enums.TipoAcuse;
+
 
 @Data
 public class PlantillaDatoDto implements Serializable {
