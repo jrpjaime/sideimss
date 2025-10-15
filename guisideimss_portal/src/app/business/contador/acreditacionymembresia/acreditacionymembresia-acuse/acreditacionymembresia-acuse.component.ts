@@ -14,9 +14,11 @@ import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription, take } from 'rxjs';
 import { LoaderService } from '../../../../shared/services/loader.service';
+import { AcuseConfig } from '../../model/AcuseConfig ';
+import { AcuseParameters } from '../../model/AcuseParameters';
 
 
-export interface FirmaRequestBackendResponse {  
+export interface FirmaRequestBackendResponse {
   cad_original: string;
   peticionJSON: string;
   error: boolean;
@@ -37,6 +39,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   acusePreviewError: string | null = null;
   nombreCompleto: string = '';
 
+   acuseParameters: AcuseParameters | null = null;
+  private readonly TIPO_ACUSE = 'ACREDITACION_MEMBRESIA';
 
   isFirmaModalVisible: boolean = false;
   firmaWidgetUrl: SafeResourceUrl | null = null;
@@ -46,7 +50,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   firmaDigital: string = '';
   folioFirma: string = '';
   curpFirma: string = '';
-  desFolioFirma: string = '';
+  firma: string = '';
+  certificado: string = '';
 
   public Object = Object;
 
@@ -76,8 +81,10 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     // 1. Obtener los datos previos
     this.datosFormularioPrevio = this.acreditacionMembresiaDataService.datosFormularioPrevio;
 
+    this.obtenerConfiguracionYDescargarAcusePreview();
 
-     this.descargarAcusePreview();
+
+
 
     // REGISTRAR EL LISTENER PARA MENSAJES DEL IFRAME
     this.windowMessageListener = this.respuestaCHFECyN.bind(this);
@@ -91,22 +98,55 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     }
     super.ngOnDestroy(); // Llama al ngOnDestroy de BaseComponent
   }
-
-
+  obtenerConfiguracionYDescargarAcusePreview(): void {
+    console.log('Llamando a obtenerConfiguracionYDescargarAcusePreview');
+    this.loaderService.show();
+    // Cambiar el tipo esperado en la suscripción
+    this.acreditacionMembresiaService.getAcuseConfig(this.TIPO_ACUSE).pipe(take(1)).subscribe({
+      next: (params: AcuseParameters) => { // <--- Tipo esperado cambiado a AcuseParameters
+        this.acuseParameters = params; // <--- Almacenar en acuseParameters
+        console.log('Parámetros del acuse recibidos:', this.acuseParameters);
+        this.descargarAcusePreview();
+        this.loaderService.hide();
+      },
+      error: (errorResponse: HttpErrorResponse) => {
+        this.loaderService.hide();
+        console.error('Error al obtener la configuración del acuse:', errorResponse);
+        let errorMessage = 'Error al obtener la configuración del acuse. Inténtalo de nuevo más tarde.';
+        if (errorResponse.error && typeof errorResponse.error === 'object' && errorResponse.error.mensaje) {
+          errorMessage = errorResponse.error.mensaje;
+        }
+        this.acusePreviewError = errorMessage;
+        this.alertService.error(this.acusePreviewError, { autoClose: false });
+      }
+    });
+  }
 
   descargarAcusePreview(): void {
+    console.log('descargarAcusePreview');
+
+    if (!this.acuseParameters) {
+      console.log('entro en if (!this.acuseParameters) {');
+      this.acusePreviewError = 'La configuración del acuse no ha sido cargada.';
+      this.alertService.error(this.acusePreviewError, { autoClose: false });
+      return;
+    }
+
+    console.log('esta antes de this.loadingAcusePreview = true;');
     this.loadingAcusePreview = true;
     this.acusePreviewError = null;
     this.alertService.clear();
 
     this.datosFormularioPrevio.vistaPrevia = "SI";
 
-    // Asegúrate de que los datos de sesión ya estén en datosFormularioPrevio aquí
-    // El nombreCompleto, RFC y CURP se habrán añadido en el subscribe de ngOnInit
-    const datosJson = JSON.stringify(this.datosFormularioPrevio);
+    // Integrar acuseParameters directamente en datosCompletos
+    const datosCompletos = {
+      ...this.datosFormularioPrevio,
+      ...this.acuseParameters
+    };
 
+    const datosJson = JSON.stringify(datosCompletos);
 
-    // Crear el DTO para enviar al backend
     const plantillaDatoDto: PlantillaDatoDto = {
       cveIdPlantillaDatos: null,
       datosJson: datosJson,
@@ -122,7 +162,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
           const blob = new Blob([response.body], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        
         } else {
           this.acusePreviewError = 'No se recibió ningún documento para previsualizar.';
           this.alertService.error(this.acusePreviewError, { autoClose: false });
@@ -136,7 +175,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         if (errorResponse.status === 404) {
           errorMessage = 'No se encontró el acuse para los datos proporcionados.';
         } else if (errorResponse.error instanceof Blob) {
-
             const reader = new FileReader();
             reader.onload = () => {
                 try {
@@ -161,8 +199,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
 
 
-
-
   iniciarProcesoFirma(): void {
     console.log("iniciarProcesoFirma - Solicitando JSON de firma al backend.");
     this.alertService.clear();
@@ -174,11 +210,11 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       return;
     }
 
-    this.loaderService.show(); 
+    this.loaderService.show();
 
     this.acreditacionMembresiaService.generarRequestJsonFirma(rfcUsuario).subscribe({
       next: (response: FirmaRequestBackendResponse) => {
-        this.loaderService.hide(); 
+        this.loaderService.hide();
         if (!response.error) {
           this.cadenaOriginalFirmada = response.cad_original; // Almacenar la cadena original del backend
           let peticionJSON = response.peticionJSON;
@@ -215,14 +251,14 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     console.log("Params: "+ params);
     console.log("widgetActionUrl: "+ widgetActionUrl);
 
-    
- 
+
+
     // 1. Mostrar el modal
     this.isFirmaModalVisible = true;
     // 2. Crear el iframe dentro del modal (o si ya está en el HTML, solo establecer su src y name)
     const iframeName = 'formFirmaDigital'; // Este nombre debe ser el 'target' del formulario.
 
- 
+
 
     // Aquí simplemente abrimos la URL en el iframe
     this.firmaWidgetUrl = this.sanitizer.bypassSecurityTrustResourceUrl(widgetActionUrl);
@@ -289,7 +325,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         this.firmaDigital = resultadoJSON.firma;
         this.folioFirma = resultadoJSON.folio;
         this.curpFirma = resultadoJSON.curp;
-        this.desFolioFirma = resultadoJSON.desFolio;
+        this.firma = resultadoJSON.firma;
+        this.certificado = resultadoJSON.certificado;
+
 
         this.isFirmaModalVisible = false;
         console.log('Firma capturada. Procediendo a enviar solicitud final.');
@@ -307,46 +345,66 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   }
 
   enviarSolicitudFinalConFirma(): void {
-    this.alertService.clear();
+      this.alertService.clear();
 
-    if (!this.firmaDigital || !this.folioFirma || !this.curpFirma) {
-        this.alertService.error('No se han obtenido los datos completos de la firma electrónica. Por favor, inténtalo de nuevo.', { autoClose: false });
+      if (!this.firmaDigital || !this.folioFirma || !this.curpFirma) {
+          this.alertService.error('No se han obtenido los datos completos de la firma electrónica. Por favor, inténtalo de nuevo.', { autoClose: false });
+          this.resetFirmaData();
+          return;
+      }
+      if (!this.acuseParameters) {
+        this.alertService.error('La configuración del acuse no está disponible para enviar la solicitud final.', { autoClose: false });
         this.resetFirmaData();
         return;
+      }
+
+
+      const datosParaSerializar = {
+        ...this.datosFormularioPrevio,
+        cadenaOriginal: this.cadenaOriginalFirmada,
+        firmaDigital: this.firmaDigital,
+        folioFirma: this.folioFirma,
+        curp: this.curpFirma,
+        desFolio: this.folioFirma,
+        firmaElectronica: this.firma,
+        selloDigitalIMSS: this.certificado,
+        ...this.acuseParameters
+      };
+
+      // 2. Serializar el objeto a una cadena JSON
+      const datosJsonString = JSON.stringify(datosParaSerializar);
+
+      // 3. Crear una instancia de PlantillaDatoDto
+      const plantillaDato: PlantillaDatoDto = {
+        cveIdPlantillaDatos: null, // O el valor que corresponda si lo tienes
+        datosJson: datosJsonString, // Asignar la cadena JSON aquí
+        tipoAcuse: 'ACREDITACION_MEMBRESIA' // Asegúrate de usar el valor correcto para TipoAcuse
+      };
+
+      this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
+      // 4. Enviar el objeto PlantillaDatoDto
+      this.acreditacionMembresiaService.enviarDatosFinales(plantillaDato).subscribe({
+        next: (response) => {
+          console.log('Respuesta de envío final con firma:', response);
+          if (response.codigo === 0) {
+            this.alertService.success('Solicitud enviada exitosamente. Folio: ' + response.folio, { autoClose: false });
+            this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
+            this.router.navigate(['/home']);
+          } else {
+            this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
+          }
+        },
+        error: (err) => {
+          console.error('Error al enviar solicitud final con firma:', err);
+          this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: false });
+          this.resetFirmaData();
+        }
+      });
+
     }
 
-    const datosParaEnviar = {
-      ...this.datosFormularioPrevio,
-      cadenaOriginal: this.cadenaOriginalFirmada, // La que generamos en el backend y almacenamos aquí
-      firmaDigital: this.firmaDigital,
-      folioFirma: this.folioFirma,
-      curp: this.curpFirma,
-      desFolio: this.desFolioFirma,
-      indAceptarBuzon: 1
-    };
 
-  
 
-    this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
-    this.acreditacionMembresiaService.enviarDatosFinales(datosParaEnviar).subscribe({
-      next: (response) => {
-        console.log('Respuesta de envío final con firma:', response);
-        if (response.codigo === 0) {
-          this.alertService.success('Solicitud enviada exitosamente. Folio: ' + response.folio, { autoClose: false });
-          this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
-          this.router.navigate(['/home']);
-        } else {
-          this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
-        }
-      },
-      error: (err) => {
-        console.error('Error al enviar solicitud final con firma:', err);
-        this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: false });
-        this.resetFirmaData();
-      }
-    });
- 
-  }
 
   enviarSolicitudFinal(): void {
     // Aquí es donde se inicia el proceso de firma, que a su vez llama al backend
@@ -368,7 +426,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.firmaDigital = '';
     this.folioFirma = '';
     this.curpFirma = '';
-    this.desFolioFirma = '';
+    this.firma = '';
+    this.certificado = '';
   }
 
 }

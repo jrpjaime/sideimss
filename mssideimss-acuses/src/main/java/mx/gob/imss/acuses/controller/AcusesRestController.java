@@ -24,7 +24,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;  
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,10 +35,12 @@ import java.net.URLEncoder;
 import org.springframework.http.HttpHeaders;  
 import org.springframework.http.MediaType;
 
-
+import mx.gob.imss.acuses.dto.AcuseConfig;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.dto.RequestFirmaDto;
+import mx.gob.imss.acuses.enums.TipoAcuse;
+import mx.gob.imss.acuses.service.AcuseConfigService;
 import mx.gob.imss.acuses.service.AcuseService;
 
  import org.json.JSONObject;
@@ -51,6 +54,10 @@ public class AcusesRestController {
 
 	@Autowired
 	private AcuseService acuseService;
+
+
+    @Autowired  
+    private AcuseConfigService acuseConfigService;
   
 
     public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
@@ -76,6 +83,54 @@ public class AcusesRestController {
 		return new ResponseEntity<List<String>>(list, HttpStatus.OK);
 	}
 
+
+
+    /**
+     * endpoint para obtener la configuración de un tipo de acuse específico
+     * como una lista plana de parámetros para JasperReports.
+     * @param tipoAcuse El nombre del tipo de acuse como String (ej. "ACREDITACION_MEMBRESIA").
+     * @return Un Map<String, String> con la configuración detallada del tipo de acuse
+     *         donde las claves son los nombres de los parámetros y los valores son sus String.
+     */
+    @GetMapping("/getAcuseConfig")
+    public ResponseEntity<Map<String, String>> getAcuseConfig(@RequestParam("tipoAcuse") String tipoAcuse) {
+        logger.info("Recibida solicitud para obtener configuración del acuse tipo: {}", tipoAcuse);
+        
+        try {
+            TipoAcuse tipoAcuseIdentificado = TipoAcuse.valueOf(tipoAcuse.toUpperCase());
+            AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseIdentificado);
+            
+            if (config != null) {
+                Map<String, String> flatParams = new HashMap<>();
+                
+                // Añadir los campos directos de AcuseConfig
+                if (config.getNomDocumento() != null) {
+                    flatParams.put("nomDocumento", config.getNomDocumento());
+                }
+                if (config.getDesVersion() != null) {
+                    flatParams.put("desVersion", config.getDesVersion());
+                }
+                
+                // Desanidar los imagePaths
+                if (config.getImagePaths() != null) {
+                    config.getImagePaths().forEach((key, value) -> {
+                        flatParams.put(key, value);
+                    });
+                }
+                
+                return new ResponseEntity<>(flatParams, HttpStatus.OK);
+            } else {
+                logger.warn("No se encontró configuración para el tipo de acuse: {}", tipoAcuse);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Tipo de acuse inválido: {}. Error: {}", tipoAcuse, e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            logger.error("Error inesperado al obtener la configuración del acuse para tipo {}: {}", tipoAcuse, e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
  
  
 	@RequestMapping("/descargarAcuse/{urlDocumento}")

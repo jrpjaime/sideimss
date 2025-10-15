@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import mx.gob.imss.acuses.dto.AcuseConfig;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
+import mx.gob.imss.acuses.enums.TipoAcuse;
 import mx.gob.imss.acuses.model.PlantillaDato;
 import mx.gob.imss.acuses.repository.PlantillaDatosRepository;
 import net.sf.jasperreports.engine.*;
@@ -34,7 +35,11 @@ import java.util.StringTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
  
 
@@ -147,22 +152,38 @@ public class AcuseServiceImpl implements AcuseService {
         return decargarAcuseDto;
     }
 
-    private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException, Exception {
+
+private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException, Exception {
         logger.info("Iniciando generación de acuse con datos JSON desde PlantillaDatoDto...");
 
-        // 1. Obtener la configuración específica del acuse
-        AcuseConfig config = acuseConfigService.getConfigForType(plantillaDatoDto.getTipoAcuse());
-        if (config == null) {
-            logger.error("No se encontró configuración para el tipo de acuse: {}", plantillaDatoDto.getTipoAcuse());
-            throw new JRException("No se encontró configuración para el tipo de acuse: " + plantillaDatoDto.getTipoAcuse());
+        String datosJSON = plantillaDatoDto.getDatosJson();
+        logger.info("Datos JSON recibidos: {}", datosJSON);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> allDataMap = new HashMap<>(); // Para almacenar todos los datos del JSON
+        String desVersion = null; // Variable para almacenar desVersion
+
+        // Primero, intentar parsear el JSON para obtener desVersion y otros datos
+        try {
+            // Intentar como objeto único para extraer desVersion y otros parámetros
+            allDataMap = objectMapper.readValue(datosJSON, new TypeReference<Map<String, Object>>() {});
+            if (allDataMap.containsKey("desVersion")) {
+                desVersion = (String) allDataMap.get("desVersion");
+                logger.info("desVersion obtenida del JSON: {}", desVersion);
+            } else {
+                logger.error("El JSON no contiene el campo 'desVersion'. Es necesario para la plantilla.");
+                throw new JRException("El campo 'desVersion' es requerido en el JSON para identificar la plantilla.");
+            }
+        } catch (Exception e) {
+       
+            logger.error("Error al intentar parsear el JSON para obtener 'desVersion' inicial: {}", e.getMessage());
+            throw new JRException("Error al procesar el JSON para la plantilla: " + e.getMessage());
         }
 
-        String datosJSON = plantillaDatoDto.getDatosJson();
-        // Usar desVersion de la configuración
-        String desVersionPlantillaPath = config.getDesVersion().replace("\\", "/") + ".jasper"; 
+        // Usar desVersion obtenida del JSON
+        String desVersionPlantillaPath = desVersion.replace("\\", "/") + ".jasper"; 
 
         logger.info("Plantilla Jasper a usar: {}", desVersionPlantillaPath);
-        logger.info("Datos JSON recibidos: {}", datosJSON);
 
         InputStream jasperStream = this.getClass().getClassLoader().getResourceAsStream(desVersionPlantillaPath);
         if (jasperStream == null) {
@@ -172,37 +193,36 @@ public class AcuseServiceImpl implements AcuseService {
 
         JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         JRDataSource dataSource;
         Map<String, Object> parameters = new HashMap<>();
         String cadenaOriginal = null;
 
+        // Ahora, determinar si el JSON es una lista o un objeto único para la fuente de datos
         try {
             List<Map<String, Object>> dataList = objectMapper.readValue(datosJSON, new TypeReference<List<Map<String, Object>>>(){});
             dataSource = new JRBeanCollectionDataSource(dataList);
-            logger.info("JSON interpretado como lista de objetos.");
+            logger.info("JSON interpretado como lista de objetos para el dataSource.");
+            // Si es una lista, los parámetros se toman del primer elemento o se manejan de otra forma.
+            // Para este caso, vamos a tomar los parámetros del allDataMap que ya procesamos inicialmente
+            parameters.putAll(allDataMap); 
+
         } catch (Exception e) {
-            logger.info("JSON interpretado como objeto único.");
-            Map<String, Object> dataMap = objectMapper.readValue(datosJSON, new TypeReference<Map<String, Object>>() {});
-
- 
-
-            if (dataMap.containsKey("cadenaOriginal")) {
-                Object value = dataMap.get("cadenaOriginal"); // Obtiene el valor
-                if (value instanceof String) {
-                    cadenaOriginal = (String) value;
-                    logger.info("Cadena Original obtenida del JSON  : {}", cadenaOriginal);
-                } else {
-                    logger.warn("El valor de 'cadenaOriginal' no es un String en el JSON.");
-                }
-            }
-
-
-
-            parameters.putAll(dataMap);
+            logger.info("JSON interpretado como objeto único para el dataSource.");
+            // Si es un objeto único, allDataMap ya contiene todos los datos
+            parameters.putAll(allDataMap);
             dataSource = new JREmptyDataSource(1);
         }
 
+        // Buscar 'cadenaOriginal' en los parámetros
+        if (parameters.containsKey("cadenaOriginal")) {
+            Object value = parameters.get("cadenaOriginal");
+            if (value instanceof String) {
+                cadenaOriginal = (String) value;
+                logger.info("Cadena Original obtenida del JSON: {}", cadenaOriginal);
+            } else {
+                logger.warn("El valor de 'cadenaOriginal' no es un String en el JSON.");
+            }
+        }
 
         SimpleDateFormat formatter = new SimpleDateFormat(FORMATO_dd_MM_yyyy_HH_mm_ss);
         
@@ -210,25 +230,20 @@ public class AcuseServiceImpl implements AcuseService {
         String fechaActual = formatter.format(new Date());
 
         parameters.put("fecha", fechaActual);
-       // parameters.put("vistaPrevia", "SI");
-
 
         if (cadenaOriginal != null) {
             InputStream qrImage = utileriasService.generaQRImageInputStream(cadenaOriginal);
-
- 
             parameters.put("qrcode", qrImage);
-            logger.info("Parámetro 'cadenaOriginal' añadido a JasperReports." + cadenaOriginal);
+            logger.info("Parámetro 'qrcode' (InputStream) añadido para la Cadena Original.");
         }
-
-
-
-
-        // 2. Añadir los parámetros de imágenes y otros textos desde la configuración
-        config.getImagePaths().forEach((key, value) -> 
-            parameters.put(key, value.replace("\\", "/"))
-        );
-        logger.info("Parámetros de configuración añadidos al reporte: {}", config.getImagePaths());
+        
+        // --- INICIO DE LA VERIFICACIÓN DE PARÁMETROS ---
+        logger.info("Verificando los parámetros que se enviarán a JasperReports:");
+        parameters.forEach((key, value) -> {
+            logger.info("  Parámetro: {} = {}", key, (value instanceof InputStream) ? "InputStream (no imprimible directamente)" : value);
+        });
+        logger.info("Fin de la verificación de parámetros.");
+        // --- FIN DE LA VERIFICACIÓN DE PARÁMETROS ---
 
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
 
@@ -247,10 +262,12 @@ public class AcuseServiceImpl implements AcuseService {
         exporter.setConfiguration(exportConfig);
         exporter.exportReport();
 
-        logger.info("✅ Acuse generado exitosamente.");
+        logger.info("Acuse generado exitosamente.");
         return baos.toByteArray();
     }
 
+
+    
     @Override
     public DecargarAcuseDto consultaAcuseByPlantillaDato(PlantillaDatoDto plantillaDatoDto) {
         logger.info("Procesando consultaAcuseByPlantillaDato sin conexión a BD...");
@@ -258,13 +275,7 @@ public class AcuseServiceImpl implements AcuseService {
         DecargarAcuseDto decargarAcuseDto = new DecargarAcuseDto();
         decargarAcuseDto.setCodigo(1); // Por defecto error
 
-        try {
-            // Obtener la configuración para el tipo de acuse recibido en el DTO
-            AcuseConfig config = acuseConfigService.getConfigForType(plantillaDatoDto.getTipoAcuse());
-            if (config == null) {
-                 throw new RuntimeException("No se encontró configuración para el tipo de acuse: " + plantillaDatoDto.getTipoAcuse());
-            }
-
+        try { 
             // Aquí el PlantillaDatoDto ya debería tener el tipoAcuse
             byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
@@ -272,7 +283,7 @@ public class AcuseServiceImpl implements AcuseService {
 
             decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
             // Usar el nomDocumento de la configuración centralizada
-            decargarAcuseDto.setNombreDocumento(config.getNomDocumento() + ".pdf");
+            decargarAcuseDto.setNombreDocumento(plantillaDatoDto.getNomDocumento() + ".pdf");
             decargarAcuseDto.setCodigo(0);
             decargarAcuseDto.setMensaje("Acuse generado exitosamente sin conexión a BD.");
 
@@ -282,5 +293,35 @@ public class AcuseServiceImpl implements AcuseService {
         }
 
         return decargarAcuseDto;
+    }
+
+
+
+    /**
+     * endpoint para obtener la configuración de un tipo de acuse específico.
+     * @param tipoAcuseString El nombre del tipo de acuse como String (ej. "ACREDITACION_MEMBRESIA").
+     * @return Un objeto AcuseConfig con la configuración detallada del tipo de acuse.
+     */
+    @GetMapping("/configuracionAcuse")
+    public ResponseEntity<AcuseConfig> getAcuseConfig(@RequestParam("tipoAcuse") String tipoAcuse) {
+        logger.info("Recibida solicitud para obtener configuración del acuse tipo: {}", tipoAcuse);
+        
+        try {
+            TipoAcuse tipoAcuseIdentificado = TipoAcuse.valueOf(tipoAcuse.toUpperCase());
+            AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseIdentificado);
+            
+            if (config != null) {
+                return new ResponseEntity<>(config, HttpStatus.OK);
+            } else {
+                logger.warn("No se encontró configuración para el tipo de acuse: {}", tipoAcuse);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Tipo de acuse inválido: {}. Error: {}", tipoAcuse, e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Retorna 400 si el enum no es válido
+        } catch (Exception e) {
+            logger.error("Error inesperado al obtener la configuración del acuse para tipo {}: {}", tipoAcuse, e.getMessage(), e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -38,6 +38,7 @@ export const EPs = {
   acuses: {
     info: "/v1/info",
     list: "/v1/list",
+    getAcuseConfig: "/v1/getAcuseConfig",
     descargarAcuse: "/v1/descargarAcuse",
     descargarAcusePreview: "/v1/descargarAcusePreview",
     generaRequestJSONFirmaAcuse:"/v1/generaRequestJSONFirmaAcuse",

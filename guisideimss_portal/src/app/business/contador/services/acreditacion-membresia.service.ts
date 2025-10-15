@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -6,6 +6,8 @@ import { EPs } from '../../../global/endPoint';
 import { environment } from '../../../../environments/environment';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { PlantillaDatoDto } from '../model/PlantillaDatoDto';
+import { AcuseConfig } from '../model/AcuseConfig ';
+import { AcuseParameters } from '../model/AcuseParameters';
 
 
 export interface FirmaRequestBackendResponse {
@@ -55,6 +57,13 @@ export class AcreditacionMembresiaService {
   }
 
 
+  // método para obtener la configuración del acuse
+  getAcuseConfig(tipoAcuse: string): Observable<AcuseParameters> {
+    const url = `${environment.acusesApiUrl}${EPs.acuses.getAcuseConfig}`;
+    let params = new HttpParams().set('tipoAcuse', tipoAcuse);
+
+    return this.httpClient.get<AcuseParameters>(url, { params: params });
+  }
 
 
   // método para descargar el preview del acuse
