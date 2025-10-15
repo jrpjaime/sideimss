@@ -124,14 +124,12 @@ public class AcuseServiceImpl implements AcuseService {
 
             AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseDeterminado);
 
-            // Convertir PlantillaDato a PlantillaDatoDto para el método actualizado
+        
             PlantillaDatoDto plantillaDatoDto = new PlantillaDatoDto();
             plantillaDatoDto.setCveIdPlantillaDatos(plantillaDato.getCveIdPlantillaDatos());
-            // Estos campos ahora vendrán de la configuración, no directamente del DTO/BD para `generarAcuseconDatosJSON`
-            // plantillaDatoDto.setNomDocumento(plantillaDato.getNomDocumento()); // Ya no se usa directamente
-            // plantillaDatoDto.setDesVersion(plantillaDato.getDesVersion()); // Ya no se usa directamente
+        
             plantillaDatoDto.setDatosJson(plantillaDato.getDesDatos());
-            plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado); // Asignar el tipo de acuse determinado
+            plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado); 
 
             // Generar el acuse y obtener los bytes del PDF, usando el DTO
             byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
