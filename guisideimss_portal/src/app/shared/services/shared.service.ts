@@ -32,7 +32,8 @@ export class SharedService {
   private registroPatronalSource = new BehaviorSubject<string>(''); // Valor por defecto
   currentRegistroPatronal = this.registroPatronalSource.asObservable();
 
-
+  private numeroRegistroImssSesionSource = new BehaviorSubject<string>(''); // Valor por defecto
+  currentNumeroRegistroImssSesion = this.numeroRegistroImssSesionSource.asObservable();
 
 
 
@@ -140,6 +141,16 @@ export class SharedService {
   }
 
 
+  changeNumeroRegistroImssSesion(numeroRegistroImssSesion: string) {
+    this.numeroRegistroImssSesionSource.next(numeroRegistroImssSesion);
+  }
+
+ 
+  get currentNumeroRegistroImssSesionValue(): string {
+    return this.numeroRegistroImssSesionSource.getValue();
+  }
+
+
     get currentRfcSesionValue(): string {
     return this.rfcSesionSource.getValue();
   }
@@ -161,6 +172,7 @@ export class SharedService {
     const segundoApellido = payload.segundoApellido;
     const desDelegacion = payload.desDelegacion;
     const desSubdelegacion = payload.desSubdelegacion;
+    const numeroRegistroImss = payload.numeroRegistroImss;
 
 
     console.log("rfc: " + rfc);
@@ -171,6 +183,7 @@ export class SharedService {
     console.log("roles: " + roles.join(', '));
     console.log("desDelegacion: " + desDelegacion);
     console.log("desSubdelegacion: " + desSubdelegacion);
+    console.log("numeroRegistroImss: " + numeroRegistroImss);
 
     this.changeRfcSesion(rfc);
     this.changeCurpSesion(curp);
@@ -180,6 +193,7 @@ export class SharedService {
     this.changeDelegacionSesion(desDelegacion);
     this.changeSubdelegacionSesion(desSubdelegacion);
     this.changeRoleSesion(roles);
+    this.changeNumeroRegistroImssSesion(numeroRegistroImss);
 
     if (roles.includes(Constants.rolePatron)) {
 

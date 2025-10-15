@@ -527,16 +527,17 @@ downloadFile(hdfsPath: string | null, fileName: string) {
         const nombreCompletoSesion = this.nombreCompletoSync; // Usa el getter síncrono del BaseComponent
         const rfcSesion = this.rfcSesion;
         const curpSesion = this.curpSesion;
+        const numeroRegistroImssSesion = this.numeroRegistroImssSesion;
 
 
 
-
-       const cadenaOriginal = `${nombreCompletoSesion}|${this.rfcSesion}|${this.curpSesion}`;
+        const cadenaOriginal = `${nombreCompletoSesion}|${this.rfcSesion}|${this.curpSesion}|${numeroRegistroImssSesion}`;
 
         console.warn('nombreCompletoSesion: '+ nombreCompletoSesion);
         console.warn('rfcSesion: '+ curpSesion);
         console.warn('curpSesion'+ curpSesion );
         console.warn('cadenaOriginal: '+ cadenaOriginal);
+        console.warn('numeroRegistroImssSesion: '+ numeroRegistroImssSesion );
 
         const datosCompletosParaAcuse = {
           ...datosDelFormulario, // Extiende todos los campos del formulario
@@ -549,6 +550,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
           nombreCompleto: nombreCompletoSesion, // Añade el nombre completo
           RFC: rfcSesion,  // Añade el RFC
           CURP: curpSesion,// Añade el CURP
+          numeroRegistroImss: numeroRegistroImssSesion,
           cadenaOriginal: cadenaOriginal
         };
 

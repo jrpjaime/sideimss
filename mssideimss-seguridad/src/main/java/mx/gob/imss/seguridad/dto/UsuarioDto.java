@@ -10,5 +10,6 @@ public class UsuarioDto {
     private String nombre;
     private String primerApellido;
     private String segundoApellido;
+    private String numeroRegistroImss;
     
 }

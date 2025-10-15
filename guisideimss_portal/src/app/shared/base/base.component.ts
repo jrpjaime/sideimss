@@ -8,7 +8,7 @@ import { combineLatest, map, Observable, startWith } from 'rxjs';
 @Directive()
 export class BaseComponent implements OnInit {
 
-
+  numeroRegistroImssSesion: string = '';
   nombreCompleto$: Observable<string> = new Observable<string>();
   rfc: string = '';
 
@@ -100,25 +100,22 @@ export class BaseComponent implements OnInit {
     });
 
     this.sharedService.currentRoleSesion.subscribe(roles => {
-    this.roles = roles;
-
-    // Usa .includes() para verificar si el usuario tiene el rol de 'Patron'
-     if (this.roles.includes(Constants.rolePatron)) {
-     this.indPatron = true;
-    } else {
-     this.indPatron = false;
-    }
-
-
-
-
-
-    console.log('this.roles: ' + this.roles.join(', '));
+        this.roles = roles;
+        // Usa .includes() para verificar si el usuario tiene el rol de 'Patron'
+        if (this.roles.includes(Constants.rolePatron)) {
+        this.indPatron = true;
+        } else {
+        this.indPatron = false;
+        }
+        console.log('this.roles: ' + this.roles.join(', '));
     });
 
 
 
-
+    this.sharedService.currentNumeroRegistroImssSesion.subscribe(numeroRegistroImssSesion => {  
+      this.numeroRegistroImssSesion = numeroRegistroImssSesion;
+      console.log('this.numeroRegistroImssSesion: ', this.numeroRegistroImssSesion);
+    });
 
 
 
@@ -150,23 +147,6 @@ export class BaseComponent implements OnInit {
 
   }
 
-
-/*
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    const maxSize = 5 * 1024 * 1024; // 5MB en bytes
-
-
-    if (file) {
-      if (file.size > maxSize) {
-        this.selectedFile = null;
-        this.fileErrorMessage = 'El archivo excede el tamaño máximo permitido de 5MB.';
-      } else {
-        this.selectedFile = file;
-        this.fileErrorMessage = ''; // Limpiar mensaje de error si el archivo es válido
-      }
-    }
-  }*/
 
 
 

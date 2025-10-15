@@ -34,6 +34,8 @@ public class JwtUtilService {
         claims.put("nombre", usuarioDto.getNombre());
         claims.put("primerApellido", usuarioDto.getPrimerApellido());
         claims.put("segundoApellido", usuarioDto.getSegundoApellido()); 
+        claims.put("numeroRegistroImss", usuarioDto.getNumeroRegistroImss());
+        
         claims.put("roles", roles);  
 
  
@@ -54,6 +56,7 @@ public class JwtUtilService {
         claims.put("nombre", usuarioDto.getNombre());
         claims.put("primerApellido", usuarioDto.getPrimerApellido());
         claims.put("segundoApellido", usuarioDto.getSegundoApellido());
+        claims.put("numeroRegistroImss", usuarioDto.getNumeroRegistroImss());
         claims.put("roles", roles);
  
         return Jwts.builder()

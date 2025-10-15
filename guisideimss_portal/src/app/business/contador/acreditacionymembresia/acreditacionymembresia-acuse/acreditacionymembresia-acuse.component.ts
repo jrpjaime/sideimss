@@ -13,9 +13,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription, take } from 'rxjs';
+import { LoaderService } from '../../../../shared/services/loader.service';
 
 
-export interface FirmaRequestBackendResponse { // <--- Asegúrate de que esto existe
+export interface FirmaRequestBackendResponse {  
   cad_original: string;
   peticionJSON: string;
   error: boolean;
@@ -59,6 +60,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     private modalService: ModalService,
     private acreditacionMembresiaService: AcreditacionMembresiaService, // Inyectar el servicio
     private alertService: AlertService,
+    private loaderService: LoaderService,
     private acreditacionMembresiaDataService: AcreditacionMembresiaDataService,
     private sanitizer: DomSanitizer, // Inyectar DomSanitizer
     sharedService: SharedService
@@ -120,7 +122,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
           const blob = new Blob([response.body], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-          this.alertService.success('Acuse previsualizado correctamente.', { autoClose: true });
+        
         } else {
           this.acusePreviewError = 'No se recibió ningún documento para previsualizar.';
           this.alertService.error(this.acusePreviewError, { autoClose: false });
@@ -172,10 +174,11 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       return;
     }
 
-    this.alertService.info('Preparando proceso de firma electrónica...', { autoClose: true });
+    this.loaderService.show(); 
 
     this.acreditacionMembresiaService.generarRequestJsonFirma(rfcUsuario).subscribe({
       next: (response: FirmaRequestBackendResponse) => {
+        this.loaderService.hide(); 
         if (!response.error) {
           this.cadenaOriginalFirmada = response.cad_original; // Almacenar la cadena original del backend
           let peticionJSON = response.peticionJSON;
@@ -194,6 +197,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         }
       },
       error: (errorResponse: HttpErrorResponse) => {
+        this.loaderService.hide();
         console.error('Error al conectar con el backend para generar JSON de firma:', errorResponse);
         let errorMessage = 'Error de comunicación con el servicio de firma. Por favor, inténtalo de nuevo más tarde.';
         if (errorResponse.error && typeof errorResponse.error === 'object' && errorResponse.error.mensaje) {
@@ -211,21 +215,14 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     console.log("Params: "+ params);
     console.log("widgetActionUrl: "+ widgetActionUrl);
 
-    // Crear el iframe dinámicamente o usar un modal con iframe.
-    // Si ya tienes un modal que muestra un iframe, asegúrate de que el 'name' del iframe
-    // coincida con el 'target' del formulario.
-
-    // Si tu modal es un div que contendrá el iframe:
+    
+ 
     // 1. Mostrar el modal
     this.isFirmaModalVisible = true;
     // 2. Crear el iframe dentro del modal (o si ya está en el HTML, solo establecer su src y name)
     const iframeName = 'formFirmaDigital'; // Este nombre debe ser el 'target' del formulario.
 
-    // Asegúrate de que en tu HTML tienes un iframe con este nombre o ID
-    // <div *ngIf="isFirmaModalVisible" class="modal">
-    //   <iframe [src]="firmaWidgetUrl" [name]="iframeName" id="firmaIframe"></iframe>
-    //   <button (click)="closeFirmaModal()">Cerrar</button>
-    // </div>
+ 
 
     // Aquí simplemente abrimos la URL en el iframe
     this.firmaWidgetUrl = this.sanitizer.bypassSecurityTrustResourceUrl(widgetActionUrl);
@@ -328,38 +325,27 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       indAceptarBuzon: 1
     };
 
-    this.modalService.showDialog(
-      'confirm',
-      'info',
-      'Confirmar Envío Final',
-      '¿Estás seguro de que deseas enviar esta solicitud de Acreditación y Membresía con la firma electrónica?',
-      (confirmed: boolean) => {
-        if (confirmed) {
-          this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
-          this.acreditacionMembresiaService.enviarDatosFinales(datosParaEnviar).subscribe({
-            next: (response) => {
-              console.log('Respuesta de envío final con firma:', response);
-              if (response.codigo === 0) {
-                this.alertService.success('Solicitud enviada exitosamente. Folio: ' + response.folio, { autoClose: false });
-                this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
-                this.router.navigate(['/home']);
-              } else {
-                this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
-              }
-            },
-            error: (err) => {
-              console.error('Error al enviar solicitud final con firma:', err);
-              this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: false });
-            }
-          });
+  
+
+    this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
+    this.acreditacionMembresiaService.enviarDatosFinales(datosParaEnviar).subscribe({
+      next: (response) => {
+        console.log('Respuesta de envío final con firma:', response);
+        if (response.codigo === 0) {
+          this.alertService.success('Solicitud enviada exitosamente. Folio: ' + response.folio, { autoClose: false });
+          this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
+          this.router.navigate(['/home']);
         } else {
-          this.alertService.info('Envío de solicitud cancelado.', { autoClose: true });
-          this.resetFirmaData();
+          this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
         }
       },
-      'Sí, Enviar',
-      'No, Volver'
-    );
+      error: (err) => {
+        console.error('Error al enviar solicitud final con firma:', err);
+        this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: false });
+        this.resetFirmaData();
+      }
+    });
+ 
   }
 
   enviarSolicitudFinal(): void {
