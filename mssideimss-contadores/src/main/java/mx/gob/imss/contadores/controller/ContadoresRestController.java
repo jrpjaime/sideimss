@@ -21,11 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
 import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
 import mx.gob.imss.contadores.dto.DocumentoIndividualResponseDto;
 import mx.gob.imss.contadores.dto.PlantillaDatoDto;
+import mx.gob.imss.contadores.entity.NdtPlantillaDato;
+import mx.gob.imss.contadores.enums.TipoAcuse;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
+import mx.gob.imss.contadores.service.JwtUtilService;
 import mx.gob.imss.contadores.service.UtileriasService;
 import reactor.core.publisher.Mono;
   
@@ -43,7 +47,7 @@ public class ContadoresRestController {
     private AcreditacionMembresiaService acreditacionMembresiaService;
 
     @Autowired
-    private UtileriasService utileriasService;
+    private  JwtUtilService jwtUtilService;
  
     @GetMapping("/info")
 	public ResponseEntity<List<String>> info() {
@@ -72,16 +76,14 @@ public class ContadoresRestController {
 
     @PostMapping("/acreditacionMembresia")
     public ResponseEntity<AcreditacionMenbresiaResponseDto> acreditacionMembresia(@RequestBody PlantillaDatoDto plantillaDatoDto) {
-        logger.info("Recibiendo datos de acreditación y membresía acreditacionMembresia:"); 
+        logger.info("Recibiendo datos de acreditación y membresía acreditacionMembresia:");
 
-
-        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::" );  
-        logger.info("plantillaDatoDto.getDatosJson():"+ plantillaDatoDto.getDatosJson());  
-        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::" );  
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         LocalDate fechaActual = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String fechaActualFormateada = fechaActual.format(formatter);
- 
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwtToken = null;
@@ -98,13 +100,55 @@ public class ContadoresRestController {
             errorDto.setFechaActual(fechaActualFormateada);
             return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
         }
- 
+
+
+
+        String rfc = null;
+        try {
+            // Extraer todos los claims del token
+            Claims claims = jwtUtilService.extractAllClaims(jwtToken);
+            // Obtener el RFC del claim "rfc"
+            rfc = (String) claims.get("rfc");
+            logger.info("RFC extraído del token JWT: {}", rfc);
+        } catch (Exception e) {
+            logger.error("Error al extraer RFC del token JWT: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("Error al procesar el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // Crear una instancia de NdtPlantillaDato y asignar el JSON
+        NdtPlantillaDato ndtPlantillaDato = new NdtPlantillaDato();
+
+        
+        ndtPlantillaDato.setDesRfc(rfc);
+        ndtPlantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+        ndtPlantillaDato.setDesPathVersion(plantillaDatoDto.getDesVersion());
+        ndtPlantillaDato.setDesDatos(plantillaDatoDto.getDatosJson());
+        ndtPlantillaDato.setDesTipoAcuse(plantillaDatoDto.getTipoAcuse().name());
+        ndtPlantillaDato.setFecRegistro(fechaActual);
+        
+
+        try {
+            // Llamar al servicio para guardar la plantilla de datos
+            NdtPlantillaDato plantillaGuardada = acreditacionMembresiaService.guardarPlantillaDato(ndtPlantillaDato);
+            logger.info("Plantilla de datos guardada exitosamente con ID: {}", plantillaGuardada.getCveIdPlantillaDato());
+        } catch (Exception e) {
+            logger.error("Error al guardar la plantilla de datos: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("Error al procesar y guardar los datos: " + e.getMessage());
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
         responseDto.setFechaActual(fechaActualFormateada);
- 
         responseDto.setCodigo(0);
-        responseDto.setMensaje("Operación realizada exitosamente."); 
-        logger.info("Operación realizada exitosamente. " );
+        responseDto.setMensaje("Operación realizada exitosamente.");
+        logger.info("Operación realizada exitosamente. ");
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 

@@ -51,7 +51,7 @@ export class AcreditacionMembresiaService {
   }
 
 
-    enviarDatosFinales(submitDto: any): Observable<any> {
+    acreditacionmembresia(submitDto: any): Observable<any> {
 
     return this.httpClient.post<any>(environment.contadoresApiUrl + EPs.contadores.acreditacionmembresia, submitDto);
   }

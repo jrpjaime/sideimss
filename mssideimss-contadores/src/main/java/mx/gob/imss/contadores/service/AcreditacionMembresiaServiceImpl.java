@@ -5,6 +5,7 @@ package mx.gob.imss.contadores.service;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
+import mx.gob.imss.contadores.entity.NdtPlantillaDato;
+import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import reactor.core.publisher.Mono;  
  
 import org.springframework.http.HttpHeaders;  
@@ -20,7 +23,8 @@ import org.springframework.http.HttpHeaders;
 public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaService {
 	private static final Logger logger = LogManager.getLogger(AcreditacionMembresiaServiceImpl.class);
 	
- 
+    @Autowired
+    private NdtPlantillaDatoRepository  ndtPlantillaDatoRepository;
 	
     private final WebClient webClient;
 
@@ -74,4 +78,15 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                 return Mono.just(errorDto);
             });
     }
+
+
+
+
+    @Override
+    public NdtPlantillaDato guardarPlantillaDato(NdtPlantillaDato plantillaDato) {
+        logger.info("Guardando NdtPlantillaDato con datos: {}", plantillaDato.getDesDatos());
+        return ndtPlantillaDatoRepository.save(plantillaDato);
+    }
+
+
 }

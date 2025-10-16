@@ -148,6 +148,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     const datosJson = JSON.stringify(datosCompletos);
 
     const plantillaDatoDto: PlantillaDatoDto = {
+      nomDocumento: this.acuseParameters['nomDocumento'],
+      desVersion: this.acuseParameters['desVersion'],
       cveIdPlantillaDatos: null,
       datosJson: datosJson,
       tipoAcuse: "ACREDITACION_MEMBRESIA"
@@ -376,6 +378,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
       // 3. Crear una instancia de PlantillaDatoDto
       const plantillaDato: PlantillaDatoDto = {
+        nomDocumento: this.acuseParameters['nomDocumento'],
+        desVersion: this.acuseParameters['desVersion'],
         cveIdPlantillaDatos: null, // O el valor que corresponda si lo tienes
         datosJson: datosJsonString, // Asignar la cadena JSON aquí
         tipoAcuse: 'ACREDITACION_MEMBRESIA' // Asegúrate de usar el valor correcto para TipoAcuse
@@ -383,7 +387,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
       this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
       // 4. Enviar el objeto PlantillaDatoDto
-      this.acreditacionMembresiaService.enviarDatosFinales(plantillaDato).subscribe({
+      this.acreditacionMembresiaService.acreditacionmembresia(plantillaDato).subscribe({
         next: (response) => {
           console.log('Respuesta de envío final con firma:', response);
           if (response.codigo === 0) {

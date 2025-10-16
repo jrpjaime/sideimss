@@ -7,9 +7,9 @@ spring:
     name: mssideimss-contadores
   datasource:
     driver-class-name: oracle.jdbc.driver.OracleDriver
-    url: ${SIDEIMSS_DB_URL}
-    username: ${SIDEIMSS_DB_USER}
-    password: ${SIDEIMSS_DB_PASSWORD}
+    url: ${SIDEIMSS_DB_URL_2}
+    username: ${SIDEIMSS_DB_USER_2}
+    password: ${SIDEIMSS_DB_PASSWORD_2}
     hikari:
       minimum-idle: ${POOL_MINIMUM_IDLE}
       maximum-pool-size: ${POOL_MAX_SIZE}

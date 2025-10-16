@@ -3,7 +3,8 @@ package mx.gob.imss.acuses.filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse; 
+import jakarta.servlet.http.HttpServletResponse;
+import mx.gob.imss.acuses.service.JwtUtilService;
 
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,7 +30,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final static Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class); 
 
     @Autowired
-    private mx.gob.imss.acuses.service.JwtUtilService jwtUtilService;
+    private  JwtUtilService jwtUtilService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

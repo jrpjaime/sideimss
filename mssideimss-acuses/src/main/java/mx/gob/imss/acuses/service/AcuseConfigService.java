@@ -19,12 +19,33 @@ public class AcuseConfigService {
 
      private final Map<TipoAcuse, AcuseConfig> configs = new EnumMap<>(TipoAcuse.class);
     
+    /**
+     * Inicializa las configuraciones de los diferentes tipos de acuses al arrancar la aplicación.
+     * Este método se ejecuta automáticamente después de que el bean AcuseConfigService ha sido construido.
+     * <p>
+     * Para cada tipo de acuse, se define una instancia de {@link AcuseConfig} que contiene:
+     * <ul>
+     *     <li>{@code nomDocumento}: El nombre base que se usará para el archivo PDF del acuse final.
+     *         Este campo es **obligatorio** para cada configuración.</li>
+     *     <li>{@code desVersion}: La ruta relativa al directorio base de reportes,
+     *         que apunta al archivo .jasper sin la extensión.
+     *         Este campo es **obligatorio** para cada configuración.</li>
+     *     <li>{@code imagePaths}: Un mapa de claves y rutas relativas para las imágenes
+     *         o cualquier otro parámetro de texto que JasperReports necesite.
+     *         Las claves deben coincidir con los nombres de los parámetros definidos en el reporte Jasper.</li>
+     * </ul>
+     * <p>
+     * Es fundamental que {@code nomDocumento} y {@code desVersion} estén presentes en cada configuración
+     * para el correcto funcionamiento de la generación de acuses.
+     */
     @PostConstruct
     public void init() {
+
         // Configuración para ACREDITACION_MEMBRESIA
+        // Este acuse gestiona la acreditación y membresía de contadores.
         AcuseConfig acreditacionMembresiaConfig = new AcuseConfig();
-        acreditacionMembresiaConfig.setNomDocumento("AcuseAcreditacionMembresia"); // Nombre final del PDF
-        acreditacionMembresiaConfig.setDesVersion("reportes\\contadores\\acreditacionmenbresia\\v202512\\SolicitudAcreditacionContador");
+        acreditacionMembresiaConfig.setNomDocumento("AcuseAcreditacionMembresia"); // Nombre final del PDF generado (ej. AcuseAcreditacionMembresia.pdf)
+        acreditacionMembresiaConfig.setDesVersion("reportes\\contadores\\acreditacionmenbresia\\v202512\\SolicitudAcreditacionContador"); // Ruta relativa del archivo .jasper (ej. SolicitudAcreditacionContador.jasper)
         acreditacionMembresiaConfig.addImagePath("imgLogoImss", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\logoImss.jpg");
         acreditacionMembresiaConfig.addImagePath("imgGobiernoRepublica", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\gobiernoMexico.png");
         acreditacionMembresiaConfig.addImagePath("imgEscudoNacional", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\escudoNacional.jpg");
@@ -33,23 +54,37 @@ public class AcuseConfigService {
         acreditacionMembresiaConfig.addImagePath("imgMarcaAgua", "reportes\\contadores\\acreditacionmenbresia\\v202512\\img\\watermark.png");
         configs.put(TipoAcuse.ACREDITACION_MEMBRESIA, acreditacionMembresiaConfig);
 
-        // Configuración para ACUSE_SOLICITUD_CAMBIO (ejemplo)
+
+        // Configuración para ACUSE_SOLICITUD_CAMBIO
+        // Este acuse corresponde a las solicitudes de cambio de algún tipo.
         AcuseConfig solicitudCambioConfig = new AcuseConfig();
-        solicitudCambioConfig.setNomDocumento("AcuseSolicitudCambio");
-        solicitudCambioConfig.setDesVersion("reportes\\solicitudes\\cambio\\v202401\\SolicitudCambio");
+        solicitudCambioConfig.setNomDocumento("AcuseSolicitudCambio"); // Nombre final del PDF
+        solicitudCambioConfig.setDesVersion("reportes\\solicitudes\\cambio\\v202401\\SolicitudCambio"); // Ruta relativa del archivo .jasper
         solicitudCambioConfig.addImagePath("imgLogoImss", "reportes\\solicitudes\\cambio\\v202401\\img\\logoImss.jpg");
-        // ... otros parámetros específicos para ACUSE_SOLICITUD_CAMBIO
+        // ... otros parámetros específicos para ACUSE_SOLICITUD_CAMBIO (ej. imgFirma, textoPiePagina)
         configs.put(TipoAcuse.ACUSE_SOLICITUD_CAMBIO, solicitudCambioConfig);
 
-        // Configuración para ACUSE_SOLICITUD_BAJA (ejemplo)
+
+        // Configuración para ACUSE_SOLICITUD_BAJA
+        // Este acuse corresponde a las solicitudes de baja de algún registro o servicio.
         AcuseConfig solicitudBajaConfig = new AcuseConfig();
-        solicitudBajaConfig.setNomDocumento("AcuseSolicitudBaja");
-        solicitudBajaConfig.setDesVersion("reportes\\solicitudes\\baja\\v202401\\SolicitudBaja");
+        solicitudBajaConfig.setNomDocumento("AcuseSolicitudBaja"); // Nombre final del PDF
+        solicitudBajaConfig.setDesVersion("reportes\\solicitudes\\baja\\v202401\\SolicitudBaja"); // Ruta relativa del archivo .jasper
         solicitudBajaConfig.addImagePath("imgLogoImss", "reportes\\solicitudes\\baja\\v202401\\img\\logoImss.jpg");
         // ... otros parámetros específicos para ACUSE_SOLICITUD_BAJA
         configs.put(TipoAcuse.ACUSE_SOLICITUD_BAJA, solicitudBajaConfig);
     }
 
+    /**
+     * Obtiene el objeto de configuración {@link AcuseConfig} para un tipo de acuse específico.
+     * Si el tipo de acuse no tiene una configuración definida, se intentará retornar
+     * la configuración predeterminada (TipoAcuse.DEFAULT).
+     *
+     * @param tipoAcuse El {@link TipoAcuse} para el cual se desea obtener la configuración.
+     * @return Un objeto {@link AcuseConfig} que contiene todos los parámetros necesarios
+     *         para generar el acuse. Retorna {@code null} si no se encuentra ninguna
+     *         configuración para el tipo dado y tampoco existe una configuración DEFAULT.
+     */
     public AcuseConfig getConfigForType(TipoAcuse tipoAcuse) {
         return configs.getOrDefault(tipoAcuse, configs.get(TipoAcuse.DEFAULT)); // Retorna DEFAULT si no encuentra
     }
