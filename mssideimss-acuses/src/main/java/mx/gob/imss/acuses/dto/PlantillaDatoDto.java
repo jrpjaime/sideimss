@@ -19,6 +19,8 @@ public class PlantillaDatoDto implements Serializable {
     private String desVersion; // Corresponde a desVersion de PlantillaDato
     private String datosJson; // Aquí se pasará la cadena JSON
     private TipoAcuse tipoAcuse;
+    private String urlDocumento;
+    
 
     private Map<String, Object> additionalParameters;
 

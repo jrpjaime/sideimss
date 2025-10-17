@@ -45,6 +45,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   acusePdfUrl: SafeResourceUrl | null = null; // Para la URL segura del PDF
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
+  acuseFinalError: string | null = null;
   nombreCompleto: string = '';
 
    acuseParameters: AcuseParameters | null = null;
@@ -61,7 +62,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   firma: string = '';
   certificado: string = '';
 
-  mostrarAcuse: boolean = false; 
+  mostrarAcuse: boolean = false;
 
   public Object = Object;
 
@@ -378,7 +379,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         return;
       }
 
-
+      this.datosFormularioPrevio.vistaPrevia = "NO";
       const datosParaSerializar = {
         ...this.datosFormularioPrevio,
         cadenaOriginal: this.cadenaOriginalFirmada,
@@ -415,23 +416,25 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
             this.firmaExitosa = true;
             this.datosExitoAcuse = {
                 folio: response.urlDocumento,
-                fechaHora: response.fechaActual,  
-                rfc: this.rfcSesion,  
-                nombre: this.nombreCompleto  
+                fechaHora: response.fechaActual,
+                rfc: this.rfcSesion,
+                nombre: this.nombreCompleto
             };
-            this.acreditacionMembresiaDataService.setDatosFormularioPrevio({}); 
+            this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
 
-            if (response && response.urlDocumento) {  
+            if (response && response.urlDocumento) {
               this.obtenerYMostrarAcuse(response.urlDocumento);
+            } else {
+              this.alertService.warn('La URL del acuse final no se recibió en la respuesta. No se podrá visualizar.', { autoClose: true });
             }
-             
+
           } else {
-            this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
+            this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: true });
           }
         },
         error: (err) => {
           console.error('Error al enviar solicitud final con firma:', err);
-          this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: false });
+          this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: true });
           this.resetFirmaData();
         }
       });
@@ -465,25 +468,59 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.certificado = '';
   }
 
- 
+
     salirDelTramite(): void {
       this.router.navigate(['/home']);
   }
 
-  obtenerYMostrarAcuse(urlDocumento: string) {
+obtenerYMostrarAcuse(urlDocumento: string) {
+    this.alertService.clear();
+    this.loaderService.show(); // Muestra el loader mientras se carga el acuse final
+    this.acuseFinalError = null; // Limpiar cualquier error previo del acuse final
+
+    // Limpia la URL del preview para no mostrar el preview mientras se carga el final
+    this.acusePdfUrl = null;
+
     this.acreditacionMembresiaService.getAcuseParaVisualizar(urlDocumento).subscribe({
-      next: (response) => {
+      next: (response: HttpResponse<Blob>) => { // Especificar el tipo de respuesta
+        this.loaderService.hide(); // Oculta el loader
         if (response.body) {
           const file = new Blob([response.body], { type: 'application/pdf' });
           const fileURL = URL.createObjectURL(file);
-          // Sanitiza la URL para que Angular la considere segura y permita cargarla en un iframe
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(fileURL);
-          this.mostrarAcuse = true; // Mostrar el iframe
+          this.mostrarAcuse = true; // Mostrar el iframe del acuse final
+          console.log('Acuse final cargado exitosamente.');
+        } else {
+          this.acuseFinalError = 'No se recibió ningún documento para el acuse final.';
+          this.alertService.error(this.acuseFinalError, { autoClose: false });
+          console.error('No se recibió body en la respuesta del acuse final.');
         }
       },
-      error: (error) => {
-        console.error('Error al obtener el acuse para visualización:', error);
-        this.alertService.error('No se pudo cargar el acuse final.', { autoClose: true });
+      error: (errorResponse: HttpErrorResponse) => { // Especificar tipo de error
+        this.loaderService.hide(); // Oculta el loader
+        console.error('Error al obtener el acuse para visualización:', errorResponse);
+        let errorMessage = 'No se pudo cargar el acuse final. Inténtalo de nuevo más tarde.';
+
+        if (errorResponse.error instanceof Blob) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const errorBody = JSON.parse(reader.result as string);
+                    errorMessage = errorBody.message || errorBody.error || errorMessage;
+                } catch (e) {
+                    console.warn('No se pudo parsear el error como JSON:', reader.result);
+                }
+                this.acuseFinalError = errorMessage;
+                this.alertService.error(this.acuseFinalError, { autoClose: false });
+            };
+            reader.readAsText(errorResponse.error);
+            return;
+        } else if (errorResponse.message) {
+          errorMessage = errorResponse.message;
+        }
+        this.acuseFinalError = errorMessage;
+        this.alertService.error(this.acuseFinalError, { autoClose: false });
+        this.mostrarAcuse = false; // Asegurarse de que el iframe no se muestre si hay un error
       }
     });
   }

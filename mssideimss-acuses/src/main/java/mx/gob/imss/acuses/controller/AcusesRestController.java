@@ -134,15 +134,13 @@ public class AcusesRestController {
  
  
 	
-    @PostMapping("/descargarAcusePost")
-    public ResponseEntity<byte[]> descargarAcusePost (
-            @RequestBody Map<String, String> requestBody, // Recibe la urlDocumento en el body
-            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
-            HttpServletRequest request) {
+    @PostMapping("/descargarAcuse")  
+    public ResponseEntity<byte[]> descargarAcuse(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());                
 
-        String urlDocumento = requestBody.get("urlDocumento"); // Extrae urlDocumento del body
+        String urlDocumento = plantillaDatoDto.getUrlDocumento(); // Extrae urlDocumento del body
 
-         logger.info("descargarAcusePost: {}", urlDocumento);
+         logger.info("descargarAcuse: {}", urlDocumento);
 
         if (urlDocumento == null || urlDocumento.isEmpty()) {
             logger.error("urlDocumento no proporcionada en el cuerpo de la solicitud POST.");
@@ -159,26 +157,18 @@ public class AcusesRestController {
         try {
             String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
             byte[] pdfBytes = Base64.getDecoder().decode(base64Content);
-
             String fileName = decargarAcuseDto.getNombreDocumento();
             if (fileName == null || fileName.isEmpty()) {
-                fileName = "documento.pdf";
+                fileName = "acuse.pdf"; // Nombre por defecto 
             }
             if (!fileName.toLowerCase().endsWith(".pdf")) {
                 fileName += ".pdf";
             }
-
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replace("+", "%20");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            
-            if (inline) {
-                headers.setContentDispositionFormData("inline", encodedFileName);
-            } else {
-                headers.setContentDispositionFormData("attachment", encodedFileName);
-            }
-            
+            headers.setContentDispositionFormData("inline", encodedFileName); // "inline" para que el navegador lo muestre en lugar de descargarlo
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
