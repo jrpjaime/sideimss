@@ -82,10 +82,10 @@ public class SeguridadRestController {
 
                 UsuarioDto  usuarioDto= new UsuarioDto();
                 usuarioDto.setRfc(authRequestDto.getUser());
-                usuarioDto.setNombre("Pedro");
-                usuarioDto.setPrimerApellido("Hernandez");
-                usuarioDto.setSegundoApellido("Robles");
-                usuarioDto.setCurp("CURPASIGNADA");
+                usuarioDto.setNombre("FERNANDO");
+                usuarioDto.setPrimerApellido("MORA");
+                usuarioDto.setSegundoApellido("GONZALEZ");
+                usuarioDto.setCurp("MOGF530415HDFRNR07");
                 usuarioDto.setNumeroRegistroImss("565656565656");
                 
                 if (roles.isEmpty()) {

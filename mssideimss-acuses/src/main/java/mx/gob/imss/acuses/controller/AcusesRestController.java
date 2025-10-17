@@ -262,7 +262,7 @@ public class AcusesRestController {
         Date fechaActual = new Date();
         
         // Genera un folio nuevo (asumiendo que utileriasService ya existe)
-        String desFolio = "BI"+ "FOLIOSSSSS";
+        String desFolio = "SIDEIMSS"+ "FOLIOSSSSS";
         logger.info("generaRequestJSONFirmaAcuse desFolio: " + desFolio );
         JSONObject jsonWidget = new JSONObject();
         String requestFirmaFiel = null; 
@@ -277,12 +277,14 @@ public class AcusesRestController {
             
             // Lógica para armar el JSON del widget de firma
             jsonWidget.put("operacion","firmaCMS");
-            jsonWidget.put("aplicacion","buzonTributario");
+            jsonWidget.put("aplicacion","GENERICO_ID_OP");
             jsonWidget.put("rfc",rfcUsuario);
-            jsonWidget.put("acuse","BZN_ACUSE_NOT");
+            jsonWidget.put("acuse","GENERICO_ACUSE");
             jsonWidget.put("cad_original",cadenaOriginal);
             jsonWidget.put("salida","cert,rfc,curp,rfc_rl,curp_rl,vigIni,vigFin,acuse,cadori,folio,firmas");
             jsonWidget.put("desFolio",desFolio);
+
+ 
 
             requestFirmaFiel = jsonWidget.toString();
             
