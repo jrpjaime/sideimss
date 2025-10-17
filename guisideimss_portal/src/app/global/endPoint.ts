@@ -39,7 +39,7 @@ export const EPs = {
     info: "/v1/info",
     list: "/v1/list",
     getAcuseConfig: "/v1/getAcuseConfig",
-    descargarAcuse: "/v1/descargarAcuse",
+    descargarAcusePost: '/descargarAcusePost',
     descargarAcusePreview: "/v1/descargarAcusePreview",
     generaRequestJSONFirmaAcuse:"/v1/generaRequestJSONFirmaAcuse",
   }

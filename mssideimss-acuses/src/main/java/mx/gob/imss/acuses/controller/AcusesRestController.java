@@ -133,57 +133,67 @@ public class AcusesRestController {
     }
  
  
-	@RequestMapping("/descargarAcuse/{urlDocumento}")
-	public ResponseEntity<byte[]> descargarAcuse (@PathVariable("urlDocumento")  String urlDocumento, HttpServletRequest request) {
- 
+	
+    @PostMapping("/descargarAcusePost")
+    public ResponseEntity<byte[]> descargarAcusePost (
+            @RequestBody Map<String, String> requestBody, // Recibe la urlDocumento en el body
+            @RequestParam(value = "inline", defaultValue = "false") boolean inline,
+            HttpServletRequest request) {
 
-        DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByUrlDocumento(urlDocumento); 
-		
+        String urlDocumento = requestBody.get("urlDocumento"); // Extrae urlDocumento del body
+
+         logger.info("descargarAcusePost: {}", urlDocumento);
+
+        if (urlDocumento == null || urlDocumento.isEmpty()) {
+            logger.error("urlDocumento no proporcionada en el cuerpo de la solicitud POST.");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByUrlDocumento(urlDocumento);
+
         if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
             logger.error("Error al obtener el documento o documento vacío. Mensaje: " + decargarAcuseDto.getMensaje());
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Retorna 404 Not Found si no se encuentra o hay error
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
         try {
-            // El formato es "data:application/pdf;base64,CONTENIDO_BASE64"
             String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
             byte[] pdfBytes = Base64.getDecoder().decode(base64Content);
 
             String fileName = decargarAcuseDto.getNombreDocumento();
             if (fileName == null || fileName.isEmpty()) {
-                fileName = "documento.pdf"; // Nombre por defecto si no se proporciona
+                fileName = "documento.pdf";
             }
-            
-            // Asegurarse de que el nombre del archivo incluya la extensión .pdf si no la tiene
             if (!fileName.toLowerCase().endsWith(".pdf")) {
                 fileName += ".pdf";
             }
 
-            // Codificar el nombre del archivo para asegurar que caracteres especiales se manejen correctamente
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replace("+", "%20");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            // La cabecera Content-Disposition indica al navegador que debe descargar el archivo.
-            // "attachment" fuerza la descarga, y "filename" sugiere el nombre del archivo.
-            headers.setContentDispositionFormData("attachment", encodedFileName);
+            
+            if (inline) {
+                headers.setContentDispositionFormData("inline", encodedFileName);
+            } else {
+                headers.setContentDispositionFormData("attachment", encodedFileName);
+            }
+            
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
         } catch (IllegalArgumentException e) {
             logger.error("Error al decodificar la cadena Base64 del documento: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Retorna 400 Bad Request
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (UnsupportedEncodingException e) {
             logger.error("Error al codificar el nombre del archivo: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Retorna 500 Internal Server Error
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             logger.error("Error inesperado al descargar el acuse: " + e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Retorna 500 Internal Server Error
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-	}
- 
- 
+    }
  
 
    

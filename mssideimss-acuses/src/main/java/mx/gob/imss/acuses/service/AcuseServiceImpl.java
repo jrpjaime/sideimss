@@ -8,7 +8,9 @@ import mx.gob.imss.acuses.dto.AcuseConfig;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.enums.TipoAcuse;
+import mx.gob.imss.acuses.model.NdtPlantillaDato;
 import mx.gob.imss.acuses.model.PlantillaDato;
+import mx.gob.imss.acuses.repository.NdtPlantillaDatoRepository;
 import mx.gob.imss.acuses.repository.PlantillaDatosRepository;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -53,83 +55,72 @@ public class AcuseServiceImpl implements AcuseService {
 	private UtileriasService utileriasService;
 
 
-	@Autowired
-	private PlantillaDatosRepository plantillaDatosRepository;
+     @Autowired
+    private NdtPlantillaDatoRepository ndtPlantillaDatoRepository;
 
 
     @Autowired
     private AcuseConfigService acuseConfigService; // Inyecta el nuevo servicio
 
-    @Override
+     @Override
     @Transactional
     public DecargarAcuseDto consultaAcuseByUrlDocumento(String urlDocumento) {
         DecargarAcuseDto decargarAcuseDto = new DecargarAcuseDto();
-        decargarAcuseDto.setCodigo(1); 
+        decargarAcuseDto.setCodigo(1);
         decargarAcuseDto.setMensaje("Error en acuse.");
 
         try {
-            String filename = utileriasService.desencriptar(urlDocumento);
-            logger.info("1filename: " + filename );
+            // Decodificar la URL Base64
+            String decodedUrl = new String(Base64.getUrlDecoder().decode(urlDocumento), "UTF-8");
+            logger.info("URL decodificada: {}", decodedUrl);
+
+            // Desencriptar la cadena (si aplica, según tu UtileriasService)
+            String filename = utileriasService.desencriptar(decodedUrl); // Aquí se usa la URL decodificada, no la base64
+            logger.info("Filename después de desencriptar: {}", filename);
+
+
             StringTokenizer tokens = new StringTokenizer(filename, "|");
             int nDatos = tokens.countTokens();
 
+            if (nDatos < 2) { // Debe haber al menos RFC y cveIdPlantillaDato
+                throw new IllegalArgumentException("Formato de URL de documento inválido: Faltan datos.");
+            }
+
             String[] datos = new String[nDatos];
             Integer i = 0;
-            while(tokens.hasMoreTokens()){
+            while (tokens.hasMoreTokens()) {
                 String str = tokens.nextToken();
                 datos[i] = str;
-                logger.info("str: " + str);
+                logger.info("Token: {}", str);
                 i++;
             }
 
             String rfc = datos[0];
-            logger.info("rfc: " + rfc);
-            Long cveIdPlantillaDatos = Long.parseLong( datos[1]);
-            logger.info("cveIdPlantillaDatos: " + cveIdPlantillaDatos);
+            logger.info("RFC: {}", rfc);
+            Long cveIdNdtPlantillaDato = Long.parseLong(datos[1]); // Renombrado para claridad
+            logger.info("cveIdNdtPlantillaDato: {}", cveIdNdtPlantillaDato);
 
-            PlantillaDato plantillaDato = plantillaDatosRepository.findById(cveIdPlantillaDatos)
-                                            .orElseThrow(() -> new RuntimeException("PlantillaDato no encontrada con ID: " + cveIdPlantillaDatos));
-            logger.info("plantillaDato: " + plantillaDato.getDesDatos());
+            // Buscar en el nuevo repositorio
+            NdtPlantillaDato ndtPlantillaDato = ndtPlantillaDatoRepository.findById(cveIdNdtPlantillaDato)
+                    .orElseThrow(() -> new RuntimeException("NdtPlantillaDato no encontrada con ID: " + cveIdNdtPlantillaDato));
+            logger.info("NdtPlantillaDato encontrada. desDatos: {}", ndtPlantillaDato.getDesDatos());
 
-            // Aquí necesitarás inferir el TipoAcuse basado en el registro de PlantillaDato
-            // Esto puede ser un nuevo campo en PlantillaDato o una lógica para determinarlo.
-            // Por ahora, asumiré que PlantillaDato.getDesVersion() o similar te da una pista.
-            // Lo ideal es tener un campo 'tipoAcuse' en la tabla PlantillaDato también.
-            // Para el ejemplo, usaré un valor fijo, pero esto debe ser dinámico.
-            // Podrías tener un método en PlantillaDato que devuelva TipoAcuse.
-            // O, si `desVersion` tiene un prefijo claro, podrías parsearlo.
-            // Ejemplo (necesitarás implementar la lógica real):
-            // TipoAcuse tipoAcuse = inferirTipoAcuseDePlantillaDato(plantillaDato); 
-            // AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuse);
-            
-            // **IMPORTANTE:** Aquí necesitas una manera de obtener el TipoAcuse
-            // desde la `PlantillaDato` que recuperaste de la base de datos.
-            // Si no tienes un campo `tipoAcuse` en `PlantillaDato`, puedes:
-            // 1. Añadirlo a la tabla `PlantillaDato` y a la entidad.
-            // 2. Inferirlo de `plantillaDato.getDesVersion()` si sigue un patrón.
-            // Por ejemplo, si `desVersion` contiene "acreditacionmenbresia", es `ACREDITACION_MEMBRESIA`.
-            
-            // Para este ejemplo, simularé la obtención del tipo de acuse:
-            // Esto es solo un placeholder, la lógica real debe venir de tu modelo/BD.
-            String desVersionPlantilla = plantillaDato.getDesVersion();
-            mx.gob.imss.acuses.enums.TipoAcuse tipoAcuseDeterminado;
-            if (desVersionPlantilla.contains("acreditacionmenbresia")) {
-                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.ACREDITACION_MEMBRESIA;
-            } else if (desVersionPlantilla.contains("solicitudes\\cambio")) {
-                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.ACUSE_SOLICITUD_CAMBIO;
-            } else {
-                tipoAcuseDeterminado = mx.gob.imss.acuses.enums.TipoAcuse.DEFAULT; // O lanza un error
-            }
-            // Fin del placeholder.
-
+            // Usar desTipoAcuse del NdtPlantillaDato para obtener la configuración
+            TipoAcuse tipoAcuseDeterminado = TipoAcuse.valueOf(ndtPlantillaDato.getDesTipoAcuse().toUpperCase());
             AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseDeterminado);
 
-        
+            if (config == null) {
+                throw new RuntimeException("No se encontró configuración para el TipoAcuse: " + tipoAcuseDeterminado.name());
+            }
+
             PlantillaDatoDto plantillaDatoDto = new PlantillaDatoDto();
-            plantillaDatoDto.setCveIdPlantillaDatos(plantillaDato.getCveIdPlantillaDatos());
-        
-            plantillaDatoDto.setDatosJson(plantillaDato.getDesDatos());
-            plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado); 
+            plantillaDatoDto.setCveIdPlantillaDatos(ndtPlantillaDato.getCveIdPlantillaDato()); // Usar el nuevo ID
+            plantillaDatoDto.setDatosJson(ndtPlantillaDato.getDesDatos());
+            plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado);
+            // El desVersion para generar el Jasper ahora se toma del AcuseConfig, no directamente de la entidad
+            // Si el DTO necesita `desVersion`, podemos tomarlo de `config.getDesVersion()`
+            plantillaDatoDto.setDesVersion(config.getDesVersion());
+            plantillaDatoDto.setNomDocumento(config.getNomDocumento()); // Para usar en consultaAcuseByPlantillaDato si se usa internamente
 
             // Generar el acuse y obtener los bytes del PDF, usando el DTO
             byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
@@ -142,13 +133,22 @@ public class AcuseServiceImpl implements AcuseService {
             decargarAcuseDto.setCodigo(0);
             decargarAcuseDto.setMensaje("Acuse generado y codificado exitosamente.");
 
-        } catch (Exception e) {
-            logger.error("Error en consultaAcuseByUrlDocumento: {}", e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            logger.error("Error en consultaAcuseByUrlDocumento (Argumento Inválido): {}", e.getMessage());
             decargarAcuseDto.setCodigo(1);
             decargarAcuseDto.setMensaje("Error al procesar el acuse: " + e.getMessage());
+        } catch (RuntimeException e) { // Captura el error de "no encontrada" y de "no se encontró configuración"
+            logger.error("Error en consultaAcuseByUrlDocumento (Runtime): {}", e.getMessage());
+            decargarAcuseDto.setCodigo(1);
+            decargarAcuseDto.setMensaje("Error al procesar el acuse: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error inesperado en consultaAcuseByUrlDocumento: {}", e.getMessage(), e);
+            decargarAcuseDto.setCodigo(1);
+            decargarAcuseDto.setMensaje("Error inesperado al procesar el acuse: " + e.getMessage());
         }
         return decargarAcuseDto;
     }
+
 
 
 private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException, Exception {

@@ -25,6 +25,14 @@ export interface FirmaRequestBackendResponse {
   mensaje?: string; // Opcional, para mensajes de éxito/error
 }
 
+
+export interface DatosAcuseExito {
+  folio: string;
+  fechaHora: string;
+  rfc: string;
+  nombre: string;
+}
+
 @Component({
   selector: 'app-acreditacionymembresia-acuse',
   standalone: true,
@@ -53,9 +61,19 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   firma: string = '';
   certificado: string = '';
 
+  mostrarAcuse: boolean = false; 
+
   public Object = Object;
 
   private windowMessageListener: ((event: MessageEvent) => void) | undefined;
+
+    firmaExitosa: boolean = false; // Controla la visibilidad del acuse de éxito
+  datosExitoAcuse: DatosAcuseExito = { // Almacenará los datos a mostrar
+    folio: '',
+    fechaHora: '',
+    rfc: '',
+    nombre: ''
+  };
 
   constructor (
     private fb: FormBuilder,
@@ -391,9 +409,22 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         next: (response) => {
           console.log('Respuesta de envío final con firma:', response);
           if (response.codigo === 0) {
-            this.alertService.success('Solicitud enviada exitosamente. Folio: ' + response.folio, { autoClose: false });
-            this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
-            this.router.navigate(['/home']);
+            this.alertService.success('Solicitud enviada exitosamente.' , { autoClose: true });
+
+            // Ocultar el acuse previo y mostrar los datos de éxito
+            this.firmaExitosa = true;
+            this.datosExitoAcuse = {
+                folio: response.urlDocumento,
+                fechaHora: response.fechaActual,  
+                rfc: this.rfcSesion,  
+                nombre: this.nombreCompleto  
+            };
+            this.acreditacionMembresiaDataService.setDatosFormularioPrevio({}); 
+
+            if (response && response.urlDocumento) {  
+              this.obtenerYMostrarAcuse(response.urlDocumento);
+            }
+             
           } else {
             this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: false });
           }
@@ -432,6 +463,29 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.curpFirma = '';
     this.firma = '';
     this.certificado = '';
+  }
+
+ 
+    salirDelTramite(): void {
+      this.router.navigate(['/home']);
+  }
+
+  obtenerYMostrarAcuse(urlDocumento: string) {
+    this.acreditacionMembresiaService.getAcuseParaVisualizar(urlDocumento).subscribe({
+      next: (response) => {
+        if (response.body) {
+          const file = new Blob([response.body], { type: 'application/pdf' });
+          const fileURL = URL.createObjectURL(file);
+          // Sanitiza la URL para que Angular la considere segura y permita cargarla en un iframe
+          this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(fileURL);
+          this.mostrarAcuse = true; // Mostrar el iframe
+        }
+      },
+      error: (error) => {
+        console.error('Error al obtener el acuse para visualización:', error);
+        this.alertService.error('No se pudo cargar el acuse final.', { autoClose: true });
+      }
+    });
   }
 
 }

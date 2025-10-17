@@ -4,6 +4,7 @@ package mx.gob.imss.contadores.controller;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -83,7 +84,9 @@ public class ContadoresRestController {
         logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         LocalDate fechaActual = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        // DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String fechaActualFormateada = fechaActual.format(formatter);
+       // String fechaactualvista=fechaActual.format(formatter2);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwtToken = null;
@@ -101,8 +104,8 @@ public class ContadoresRestController {
             return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-
-
+        String urlDocumentoBase64= null;
+        String urlDocumento= null;
         String rfc = null;
         try {
             // Extraer todos los claims del token
@@ -134,6 +137,9 @@ public class ContadoresRestController {
         try {
             // Llamar al servicio para guardar la plantilla de datos
             NdtPlantillaDato plantillaGuardada = acreditacionMembresiaService.guardarPlantillaDato(ndtPlantillaDato);
+
+            urlDocumento= rfc+ "|" +  plantillaGuardada.getCveIdPlantillaDato().toString() +"";
+            urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
             logger.info("Plantilla de datos guardada exitosamente con ID: {}", plantillaGuardada.getCveIdPlantillaDato());
         } catch (Exception e) {
             logger.error("Error al guardar la plantilla de datos: {}", e.getMessage(), e);
@@ -147,7 +153,8 @@ public class ContadoresRestController {
         AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
         responseDto.setFechaActual(fechaActualFormateada);
         responseDto.setCodigo(0);
-        responseDto.setMensaje("Operación realizada exitosamente.");
+        responseDto.setMensaje("Operación realizada exitosamente."); 
+        responseDto.setUrlDocumento(urlDocumentoBase64);
         logger.info("Operación realizada exitosamente. ");
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }

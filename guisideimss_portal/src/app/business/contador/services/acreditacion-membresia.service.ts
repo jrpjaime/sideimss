@@ -83,4 +83,23 @@ export class AcreditacionMembresiaService {
     return this.httpClient.post<FirmaRequestBackendResponse>(url, requestBody);
   }
 
+
+
+    getAcuseParaVisualizar(urlDocumento: string): Observable<HttpResponse<Blob>> {
+    const url = `${environment.acusesApiUrl}${EPs.acuses.descargarAcusePost}`; // Usa el nuevo endpoint POST
+    
+    // El cuerpo de la solicitud POST
+    const requestBody = { urlDocumento: urlDocumento };
+
+    // Agregamos el parámetro 'inline=true' en los HttpParams para el backend
+    let params = new HttpParams().set('inline', 'true'); 
+
+    return this.httpClient.post(url, requestBody, { // Envía el requestBody como segundo argumento
+      params: params, // Los parámetros de consulta (inline=true)
+      observe: 'response',
+      responseType: 'blob' // Esperamos un Blob (el PDF)
+    });
+  }
+
+  
 }
