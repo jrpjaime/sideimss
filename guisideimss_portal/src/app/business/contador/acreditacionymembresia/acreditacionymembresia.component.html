@@ -69,7 +69,7 @@
             </div>
             <div class="col-sm-4">
               <button type="button" class="btn btn-primary" (click)="uploadFile('archivoUno')"
-                      [disabled]="!selectedFileUno || fileUnoUploadSuccess || loadingFileUno">
+                      [disabled]="!selectedFileUno || fileUnoUploadSuccess || loadingFileUno || formAcreditacionMembresia.hasError('archivosDuplicados')">
                 @if (loadingFileUno) {
                   <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   Adjuntando...
@@ -83,10 +83,10 @@
 
         </div>
 
-        @if (formAcreditacionMembresia.get('archivoUno')?.invalid && formAcreditacionMembresia.get('archivoUno')?.touched && !fileUnoUploadSuccess) {
+        @if (formAcreditacionMembresia.get('archivoUno')?.invalid && formAcreditacionMembresia.get('archivoUno')?.touched && !fileUnoUploadSuccess && !formAcreditacionMembresia.hasError('archivosDuplicados')) {
           <small class="text-danger">Por favor, selecciona un archivo de acreditación (PDF, máximo 5MB).</small>
         }
-         @if (selectedFileUno && !fileUnoUploadSuccess && !loadingFileUno) {
+         @if (selectedFileUno && !fileUnoUploadSuccess && !loadingFileUno && !formAcreditacionMembresia.hasError('archivosDuplicados')) {
             <small class="text-muted d-block mt-1">Archivo seleccionado: {{ selectedFileUno.name }}</small>
         }
 
@@ -131,7 +131,7 @@
             </div>
             <div class="col-sm-4">
               <button type="button" class="btn btn-primary" (click)="uploadFile('archivoDos')"
-                      [disabled]="!selectedFileDos || fileDosUploadSuccess || loadingFileDos">
+                      [disabled]="!selectedFileDos || fileDosUploadSuccess || loadingFileDos || formAcreditacionMembresia.hasError('archivosDuplicados')">
                 @if (loadingFileDos) {
                   <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   Adjuntando...
@@ -146,10 +146,10 @@
 
         </div>
 
-        @if (formAcreditacionMembresia.get('archivoDos')?.invalid && formAcreditacionMembresia.get('archivoDos')?.touched && !fileDosUploadSuccess) {
+        @if (formAcreditacionMembresia.get('archivoDos')?.invalid && formAcreditacionMembresia.get('archivoDos')?.touched && !fileDosUploadSuccess && !formAcreditacionMembresia.hasError('archivosDuplicados')) {
           <small class="text-danger">Por favor, selecciona un archivo de membresía (PDF, máximo 5MB).</small>
         }
-        @if (selectedFileDos && !fileDosUploadSuccess && !loadingFileDos) {
+        @if (selectedFileDos && !fileDosUploadSuccess && !loadingFileDos && !formAcreditacionMembresia.hasError('archivosDuplicados')) {
             <small class="text-muted d-block mt-1">Archivo seleccionado: {{ selectedFileDos.name }}</small>
         }
 
@@ -181,6 +181,18 @@
     </div>
   </div>
 
+  <!-- MENSAJE DE ERROR PARA ARCHIVOS DUPLICADOS (A NIVEL DE FORMULARIO) -->
+  @if (formAcreditacionMembresia.hasError('archivosDuplicados')) {
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="alert alert-danger mt-2 d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ formAcreditacionMembresia.errors?.['archivosDuplicados']?.message }}
+            </div>
+        </div>
+    </div>
+  }
+
   <div class="row">
     <div class="col-sm-6">
       <div class="form-group">
@@ -193,7 +205,8 @@
   <div class="pull-right">
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="onReiniciarFormAcreditacionMembresia()">Cancelar</button>
-        <button type="button" class="btn btn-primary"  [disabled]="!formAcreditacionMembresia.valid || !fileUnoUploadSuccess || !fileDosUploadSuccess"
+        <button type="button" class="btn btn-primary"
+        [disabled]="!formAcreditacionMembresia.valid || !fileUnoUploadSuccess || !fileDosUploadSuccess || formAcreditacionMembresia.hasError('archivosDuplicados')"
         (click)="continuarConAcuse()"  >
         Verificar
       </button>

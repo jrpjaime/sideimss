@@ -1,8 +1,9 @@
 
 
+
 import { Component, OnInit, Renderer2 } from '@angular/core';
 import { BaseComponent } from '../../../shared/base/base.component';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CatalogosService } from '../../../shared/catalogos/services/catalogos.service';
 import { SharedService } from '../../../shared/services/shared.service';
@@ -61,17 +62,33 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
     this.formAcreditacionMembresia = this.fb.group({
       fechaExpedicionAcreditacion: ['', [Validators.required]],
       fechaExpedicionMembresia: ['', [Validators.required]],
-      // Los campos de archivo ya no son 'required' en la inicialización si se suben individualmente
-      // En su lugar, se validará su estado de carga exitosa
-      archivoUno: [''], // Mantenerlo para almacenar el nombre o un placeholder, pero sin Validators.required inicial
+      archivoUno: [''],
       archivoDos: ['']
-    }, { validators: fechaInicioMenorOigualFechaFin() });
+    }, {
+      validators: [fechaInicioMenorOigualFechaFin(), this.archivosDiferentesValidator()]
+    });
   }
 
 
   override ngOnInit(): void {
     super.ngOnInit();
     this.cargarDatosPrevios();
+  }
+
+  // El validador de grupo se mantiene, pero ahora actuará sobre los `selectedFileUno` y `selectedFileDos` directamente,
+  // y será desencadenado por `updateValueAndValidity` en `onFileSelected` y `deleteFile`.
+  archivosDiferentesValidator() {
+    return (group: AbstractControl): ValidationErrors | null => {
+      // Solo validar si ambos archivos han sido seleccionados
+      if (this.selectedFileUno && this.selectedFileDos) {
+        if (this.selectedFileUno.name === this.selectedFileDos.name) {
+          return { 'archivosDuplicados': {
+            message: `Verifique el documento, debe ser diferente al documento "${this.selectedFileUno.name}"`
+          }};
+        }
+      }
+      return null;
+    };
   }
 
 
@@ -161,14 +178,14 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
         this.alertService.error('El archivo excede el tamaño máximo permitido de 5MB.', { autoClose: true });
         this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'maxSize': true });
         event.target.value = null; // Limpiar el input file
-        // No asignar el archivo si hay error
+        this.formAcreditacionMembresia.updateValueAndValidity(); // Re-validar por si acaso
         return;
       }
       if (file.type !== 'application/pdf') {
         this.alertService.error('Solo se permiten archivos en formato PDF.', { autoClose: true });
         this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'invalidType': true });
         event.target.value = null; // Limpiar el input file
-        // No asignar el archivo si hay error
+        this.formAcreditacionMembresia.updateValueAndValidity(); // Re-validar por si acaso
         return;
       }
 
@@ -177,17 +194,41 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
       } else if (controlName === 'archivoDos') {
         this.selectedFileDos = file;
       }
-      // Actualizar el valor del FormControl, pero sin marcarlo como válido/inválido por la subida
+
       this.formAcreditacionMembresia.get(controlName)?.setValue(file.name);
       this.formAcreditacionMembresia.get(controlName)?.markAsDirty();
       this.formAcreditacionMembresia.get(controlName)?.markAsTouched();
-      this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity(); // Recalcular validez
+
     } else {
       // Si no se selecciona ningún archivo
       this.formAcreditacionMembresia.get(controlName)?.setValue('');
       this.formAcreditacionMembresia.get(controlName)?.markAsDirty();
       this.formAcreditacionMembresia.get(controlName)?.markAsTouched();
-      this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity(); // Recalcular validez
+    }
+
+    // *** Ejecutar el validador de archivos duplicados aquí ***
+    // Esto lo hará antes de la carga
+    this.formAcreditacionMembresia.updateValueAndValidity();
+
+    // Si hay un error de archivos duplicados, limpiar el archivo que acaba de ser seleccionado
+    // y mostrar un mensaje de alerta.
+    if (this.formAcreditacionMembresia.hasError('archivosDuplicados')) {
+      const errorMessage = this.formAcreditacionMembresia.errors?.['archivosDuplicados']?.message;
+      this.alertService.error(errorMessage, { autoClose: false });
+
+      // Limpiar el archivo recién seleccionado para evitar que se cargue
+      if (controlName === 'archivoUno') {
+        this.selectedFileUno = null;
+        this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
+        const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
+        if (fileInputUno) fileInputUno.value = '';
+      } else if (controlName === 'archivoDos') {
+        this.selectedFileDos = null;
+        this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
+        const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
+        if (fileInputDos) fileInputDos.value = '';
+      }
+      this.formAcreditacionMembresia.updateValueAndValidity(); // Re-validar después de limpiar
     }
   }
 
@@ -242,6 +283,15 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
       return;
     }
 
+
+
+
+    if (this.formAcreditacionMembresia.hasError('archivosDuplicados')) {
+      const errorMessage = this.formAcreditacionMembresia.errors?.['archivosDuplicados']?.message;
+      this.alertService.error(errorMessage, { autoClose: false });
+      return; // No subir si son duplicados
+    }
+
     this[loadingFlag] = true; // Activar spinner
 
     const formData = new FormData();
@@ -262,7 +312,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
           this.alertService.success(`${documentType} "${fileToUpload?.name}" cargado exitosamente.`, { autoClose: true });
           // Opcional: Marcar el control de formulario como válido si la subida fue un éxito
           this.formAcreditacionMembresia.get(controlName)?.setErrors(null);
-          this.formAcreditacionMembresia.get(controlName)?.updateValueAndValidity();
+          this.formAcreditacionMembresia.updateValueAndValidity();
         } else {
           this[fileUploadSuccess] = false;
           this[fileHdfsPath] = null;
@@ -527,7 +577,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
                 if (fileInputUno) fileInputUno.value = '';
                 this.formAcreditacionMembresia.get('archivoUno')?.setValue('');
                 this.formAcreditacionMembresia.get('archivoUno')?.markAsUntouched();
-                this.formAcreditacionMembresia.get('archivoUno')?.setErrors({ 'required': true }); // Marcarlo como requerido nuevamente
+                this.formAcreditacionMembresia.get('archivoUno')?.setErrors(null); // No marcar como requerido, el uploadFile lo hace
                 this.fileUnoError = null;
               } else if (controlName === 'archivoDos') {
                 this.fileDosUploadSuccess = false;
@@ -537,9 +587,11 @@ downloadFile(hdfsPath: string | null, fileName: string) {
                 if (fileInputDos) fileInputDos.value = '';
                 this.formAcreditacionMembresia.get('archivoDos')?.setValue('');
                 this.formAcreditacionMembresia.get('archivoDos')?.markAsUntouched();
-                this.formAcreditacionMembresia.get('archivoDos')?.setErrors({ 'required': true }); // Marcarlo como requerido nuevamente
+                this.formAcreditacionMembresia.get('archivoDos')?.setErrors(null); // No marcar como requerido, el uploadFile lo hace
                 this.fileDosError = null;
               }
+		      // Después de eliminar, re-validar el formulario completo para activar el validador de archivos duplicados
+              this.formAcreditacionMembresia.updateValueAndValidity();
             },
             error: (error: HttpErrorResponse) => {
               console.error('Error al eliminar el archivo:', error);
@@ -569,6 +621,7 @@ downloadFile(hdfsPath: string | null, fileName: string) {
 
   continuarConAcuse(): void {
     // Verificar la validez del formulario y si los archivos han sido cargados exitosamente
+
     if (this.formAcreditacionMembresia.valid) {
 
       // Inicializar docMem y docAcr como null por defecto
@@ -660,9 +713,10 @@ downloadFile(hdfsPath: string | null, fileName: string) {
     } else {
       // Si el formulario no es válido
       console.warn('El formulario no es válido.');
-      // Opcional: Marcar todos los campos como "touched" para que se muestren los mensajes de error de validación
-      this.formAcreditacionMembresia.markAllAsTouched();
-      this.alertService.error('Por favor, completa todos los campos requeridos del formulario antes de continuar.', { autoClose: true });
+      this.formAcreditacionMembresia.markAllAsTouched(); // Marcar todos los campos como "touched"
+      // Si el error es por duplicidad, ya se habrá mostrado en onFileSelected.
+      // Aquí solo se muestra un error general si hay otros problemas de validación.
+      this.alertService.error('Por favor, completa y valida todos los campos requeridos del formulario antes de continuar.', { autoClose: true });
     }
   }
 
