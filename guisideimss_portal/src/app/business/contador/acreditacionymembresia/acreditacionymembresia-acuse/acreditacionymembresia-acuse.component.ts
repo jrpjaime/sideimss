@@ -16,6 +16,7 @@ import { Subscription, take } from 'rxjs';
 import { LoaderService } from '../../../../shared/services/loader.service';
 import { AcuseConfig } from '../../model/AcuseConfig ';
 import { AcuseParameters } from '../../model/AcuseParameters';
+import { NAV } from '../../../../global/navigation';
 
 
 export interface FirmaRequestBackendResponse {
@@ -450,9 +451,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   }
 
   volver(): void {
-    this.router.navigate(['/acreditacion-membresia']);
+ 
+    this.router.navigate([NAV.contadoracreditacionymembresia]);
   }
-
   closeFirmaModal(): void {
     this.isFirmaModalVisible = false;
     this.alertService.info('Proceso de firma cancelado.', { autoClose: true });

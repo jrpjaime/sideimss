@@ -1,4 +1,4 @@
-import { Component, Renderer2 } from '@angular/core';
+import { Component, OnInit, Renderer2 } from '@angular/core';
 import { BaseComponent } from '../../../shared/base/base.component';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,7 +12,7 @@ import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResp
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModalService } from '../../../shared/services/modal.service';
 import { catchError, forkJoin, of } from 'rxjs';
-import { AcreditacionMembresiaDataService } from '../services/acreditacion-membresia-data.service';
+import { AcreditacionMembresiaDataService, FormDataToReturn } from '../services/acreditacion-membresia-data.service';
 import { NAV } from '../../../global/navigation';
 
 
@@ -23,7 +23,7 @@ import { NAV } from '../../../global/navigation';
   templateUrl: './acreditacionymembresia.component.html',
   styleUrl: './acreditacionymembresia.component.css'
 })
-export class AcreditacionymembresiaComponent extends BaseComponent {
+export class AcreditacionymembresiaComponent extends BaseComponent implements OnInit {
 
   formAcreditacionMembresia: FormGroup;
   selectedFileUno: File | null = null;
@@ -67,7 +67,44 @@ export class AcreditacionymembresiaComponent extends BaseComponent {
   }
 
 
+  override ngOnInit(): void {  
+    super.ngOnInit();  
+    this.cargarDatosPrevios();  
+  }
 
+
+    cargarDatosPrevios(): void {
+    const datosGuardados = this.acreditacionMembresiaDataService.getDatosParaRegresar();
+    if (datosGuardados) {
+      console.log('Cargando datos previos del formulario:', datosGuardados);
+      this.formAcreditacionMembresia.patchValue({
+        fechaExpedicionAcreditacion: datosGuardados.fechaExpedicionAcreditacion,
+        fechaExpedicionMembresia: datosGuardados.fechaExpedicionMembresia,
+      });
+
+      // Restaurar el estado de los archivos si existían
+      if (datosGuardados.fileUnoHdfsPath && datosGuardados.selectedFileUnoName) {
+        this.fileUnoHdfsPath = datosGuardados.fileUnoHdfsPath;
+        this.fileUnoUploadSuccess = true;
+        // Simular que un archivo fue seleccionado para que el nombre se muestre correctamente
+        this.selectedFileUno = new File([], datosGuardados.selectedFileUnoName, { type: 'application/pdf' });
+        this.formAcreditacionMembresia.get('archivoUno')?.setValue(datosGuardados.selectedFileUnoName);
+        this.formAcreditacionMembresia.get('archivoUno')?.setErrors(null); // Quitar error de 'required'
+      }
+
+      if (datosGuardados.fileDosHdfsPath && datosGuardados.selectedFileDosName) {
+        this.fileDosHdfsPath = datosGuardados.fileDosHdfsPath;
+        this.fileDosUploadSuccess = true;
+        // Simular que un archivo fue seleccionado
+        this.selectedFileDos = new File([], datosGuardados.selectedFileDosName, { type: 'application/pdf' });
+        this.formAcreditacionMembresia.get('archivoDos')?.setValue(datosGuardados.selectedFileDosName);
+        this.formAcreditacionMembresia.get('archivoDos')?.setErrors(null); // Quitar error de 'required'
+      }
+      this.formAcreditacionMembresia.markAllAsTouched(); // Para que se activen las validaciones visuales
+      this.formAcreditacionMembresia.updateValueAndValidity(); // Recalcular la validez del formulario
+      this.acreditacionMembresiaDataService.clearDatosParaRegresar(); // Limpiar los datos después de cargarlos
+    }
+  }
 
     onFileSelected(event: any, controlName: string) {
     this.alertService.clear(); // Limpiar alerts previos
@@ -556,6 +593,19 @@ downloadFile(hdfsPath: string | null, fileName: string) {
 
         // Guardar los datos completos en el servicio
         this.acreditacionMembresiaDataService.setDatosFormularioPrevio(datosCompletosParaAcuse);
+
+
+                // --- Guardar los datos específicos para regresar antes de navegar ---
+        const datosParaRegresar: FormDataToReturn = {
+          fechaExpedicionAcreditacion: this.formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.value,
+          fechaExpedicionMembresia: this.formAcreditacionMembresia.get('fechaExpedicionMembresia')?.value,
+          fileUnoHdfsPath: this.fileUnoHdfsPath,
+          fileDosHdfsPath: this.fileDosHdfsPath,
+          selectedFileUnoName: this.selectedFileUno?.name || null,
+          selectedFileDosName: this.selectedFileDos?.name || null,
+        };
+        this.acreditacionMembresiaDataService.setDatosParaRegresar(datosParaRegresar);
+        // --- FIN de guardar datos para regresar ---
 
         // Navegar al componente de acuse
         this.router.navigate([NAV.contadoracreditacionymembresiaacuse]);
