@@ -44,3 +44,6 @@ documentos:
   microservice:
     # URL base del microservicio de documentos http://localhost:4113/mssideimss-documentos/v1/cargarDocumento
     url: ${SIDEIMSS_DOCUMENTOS_URL}
+serviciosdigitales:
+  url:
+    correo: ${SIDEIMSS_URL_SEND_CORREO_ELECTRONICO}    

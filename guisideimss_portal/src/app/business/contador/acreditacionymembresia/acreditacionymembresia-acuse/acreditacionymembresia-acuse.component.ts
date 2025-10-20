@@ -17,7 +17,7 @@ import { LoaderService } from '../../../../shared/services/loader.service';
 import { AcuseConfig } from '../../model/AcuseConfig ';
 import { AcuseParameters } from '../../model/AcuseParameters';
 import { NAV } from '../../../../global/navigation';
-
+import { environment } from '../../../../../environments/environment';
 
 export interface FirmaRequestBackendResponse {
   cad_original: string;
@@ -118,6 +118,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     }
     super.ngOnDestroy(); // Llama al ngOnDestroy de BaseComponent
   }
+
   obtenerConfiguracionYDescargarAcusePreview(): void {
     console.log('Llamando a obtenerConfiguracionYDescargarAcusePreview');
     this.loaderService.show();
@@ -328,7 +329,10 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     console.log("Origin:", event.origin);
     console.log("Data:", event.data);
 
-    const URL_FIRMA_DIGITAL =  'http://172.16.23.224'; // Debe coincidir exactamente con el origin del widget
+    //const URL_FIRMA_DIGITAL =  'http://172.16.23.224'; // Debe coincidir exactamente con el origin del widget
+
+    const URL_FIRMA_DIGITAL = `${environment.firmaDigitalUrl}`;  // Debe coincidir exactamente con el origin del widget
+     console.log("Debe coincidir exactamente con el origin del widget URL_FIRMA_DIGITAL:", URL_FIRMA_DIGITAL);
 
     // Es crucial verificar el origen del mensaje para seguridad
     if (event.origin !== URL_FIRMA_DIGITAL) {
@@ -422,6 +426,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
                 nombre: this.nombreCompleto
             };
             this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
+            this.acreditacionMembresiaDataService.clearDatosParaRegresar();
 
             if (response && response.urlDocumento) {
               this.obtenerYMostrarAcuse(response.urlDocumento);
@@ -450,10 +455,10 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.iniciarProcesoFirma();
   }
 
-  volver(): void {
- 
+  regresarMantenerDatos(): void {
     this.router.navigate([NAV.contadoracreditacionymembresia]);
   }
+
   closeFirmaModal(): void {
     this.isFirmaModalVisible = false;
     this.alertService.info('Proceso de firma cancelado.', { autoClose: true });
@@ -470,7 +475,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   }
 
 
-    salirDelTramite(): void {
+  salirDelTramite(): void {
+      this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
+      this.acreditacionMembresiaDataService.clearDatosParaRegresar(); // Asegurar limpieza total
       this.router.navigate(['/home']);
   }
 

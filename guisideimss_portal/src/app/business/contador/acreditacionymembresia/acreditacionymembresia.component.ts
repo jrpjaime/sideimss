@@ -1,3 +1,5 @@
+
+
 import { Component, OnInit, Renderer2 } from '@angular/core';
 import { BaseComponent } from '../../../shared/base/base.component';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -67,15 +69,17 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
   }
 
 
-  override ngOnInit(): void {  
-    super.ngOnInit();  
-    this.cargarDatosPrevios();  
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.cargarDatosPrevios();
   }
 
 
     cargarDatosPrevios(): void {
+
+
     const datosGuardados = this.acreditacionMembresiaDataService.getDatosParaRegresar();
-    if (datosGuardados) {
+    if (datosGuardados && Object.keys(datosGuardados).length > 0) {
       console.log('Cargando datos previos del formulario:', datosGuardados);
       this.formAcreditacionMembresia.patchValue({
         fechaExpedicionAcreditacion: datosGuardados.fechaExpedicionAcreditacion,
@@ -102,7 +106,35 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
       }
       this.formAcreditacionMembresia.markAllAsTouched(); // Para que se activen las validaciones visuales
       this.formAcreditacionMembresia.updateValueAndValidity(); // Recalcular la validez del formulario
-      this.acreditacionMembresiaDataService.clearDatosParaRegresar(); // Limpiar los datos después de cargarlos
+      // Una vez cargados, se pueden limpiar si se desea que la próxima visita desde el menú esté limpia.
+      // Pero si queremos que el botón "Regresar" funcione, no lo limpiamos aquí.
+      // La limpieza ocurrirá solo al cancelar o al firmar exitosamente.
+      this.acreditacionMembresiaDataService.clearDatosParaRegresar(); // Limpiar después de cargar para futuras visitas desde el menú
+    } else {
+        // Si no hay datos guardados (o se limpiaron), asegurar que el formulario esté en estado inicial
+        this.formAcreditacionMembresia.reset();
+        this.selectedFileUno = null;
+        this.selectedFileDos = null;
+        this.fileUnoUploadSuccess = false;
+        this.fileDosUploadSuccess = false;
+        this.fileUnoHdfsPath = null;
+        this.fileDosHdfsPath = null;
+        this.fileUnoError = null;
+        this.fileDosError = null;
+        this.loadingFileUno = false;
+        this.loadingFileDos = false;
+        this.responseDto = null;
+
+        const fileInputUno = document.getElementById('archivoUno') as HTMLInputElement;
+        const fileInputDos = document.getElementById('archivoDos') as HTMLInputElement;
+        if (fileInputUno) fileInputUno.value = '';
+        if (fileInputDos) fileInputDos.value = '';
+
+        Object.keys(this.formAcreditacionMembresia.controls).forEach(key => {
+          this.formAcreditacionMembresia.get(key)?.markAsPristine();
+          this.formAcreditacionMembresia.get(key)?.markAsUntouched();
+          this.formAcreditacionMembresia.get(key)?.updateValueAndValidity();
+        });
     }
   }
 
@@ -314,19 +346,19 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
           if (deleteObservables.length > 0) {
             forkJoin(deleteObservables).subscribe({
               next: () => {
-                this.performResetAndRedirect();
+                this.performResetAndRedirect(true);
                 this.alertService.success('Archivos eliminados y cancelación confirmada.', { autoClose: true });
               },
               error: (err) => {
                 // Este error solo se capturaría si forkJoin falla completamente sin catchError en los pipes individuales
                 console.error('Error general al eliminar archivos:', err);
                 this.alertService.error('Ocurrió un error al intentar eliminar algunos archivos. Se procederá con la cancelación.', { autoClose: true });
-                this.performResetAndRedirect();
+                this.performResetAndRedirect(true);
               }
             });
           } else {
             // No hay archivos para eliminar, simplemente resetear y redirigir
-            this.performResetAndRedirect();
+            this.performResetAndRedirect(true);
             this.alertService.success('Cancelación confirmada.', { autoClose: true });
           }
 
@@ -343,8 +375,9 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
   /**
    * Método auxiliar para resetear el formulario y redirigir,
    * para evitar duplicación de código.
+   * @param clearDataService Indica si también se deben limpiar los datos en el DataService.
    */
-  private performResetAndRedirect() {
+  private performResetAndRedirect(clearDataService: boolean = false) {
     this.formAcreditacionMembresia.reset();
     this.selectedFileUno = null;
     this.selectedFileDos = null;
@@ -370,6 +403,16 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
       this.formAcreditacionMembresia.get(key)?.markAsUntouched();
       this.formAcreditacionMembresia.get(key)?.updateValueAndValidity();
     });
+
+    if (clearDataService) {
+        this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
+        this.acreditacionMembresiaDataService.clearDatosParaRegresar();
+    }
+
+
+
+
+
 
     // Redirigir a la página inicial
     this.router.navigate(['/home']);

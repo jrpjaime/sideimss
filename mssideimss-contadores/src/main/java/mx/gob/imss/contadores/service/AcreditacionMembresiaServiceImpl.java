@@ -3,6 +3,8 @@ package mx.gob.imss.contadores.service;
  
  
 
+import java.util.Collections;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import mx.gob.imss.contadores.dto.CorreoDto;
 import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
@@ -22,6 +26,9 @@ import org.springframework.http.HttpHeaders;
 @Service("acreditacionMembresiaService")
 public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaService {
 	private static final Logger logger = LogManager.getLogger(AcreditacionMembresiaServiceImpl.class);
+
+    @Value("${SIDEIMSS_URL_SEND_CORREO_ELECTRONICO}")
+    private String urlSendCorreoElectronico;
 	
     @Autowired
     private NdtPlantillaDatoRepository  ndtPlantillaDatoRepository;
@@ -88,5 +95,74 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         return ndtPlantillaDatoRepository.save(plantillaDato);
     }
 
+
+
+// Implementación del método para el envío de correo
+    @Override
+    public Mono<Void> enviarCorreoAcreditacion(String correoDestino, String rfc, String nombreCompleto) {
+        logger.info("Preparando para enviar correo a {} por acreditación/membresía.", correoDestino);
+        
+        // 1. Construir el objeto CorreoDto
+        CorreoDto correoDto = new CorreoDto();
+        correoDto.setRemitente("tramites.cpa@imss.gob.mx"); // De:
+        correoDto.setCorreoPara(Collections.singletonList(correoDestino)); // Para: 
+        correoDto.setAsunto("Constancia de acreditación/membresía"); // Título:
+        
+String cuerpoCorreoHtml = String.format(
+        "<!DOCTYPE html>" +
+        "<html>" +
+        "<head><meta charset=\"UTF-8\"></head>" +
+        "<body>" +
+        "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
+        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+        "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " + 
+        "Ley del Seguro Social y sus reglamentos y su constancia de ser integrante o miembro de un colegio o " +
+        "asociación de profesionales de la contaduría pública, han sido recibidas." +
+        "</p>" +
+        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+        "<strong>Por lo anterior, se anexa al presente el respectivo acuse de recibo.</strong>" +
+        "</p>" +
+        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+        "Asimismo, podrá dar seguimiento a su trámite en la siguiente liga: " +
+        "<a href=\"http://agqa.imss.gob.mx/escritorio/web/publico\">" +
+        "http://agqa.imss.gob.mx/escritorio/web/publico" +
+        "</a>" +
+        "</p>" +
+        "<br>" +
+        "<p style='font-size: 12px; color: #777;'>" +
+        "Este es un correo automático. Por favor, no responda a esta dirección." +
+        "</p>" +
+        "</body>" +
+        "</html>",
+        nombreCompleto, rfc
+    );
+        correoDto.setCuerpoCorreo(cuerpoCorreoHtml);
+
+        // 2. Llamar al servicio externo de correo
+        return webClient.post()
+            .uri(urlSendCorreoElectronico) // Usando la variable SIDEIMSS_URL_SEND_CORREO_ELECTRONICO
+            .bodyValue(correoDto)
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, response -> {
+                logger.error("Error HTTP {} al intentar enviar correo a {}.", response.statusCode(), correoDestino);
+                // Si el servicio de correo falla, lanzamos una excepción específica para que el controlador la maneje
+                return response.bodyToMono(String.class)
+                    .flatMap(errorBody -> Mono.error(new RuntimeException(
+                        "Fallo al enviar el correo: " + response.statusCode().value() + " - " + errorBody
+                    )));
+            })
+            .toBodilessEntity() // Solo nos interesa el status, no el cuerpo de la respuesta
+            .then() // Convierte a Mono<Void>
+            .onErrorResume(e -> {
+                if (e instanceof WebClientResponseException) {
+                    WebClientResponseException we = (WebClientResponseException) e;
+                    logger.error("Fallo WebClient al enviar correo a {}: {} - {}", correoDestino, we.getStatusCode(), we.getMessage());
+                } else {
+                    logger.error("Fallo genérico al enviar correo a {}: {}", correoDestino, e.getMessage());
+                }
+                // Propaga el error como una RuntimeException que indica el fallo
+                return Mono.error(new RuntimeException("Error en el servicio de envío de correo. Intente más tarde.", e));
+            });
+    }    
 
 }
