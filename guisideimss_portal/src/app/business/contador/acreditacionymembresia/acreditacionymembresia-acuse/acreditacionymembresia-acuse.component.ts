@@ -47,7 +47,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
   acuseFinalError: string | null = null;
-  nombreCompleto: string = '';
+  //nombreCompleto: string = '';
 
    acuseParameters: AcuseParameters | null = null;
   private readonly TIPO_ACUSE = 'ACREDITACION_MEMBRESIA';
@@ -372,7 +372,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
   enviarSolicitudFinalConFirma(): void {
       this.alertService.clear();
-
+      const nombreCompletoSesion = this.nombreCompletoSync;
       if (!this.firmaDigital || !this.folioFirma || !this.curpFirma) {
           this.alertService.error('No se han obtenido los datos completos de la firma electrónica. Por favor, inténtalo de nuevo.', { autoClose: false });
           this.resetFirmaData();
@@ -423,7 +423,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
                 folio: response.urlDocumento,
                 fechaHora: response.fechaActual,
                 rfc: this.rfcSesion,
-                nombre: this.nombreCompleto
+                nombre: nombreCompletoSesion
             };
             this.acreditacionMembresiaDataService.setDatosFormularioPrevio({});
             this.acreditacionMembresiaDataService.clearDatosParaRegresar();
