@@ -16,7 +16,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.transaction.Transactional; // Mantener para el contexto de BBDD si aplica
+ 
 import mx.gob.imss.documentos.dto.DocumentoIndividualDto;
 import mx.gob.imss.documentos.dto.DownloadFileDto;
 
@@ -88,7 +88,6 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
     }
 
 	@Override 
-    @Transactional // Mantener @Transactional si tienes otras operaciones de BBDD en este método
 	public DocumentoIndividualDto cargaDocumentoHadoop(DocumentoIndividualDto documentoIndividualVO ) throws IOException, IllegalArgumentException, ParseException { 
 		
 	    logger.info("-------------inicio cargaDocumentoHadoop cargaDocumentoBase64 " );
@@ -171,8 +170,7 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 	}
 
 
-   @Override
-    @Transactional
+   @Override 
     public DocumentoIndividualDto cargaDocumentoHadoop(
             MultipartFile archivo,
             String desRfc,
@@ -271,7 +269,6 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 
 
     @Override
-    @Transactional // Mantener @Transactional si tienes otras operaciones de BBDD en este método
     public String saveDocumentoHdfs(byte[] file, String pathHdfs, String namefile) throws IOException, IllegalArgumentException {
 		if (file == null || file.length == 0) {
 			logger.error("Error: el archivo a guardar en HDFS es nulo o está vacío. Se iniciará el rollback.");
