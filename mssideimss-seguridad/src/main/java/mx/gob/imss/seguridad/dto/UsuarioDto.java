@@ -11,5 +11,7 @@ public class UsuarioDto {
     private String primerApellido;
     private String segundoApellido;
     private String numeroRegistroImss;
+    private String numRegistroCpa;
+    private String cveIdCpa;
     
 }
