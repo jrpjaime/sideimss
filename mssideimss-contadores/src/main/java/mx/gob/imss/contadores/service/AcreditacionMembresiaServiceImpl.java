@@ -103,12 +103,12 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
 // Implementación del método para el envío de correo
-    @Override
-    public Mono<Void> enviarCorreoAcreditacion(String rfc, String nombreCompleto) { // Se elimina correoDestino del parámetro
+      @Override
+    public Mono<Void> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) {
         logger.info("Preparando para enviar correo por acreditación/membresía para RFC: {}.", rfc);
-        
-        // Primero, obtener el correo electrónico usando el RFC
-        return obtenerCorreoDeMediosContacto(rfc)
+
+        // Primero, obtener el correo electrónico usando el RFC, pasando el jwtToken
+        return obtenerCorreoDeMediosContacto(rfc, jwtToken) // Pasamos el jwtToken aquí
             .flatMap(correoDestino -> {
                 if (correoDestino == null || correoDestino.isEmpty()) {
                     logger.warn("No se pudo obtener un correo destino para el RFC: {}", rfc);
@@ -116,14 +116,14 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                 }
 
                 logger.info("Correo destino obtenido para RFC {}: {}", rfc, correoDestino);
-                
+
                 // 1. Construir el objeto CorreoDto
                 CorreoDto correoDto = new CorreoDto();
                 correoDto.setRemitente("tramites.cpa@imss.gob.mx"); // De:
-               /// correoDto.setCorreoPara(Collections.singletonList(correoDestino)); // Para: 
-                correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); // Para: 
-                correoDto.setAsunto("Constancia de acreditación/membresía"); // Título:
-                
+                // correoDto.setCorreoPara(Collections.singletonList(correoDestino)); // Para:
+                correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); // Para: (mantienes tu override para testing)
+                correoDto.setAsunto("ES UNA PRUEBA NO RESPONDER Constancia de acreditación/membresía"); // Título:
+
                 String cuerpoCorreoHtml = String.format(
                         "<!DOCTYPE html>" +
                         "<html>" +
@@ -131,7 +131,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                         "<body>" +
                         "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
                         "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                        "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " + 
+                        "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " +
                         "Ley del Seguro Social y sus reglamentos y su constancia de ser integrante o miembro de un colegio o " +
                         "asociación de profesionales de la contaduría pública, han sido recibidas." +
                         "</p>" +
@@ -156,19 +156,18 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
                 // 2. Llamar al servicio externo de correo
                 return webClient.post()
-                    .uri(urlSendCorreoElectronico) // Usando la variable SIDEIMSS_URL_SEND_CORREO_ELECTRONICO
+                    .uri(urlSendCorreoElectronico)
                     .bodyValue(correoDto)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, response -> {
                         logger.error("Error HTTP {} al intentar enviar correo a {}.", response.statusCode(), correoDestino);
-                        // Si el servicio de correo falla, lanzamos una excepción específica para que el controlador la maneje
                         return response.bodyToMono(String.class)
                             .flatMap(errorBody -> Mono.error(new RuntimeException(
                                 "Fallo al enviar el correo: " + response.statusCode().value() + " - " + errorBody
                             )));
                     })
-                    .toBodilessEntity() // Solo nos interesa el status, no el cuerpo de la respuesta
-                    .then() // Convierte a Mono<Void>
+                    .toBodilessEntity()
+                    .then()
                     .onErrorResume(e -> {
                         if (e instanceof WebClientResponseException) {
                             WebClientResponseException we = (WebClientResponseException) e;
@@ -176,23 +175,24 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                         } else {
                             logger.error("Fallo genérico al enviar correo a {}: {}", correoDestino, e.getMessage());
                         }
-                        // Propaga el error como una RuntimeException que indica el fallo
                         return Mono.error(new RuntimeException("Error en el servicio de envío de correo. Intente más tarde.", e));
                     });
             });
-    }   
+    }
 
-
-
-        private Mono<String> obtenerCorreoDeMediosContacto(String rfc) {
-
-          
+    // Modificamos la firma para aceptar el jwtToken
+    private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
         logger.info("Llamando a mssideimss-catalogos para obtener medios de contacto para RFC: {}", rfc);
         String url = catalogosMicroserviceUrl + "/mediosContacto/" + rfc;
-          url = catalogosMicroserviceUrl.trim() + "/mediosContacto/GOAP7903086U1" ; //quitar esta linea
-       logger.info("conectando a : {}", url);
+
+        // **IMPORTANTE:** Remover esta línea si no es para pruebas y quieres usar el RFC dinámico
+         url = catalogosMicroserviceUrl.trim() + "/mediosContacto/GOAP7903086U1" ; //quitar esta linea
+        logger.info("conectando a : {}", url);
+
         return webClient.get()
             .uri(url)
+            // Agregamos el encabezado Authorization con el token JWT
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
             .retrieve()
             .onStatus(HttpStatusCode::isError, response -> {
                 logger.error("Error HTTP {} al obtener medios de contacto de mssideimss-catalogos para RFC {}.", response.statusCode(), rfc);
@@ -201,10 +201,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                         "Fallo al obtener correo de catalogos (" + response.statusCode().value() + "): " + errorBody
                     )));
             })
-            .bodyToMono(MediosContactoContadoresResponseDto.class) // Asegúrate de tener este DTO
+            .bodyToMono(MediosContactoContadoresResponseDto.class)
             .map(response -> {
-                // Aquí asumimos que quieres el primer correo electrónico encontrado.
-                // Podrías añadir lógica para seleccionar el "mejor" correo si hay varios.
                 if (response != null && response.getMedios() != null && !response.getMedios().isEmpty()) {
                     for (MedioContactoContadoresDto medio : response.getMedios()) {
                         if ("CORREO ELECTRÓNICO".equalsIgnoreCase(medio.getTipoContacto())) {
@@ -214,13 +212,11 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                     }
                 }
                 logger.warn("No se encontró un correo electrónico en la respuesta de mssideimss-catalogos para RFC {}.", rfc);
-                return null; // O una cadena vacía, dependiendo de tu lógica
+                return null;
             })
             .onErrorResume(e -> {
                 logger.error("Fallo completo al obtener correo de mssideimss-catalogos para RFC {}: {}", rfc, e.getMessage(), e);
-                // Decide si quieres fallar la operación de envío de correo si no se puede obtener el RFC
                 return Mono.error(new RuntimeException("Error al obtener correo de contacto desde el servicio de catálogos.", e));
             });
     }
-
 }

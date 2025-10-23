@@ -24,6 +24,7 @@ import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
+import mx.gob.imss.catalogos.service.MediosContactoService;
 import mx.gob.imss.catalogos.service.MediosContactoSoapClientService;
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
@@ -46,8 +47,8 @@ public class CatalogosRestController {
 	@Autowired
 	private SdcSubdelegacionService sdcSubdelegacionService;
 
-	@Autowired
-    private MediosContactoSoapClientService mediosContactoSoapClientService;
+    @Autowired
+    private MediosContactoService mediosContactoService; 
 	
  
     @GetMapping("/info")
@@ -82,7 +83,7 @@ public class CatalogosRestController {
     @GetMapping("/mediosContacto/{rfc}")
     public ResponseEntity<MediosContactoResponseDto> getMediosContactoByRfc(@PathVariable String rfc) {
         logger.info("Recibiendo solicitud para /mediosContacto/{}", rfc);
-        MediosContactoResponseDto response = mediosContactoSoapClientService.recuperarMediosContactoPorRfc(rfc);
+        MediosContactoResponseDto response = mediosContactoService.recuperarMediosContactoPorRfc(rfc); // <-- CAMBIADO
         
         if (response != null && !response.getMedios().isEmpty()) {
             return new ResponseEntity<>(response, HttpStatus.OK);

@@ -145,34 +145,28 @@ public class ContadoresRestController {
     ndtPlantillaDato.setFecRegistro(fechaActual);
    
 
-    try {
+        try {
             // **1. INTENTO DE ENVÍO DE CORREO:**
-            // Se realiza la llamada al servicio de correo. Se usa block() para esperar la respuesta
-            // en este punto del flujo, ya que el guardado de la base de datos es síncrono.
-            // Si hay un error, el Mono lanza una excepción que es capturada en el catch.
             logger.info("Iniciando el envío del correo de notificación.");
-            acreditacionMembresiaService.enviarCorreoAcreditacion(  rfc, nombreCompleto)
-                .block(); // Bloquear hasta que el Mono<Void> se complete (o falle)
+            // Pasamos el token JWT al servicio
+            acreditacionMembresiaService.enviarCorreoAcreditacion(rfc, nombreCompleto, jwtToken)
+                .block();
             logger.info("Correo enviado exitosamente.");
 
-
             // **2. GUARDADO DE INFORMACIÓN (Solo si el correo fue exitoso):**
-      NdtPlantillaDato plantillaGuardada = acreditacionMembresiaService.guardarPlantillaDato(ndtPlantillaDato);
-      urlDocumento= rfc+ "|" + plantillaGuardada.getCveIdPlantillaDato().toString() +"";
-      urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
-      logger.info("Plantilla de datos guardada exitosamente con ID: {}", plantillaGuardada.getCveIdPlantillaDato());
-            
-    } catch (Exception e) {
-            // Este catch maneja fallos de correo (lanzados por .block() o el onErrorResume del servicio)
-            // y fallos al guardar en DB.
-      logger.error("Fallo durante el envío de correo o el guardado de datos: {}", e.getMessage(), e);
-      AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
-      errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value()); // 500
-            // Usamos un mensaje que indique que debe intentar de nuevo.
-      errorDto.setMensaje("Error al procesar la solicitud o al enviar el correo. Por favor, **intente más tarde**.");
-      errorDto.setFechaActual(fechaActualFormateada);
-      return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+            NdtPlantillaDato plantillaGuardada = acreditacionMembresiaService.guardarPlantillaDato(ndtPlantillaDato);
+            urlDocumento = rfc + "|" + plantillaGuardada.getCveIdPlantillaDato().toString() + "";
+            urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
+            logger.info("Plantilla de datos guardada exitosamente con ID: {}", plantillaGuardada.getCveIdPlantillaDato());
+
+        } catch (Exception e) {
+            logger.error("Fallo durante el envío de correo o el guardado de datos: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorDto.setMensaje("Error al procesar la solicitud o al enviar el correo. Por favor, **intente más tarde**.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
     AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
     responseDto.setFechaActual(fechaActualFormateada);
