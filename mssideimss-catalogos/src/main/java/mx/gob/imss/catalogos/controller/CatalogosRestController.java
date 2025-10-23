@@ -13,16 +13,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.domain.Page;
 
-  
+import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
-import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;  
+import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
+import mx.gob.imss.catalogos.service.MediosContactoSoapClientService;
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
 
@@ -30,7 +32,7 @@ import jakarta.validation.Valid;
  
 
 
-@Controller
+@RestController
 @CrossOrigin("*") 
 @RequestMapping("/mssideimss-catalogos/v1")
 public class CatalogosRestController {
@@ -43,6 +45,9 @@ public class CatalogosRestController {
 
 	@Autowired
 	private SdcSubdelegacionService sdcSubdelegacionService;
+
+	@Autowired
+    private MediosContactoSoapClientService mediosContactoSoapClientService;
 	
  
     @GetMapping("/info")
@@ -72,7 +77,21 @@ public class CatalogosRestController {
 	 
 
  
- 
+
+
+    @GetMapping("/mediosContacto/{rfc}")
+    public ResponseEntity<MediosContactoResponseDto> getMediosContactoByRfc(@PathVariable String rfc) {
+        logger.info("Recibiendo solicitud para /mediosContacto/{}", rfc);
+        MediosContactoResponseDto response = mediosContactoSoapClientService.recuperarMediosContactoPorRfc(rfc);
+        
+        if (response != null && !response.getMedios().isEmpty()) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else if (response != null) {
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND); // O un código 200 con lista vacía
+        } else {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
 		

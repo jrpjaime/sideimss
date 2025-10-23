@@ -151,7 +151,7 @@ public class ContadoresRestController {
             // en este punto del flujo, ya que el guardado de la base de datos es síncrono.
             // Si hay un error, el Mono lanza una excepción que es capturada en el catch.
             logger.info("Iniciando el envío del correo de notificación.");
-            acreditacionMembresiaService.enviarCorreoAcreditacion(correoElectronico, rfc, nombreCompleto)
+            acreditacionMembresiaService.enviarCorreoAcreditacion(  rfc, nombreCompleto)
                 .block(); // Bloquear hasta que el Mono<Void> se complete (o falle)
             logger.info("Correo enviado exitosamente.");
 

@@ -107,6 +107,87 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+
+
+
+
+
+
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        
+        <!-- JAXB RI (Runtime Implementation) - para la implementación de JAXB -->
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.3.6</version>
+        </dependency>
+        
+        <!-- JAXB Core - a veces necesaria para jaxb-impl -->
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-core</artifactId>
+            <version>2.3.0.1</version>
+        </dependency>
+        
+        <!-- JAX Activation API - Requerida por JAXB en JDKs modernos -->
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+
+        <!-- JAX-WS API y Runtime (para el cliente SOAP) -->
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>2.3.5</version> <!-- Asegúrate de usar una versión compatible con tu JDK y JAXB -->
+            <type>pom</type> <!-- Esto trae todas las dependencias transitivas necesarias para JAX-WS -->
+        </dependency>
+
+        <dependency>
+            <groupId>javax.xml.ws</groupId>
+            <artifactId>jaxws-api</artifactId>
+            <version>2.3.1</version> <!-- Usar una versión compatible con JAXB y JAX-WS RI -->
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.6</version> <!-- Debe ser compatible con las versiones de jaxb-api y jaxb-impl -->
+        </dependency>
+
+        <!-- Si jaxws-rt no es suficiente por sí solo, a veces se necesita el transport HTTP -->
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-ri</artifactId>
+            <version>2.3.5</version> <!-- Coincide con jaxws-rt -->
+            <type>pom</type>
+            <scope>runtime</scope> <!-- Solo es necesario en tiempo de ejecución -->
+        </dependency>
+
+
+
+
+        <dependency>
+            <groupId>com.sun.xml.messaging.saaj</groupId>
+            <artifactId>saaj-impl</artifactId>
+            <version>1.5.3</version> <!-- Usar una versión reciente compatible -->
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.soap</groupId>
+            <artifactId>javax.xml.soap-api</artifactId>
+            <version>1.4.0</version> <!-- La API para javax.xml.soap.* -->
+        </dependency>
+
+
+
+
+        
     </dependencies>
     <build>
         <plugins>
