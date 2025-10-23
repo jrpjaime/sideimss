@@ -205,7 +205,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             .map(response -> {
                 if (response != null && response.getMedios() != null && !response.getMedios().isEmpty()) {
                     for (MedioContactoContadoresDto medio : response.getMedios()) {
-                        if ("CORREO ELECTRÓNICO".equalsIgnoreCase(medio.getTipoContacto())) {
+                        if ("1".equalsIgnoreCase(medio.getTipoContacto())) {
                             logger.info("Correo electrónico obtenido de mssideimss-catalogos para RFC {}: {}", rfc, medio.getDesFormaContacto());
                             return medio.getDesFormaContacto();
                         }
