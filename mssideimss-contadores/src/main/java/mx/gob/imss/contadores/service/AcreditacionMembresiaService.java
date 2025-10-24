@@ -8,5 +8,5 @@ public interface AcreditacionMembresiaService {
  
     Mono<DocumentoIndividualDto> cargarDocumentoAlmacenamiento(DocumentoIndividualDto documento, String finalJwtToken);
     NdtPlantillaDato guardarPlantillaDato(NdtPlantillaDato plantillaDato);
-     Mono<Void> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken);
+    Mono<String> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken); 
 }

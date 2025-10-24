@@ -47,7 +47,6 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
-
     @Override
     public Mono<DocumentoIndividualDto> cargarDocumentoAlmacenamiento(DocumentoIndividualDto documento, String jwtToken) {
         logger.info("Preparando para enviar documento '{}' al microservicio de documentos.", documento.getNomArchivo());
@@ -79,10 +78,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             .onErrorResume(e -> {
                 logger.error("Fallo completo al cargar documento '{}': {}", documento.getNomArchivo(), e.getMessage(), e);
                 DocumentoIndividualDto errorDto = new DocumentoIndividualDto();
-                //mensaje de la excepción si es una WebClientResponseException
-                // para obtener un código más preciso, o usar un genérico como BAD_GATEWAY si el microservicio falló.
                 if (e instanceof RuntimeException && e.getMessage() != null && e.getMessage().contains("Error del microservicio de documentos")) {
-                    errorDto.setCodigo(HttpStatus.BAD_GATEWAY.value()); // O el que consideres apropiado
+                    errorDto.setCodigo(HttpStatus.BAD_GATEWAY.value()); 
                 } else {
                     errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
                 }
@@ -91,38 +88,30 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             });
     }
 
-
-
-
     @Override
     public NdtPlantillaDato guardarPlantillaDato(NdtPlantillaDato plantillaDato) {
         logger.info("Guardando NdtPlantillaDato con datos: {}", plantillaDato.getDesDatos());
         return ndtPlantillaDatoRepository.save(plantillaDato);
     }
 
-
-
-// Implementación del método para el envío de correo
-      @Override
-    public Mono<Void> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) {
+    // Implementación del método para el envío de correo
+    @Override
+    public Mono<String> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) { // Cambia el retorno a Mono<String> para el mensaje
         logger.info("Preparando para enviar correo por acreditación/membresía para RFC: {}.", rfc);
 
-        // Primero, obtener el correo electrónico usando el RFC, pasando el jwtToken
-        return obtenerCorreoDeMediosContacto(rfc, jwtToken) // Pasamos el jwtToken aquí
+        return obtenerCorreoDeMediosContacto(rfc, jwtToken)
             .flatMap(correoDestino -> {
                 if (correoDestino == null || correoDestino.isEmpty()) {
-                    logger.warn("No se pudo obtener un correo destino para el RFC: {}", rfc);
-                    return Mono.error(new RuntimeException("No se encontró un correo electrónico para el RFC proporcionado."));
+                    logger.warn("No se pudo obtener un correo destino para el RFC: {}. Continuando sin enviar correo.", rfc);
+                    return Mono.just("No se encontró un correo electrónico para el RFC proporcionado. El guardado de la plantilla continuará."); // Mensaje para el controlador
                 }
 
                 logger.info("Correo destino obtenido para RFC {}: {}", rfc, correoDestino);
 
-                // 1. Construir el objeto CorreoDto
                 CorreoDto correoDto = new CorreoDto();
-                correoDto.setRemitente("tramites.cpa@imss.gob.mx"); // De:
-                // correoDto.setCorreoPara(Collections.singletonList(correoDestino)); // Para:
+                correoDto.setRemitente("tramites.cpa@imss.gob.mx");
                 correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); // Para: (mantienes tu override para testing)
-                correoDto.setAsunto("ES UNA PRUEBA NO RESPONDER Constancia de acreditación/membresía"); // Título:
+                correoDto.setAsunto("ES UNA PRUEBA NO RESPONDER Constancia de acreditación/membresía");
 
                 String cuerpoCorreoHtml = String.format(
                         "<!DOCTYPE html>" +
@@ -154,7 +143,6 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                     );
                 correoDto.setCuerpoCorreo(cuerpoCorreoHtml);
 
-                // 2. Llamar al servicio externo de correo
                 return webClient.post()
                     .uri(urlSendCorreoElectronico)
                     .bodyValue(correoDto)
@@ -167,31 +155,30 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                             )));
                     })
                     .toBodilessEntity()
-                    .then()
+                    .thenReturn("Correo enviado exitosamente.") // Si el envío es exitoso, devuelve este mensaje
                     .onErrorResume(e -> {
                         if (e instanceof WebClientResponseException) {
                             WebClientResponseException we = (WebClientResponseException) e;
-                            logger.error("Fallo WebClient al enviar correo a {}: {} - {}", correoDestino, we.getStatusCode(), we.getMessage());
+                            logger.error("Fallo WebClient al enviar correo a {}: {} - {}. Continuando con el guardado de la plantilla.", correoDestino, we.getStatusCode(), we.getMessage());
                         } else {
-                            logger.error("Fallo genérico al enviar correo a {}: {}", correoDestino, e.getMessage());
+                            logger.error("Fallo genérico al enviar correo a {}: {}. Continuando con el guardado de la plantilla.", correoDestino, e.getMessage());
                         }
-                        return Mono.error(new RuntimeException("Error en el servicio de envío de correo. Intente más tarde.", e));
+                        return Mono.just("Error en el servicio de envío de correo. El guardado de la plantilla continuará."); // Mensaje para el controlador
                     });
+            })
+            .onErrorResume(e -> { // Manejo de errores de obtenerCorreoDeMediosContacto
+                logger.warn("No se pudo obtener el correo para RFC {}: {}. Continuando sin enviar correo.", rfc, e.getMessage());
+                return Mono.just("No se pudo obtener un correo electrónico. El guardado de la plantilla continuará."); // Mensaje para el controlador
             });
     }
 
-    // Modificamos la firma para aceptar el jwtToken
     private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
         logger.info("Llamando a mssideimss-catalogos para obtener medios de contacto para RFC: {}", rfc);
-        String url = catalogosMicroserviceUrl + "/mediosContacto/" + rfc;
-
-        // **IMPORTANTE:** Remover esta línea si no es para pruebas y quieres usar el RFC dinámico
-         url = catalogosMicroserviceUrl.trim() + "/mediosContacto/GOAP7903086U1" ; //quitar esta linea
+        String url = catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc;
         logger.info("conectando a : {}", url);
 
         return webClient.get()
             .uri(url)
-            // Agregamos el encabezado Authorization con el token JWT
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
             .retrieve()
             .onStatus(HttpStatusCode::isError, response -> {
@@ -212,11 +199,11 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                     }
                 }
                 logger.warn("No se encontró un correo electrónico en la respuesta de mssideimss-catalogos para RFC {}.", rfc);
-                return null;
+                return null; // Devuelve null si no se encuentra un correo
             })
             .onErrorResume(e -> {
-                logger.error("Fallo completo al obtener correo de mssideimss-catalogos para RFC {}: {}", rfc, e.getMessage(), e);
-                return Mono.error(new RuntimeException("Error al obtener correo de contacto desde el servicio de catálogos.", e));
+                logger.error("Fallo completo al obtener correo de mssideimss-catalogos para RFC {}: {}. Se asume que no hay correo.", rfc, e.getMessage(), e);
+                return Mono.just(""); // Devuelve un string vacío para indicar que no hay correo, pero no detiene la ejecución.
             });
     }
 }
