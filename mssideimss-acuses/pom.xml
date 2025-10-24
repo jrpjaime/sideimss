@@ -124,23 +124,44 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+
+
+
+
+        <!-- Jaspersoft® Studio 6.21.5 - Visual Designer for JasperReports 6.21.5.  -->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports</artifactId>
-			<version>6.4.0</version>
+			<version>6.21.5</version>
 		</dependency>
 
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports-fonts</artifactId>
-			<version>6.0.0</version>
+			<version>6.21.5</version>
 		</dependency>
         
+       
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+
+        
+
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20240303</version>
         </dependency>
+        
     </dependencies>
     <build>
         <plugins>

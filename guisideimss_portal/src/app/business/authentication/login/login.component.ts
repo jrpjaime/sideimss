@@ -8,7 +8,7 @@ import { NAV } from '../../../global/navigation';
 import { Constants } from '../../../global/Constants';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from '../../../shared/services/alert.service'; 
+import { AlertService } from '../../../shared/services/alert.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -24,9 +24,6 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   activeTab: 'login' | 'firma' = 'firma';
   errorMessage: string | null = null;
 
-  // Constante para la URL del widget de firma
-  // private URL_FIRMA_DIGITAL = "http://172.16.23.224";
-
   // Propiedades para el widget de firma
   widgetUrl: SafeResourceUrl | undefined;
   @ViewChild('formWidget') formWidget!: ElementRef<HTMLFormElement>;
@@ -37,7 +34,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private sharedService: SharedService,
     private router: Router,
     private sanitizer: DomSanitizer,
-     public alertService: AlertService, 
+     public alertService: AlertService,
     private cdRef: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
@@ -80,7 +77,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
      console.log("LoginComponent entro en login");
     if (this.loginForm.valid) {
       const { user, password } = this.loginForm.value;
-     
+
       this.authService.login(user, password).subscribe({
         next: (response) => {
           this.sharedService.initializeUserData();
@@ -118,7 +115,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       complete:() => {
-         
+
       }
 
 
@@ -209,7 +206,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
                   }
                 },
                 complete:() => {
-                   
+
                 }
         });
 

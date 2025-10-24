@@ -267,7 +267,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     });
   }
   displayFirmaModalAndSubmitForm(params: string): void {
-    const URL_FIRMA_DIGITAL =  'http://172.16.23.224'; // Asegúrate de que esta URL sea correcta y accesible
+
+    const URL_FIRMA_DIGITAL = `${environment.firmaDigitalUrl}`;
     const widgetActionUrl = `${URL_FIRMA_DIGITAL}/firmaElectronicaWeb/widget/chfecyn`;
 
 
@@ -328,8 +329,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     console.log("respuestaCHFECyN - Mensaje recibido.");
     console.log("Origin:", event.origin);
     console.log("Data:", event.data);
-
-    //const URL_FIRMA_DIGITAL =  'http://172.16.23.224'; // Debe coincidir exactamente con el origin del widget
 
     const URL_FIRMA_DIGITAL = `${environment.firmaDigitalUrl}`;  // Debe coincidir exactamente con el origin del widget
      console.log("Debe coincidir exactamente con el origin del widget URL_FIRMA_DIGITAL:", URL_FIRMA_DIGITAL);
