@@ -42,4 +42,4 @@ management:
       enabled: true 
 imss:
   firma-electronica:
-    base-url: http://172.16.23.224  # https://firmadigitalssl.imss.gob.mx # Esta será la parte base  
+    base-url: ${SIDEIMSS_FIRMA_DIGITAL:http://172.16.23.224}  # https://firmadigitalssl.imss.gob.mx # Esta será la parte base     http://172.16.23.224 

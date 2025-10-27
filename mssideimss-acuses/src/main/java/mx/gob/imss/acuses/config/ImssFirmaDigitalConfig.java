@@ -1,9 +1,11 @@
 package mx.gob.imss.acuses.config;
 
-import mx.gob.imss.acuses.wsfirmaelectronicaseg.FirmaElectronicaSegService;
+import mx.gob.imss.acuses.wsfirmaelectronicaseg.FirmaElectronicaSegService; 
 import mx.gob.imss.acuses.wsfirmaelectronicaseg.FirmaElectronicaSegPortType;  
-import mx.gob.imss.acuses.wsfirmaelectronicaseg.ObjectFactory;  
- 
+import mx.gob.imss.acuses.wsfirmaelectronicaseg.ObjectFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value; 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +16,8 @@ import java.net.URL;
 @Configuration
 public class ImssFirmaDigitalConfig {
 
-   // @Value("${imss.firma.wsdl.url:https://firmadigitalssl.imss.gob.mx/WsFirmaElectronicaSeg/FirmaElectronicaSegService?WSDL}")
-   // private String wsdlUrl;
+    private final static Logger logger = LoggerFactory.getLogger(ImssFirmaDigitalConfig.class);
+
 
    @Value("${imss.firma-electronica.base-url}")
     private String imssFirmaBaseUrl;
@@ -27,7 +29,8 @@ public class ImssFirmaDigitalConfig {
         try {
             URL wsdlLocation = new URL(imssFirmaBaseUrl + "/WsFirmaElectronicaSeg/FirmaElectronicaSegService?WSDL");
             
-            // EL targetNamespace del Servicio es "http://doctrust.metatrust.com.mx/WsFirmaElectronicaSeg.wsdl"
+            logger.info("Firma digital:: {}", wsdlLocation);
+             
             QName serviceName = new QName("http://doctrust.metatrust.com.mx/WsFirmaElectronicaSeg.wsdl", "FirmaElectronicaSegService");
             
             FirmaElectronicaSegService service = new FirmaElectronicaSegService(wsdlLocation, serviceName);
