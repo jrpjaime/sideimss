@@ -1,7 +1,6 @@
 package mx.gob.imss.acuses.service;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
 
 import jakarta.annotation.PostConstruct;
 import mx.gob.imss.acuses.dto.AcuseConfig;
@@ -15,7 +14,6 @@ import java.util.Map;
 
 @Service
 public class AcuseConfigService {
-    private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
 
      private final Map<TipoAcuse, AcuseConfig> configs = new EnumMap<>(TipoAcuse.class);
     

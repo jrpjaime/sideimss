@@ -39,5 +39,7 @@ management:
         include: health
   endpoint:
     auditevents:
-      enabled: true
-    
+      enabled: true 
+imss:
+  firma-electronica:
+    base-url: http://172.16.23.224  # https://firmadigitalssl.imss.gob.mx # Esta será la parte base  

@@ -2,13 +2,12 @@ package mx.gob.imss.documentos.controller;
 
  
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Base64; // Importar Base64
-import java.nio.charset.StandardCharsets;
+
 import org.springframework.http.MediaType; 
 
 import org.slf4j.Logger;
@@ -33,7 +32,6 @@ import mx.gob.imss.documentos.service.CargaDocumentoService;
  
 import org.springframework.core.io.Resource;  
 import org.springframework.http.HttpHeaders;
-import org.apache.hadoop.fs.Path;
  
 
 @RestController   

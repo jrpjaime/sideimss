@@ -245,10 +245,6 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
           console.log("Cadena Original recibida del backend:", this.cadenaOriginalFirmada);
           console.log("Peticion JSON recibida del backend:", peticionJSON);
 
-          // El reemplazo de caracteres especiales ya lo hace el backend,
-          // pero si quieres ser doblemente seguro, podrías mantenerlo aquí.
-          // peticionJSON = peticionJSON.replaceAll("ñ", "\\u00d1").replaceAll("Ñ", "\\u00D1");
-
           this.displayFirmaModalAndSubmitForm(peticionJSON);
         } else {
           console.error('Error del backend al generar JSON de firma:', response.mensaje);

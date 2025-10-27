@@ -20,15 +20,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import jakarta.servlet.http.HttpServletRequest;
  
 import java.net.URLEncoder; 
  
@@ -36,14 +33,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import mx.gob.imss.acuses.dto.AcuseConfig;
+import mx.gob.imss.acuses.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.dto.RequestFirmaDto;
+import mx.gob.imss.acuses.dto.SelloResponseDto;
 import mx.gob.imss.acuses.enums.TipoAcuse;
 import mx.gob.imss.acuses.service.AcuseConfigService;
 import mx.gob.imss.acuses.service.AcuseService;
+import mx.gob.imss.acuses.service.SelloService;
 
- import org.json.JSONObject;
+import org.json.JSONObject;
 
 
 @Controller
@@ -58,6 +58,10 @@ public class AcusesRestController {
 
     @Autowired  
     private AcuseConfigService acuseConfigService;
+
+
+    @Autowired
+    private SelloService selloService; 
   
 
     public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
@@ -307,5 +311,46 @@ public class AcusesRestController {
         logger.info("generaRequestJSONFirmaAcuse - Fin");
         return result;
     }
+
+
+
+
+
+
+  /**
+     * Método POST para generar el sello a partir de una cadena original.
+     * Recibe un objeto CadenaOriginalRequestDto y devuelve un SelloResponseDto.
+     * @param requestDto Objeto que contiene la cadenaOriginal.
+     * @return ResponseEntity con el objeto SelloResponseDto (sello, codigo, mensaje).
+     */
+    @PostMapping("/generaSello")
+    public ResponseEntity<SelloResponseDto> generaSello(@RequestBody CadenaOriginalRequestDto cadenaOriginalRequestDto) {
+        logger.info("Recibida solicitud para generar sello con cadena original: {}", cadenaOriginalRequestDto.getCadenaOriginal());
+
+        SelloResponseDto response = new SelloResponseDto();
+
+        if (cadenaOriginalRequestDto.getCadenaOriginal() == null || cadenaOriginalRequestDto.getCadenaOriginal().trim().isEmpty()) {
+            response.setCodigo(1); // Error
+            response.setMensaje("La cadenaOriginal no puede estar vacía.");
+            logger.warn("CadenaOriginal vacía en la solicitud de sello.");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            String selloGenerado = selloService.generarSelloDigital(cadenaOriginalRequestDto);
+            response.setSello(selloGenerado);
+            response.setCodigo(0); // Correcto
+            response.setMensaje("Sello generado exitosamente.");
+            logger.info("Sello generado exitosamente para la cadena original.");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error al generar el sello para la cadena original: {}. Error: {}", cadenaOriginalRequestDto.getCadenaOriginal(), e.getMessage(), e);
+            response.setCodigo(1); // Error
+            response.setMensaje("Error al generar el sello: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }    
+
+
 
 }

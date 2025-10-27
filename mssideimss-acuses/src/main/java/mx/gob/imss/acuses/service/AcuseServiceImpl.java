@@ -9,9 +9,7 @@ import mx.gob.imss.acuses.dto.DecargarAcuseDto;
 import mx.gob.imss.acuses.dto.PlantillaDatoDto;
 import mx.gob.imss.acuses.enums.TipoAcuse;
 import mx.gob.imss.acuses.model.NdtPlantillaDato;
-import mx.gob.imss.acuses.model.PlantillaDato;
 import mx.gob.imss.acuses.repository.NdtPlantillaDatoRepository;
-import mx.gob.imss.acuses.repository.PlantillaDatosRepository;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
@@ -21,12 +19,10 @@ import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
 import net.sf.jasperreports.export.SimplePdfReportConfiguration;
 import net.sf.jasperreports.engine.util.JRLoader;
 
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Base64; // Importar Base64
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;

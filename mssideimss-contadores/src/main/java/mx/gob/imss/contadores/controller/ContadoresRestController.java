@@ -19,23 +19,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 
 import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
-import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
-import mx.gob.imss.contadores.dto.DocumentoIndividualResponseDto;
 import mx.gob.imss.contadores.dto.PlantillaDatoDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
-import mx.gob.imss.contadores.enums.TipoAcuse;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
 import mx.gob.imss.contadores.service.JwtUtilService;
-import mx.gob.imss.contadores.service.UtileriasService;
-import reactor.core.publisher.Mono;
   
 import org.springframework.security.core.Authentication;  
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import java.util.Map;
 
 @Controller
