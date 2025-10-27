@@ -383,12 +383,12 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       const datosParaSerializar = {
         ...this.datosFormularioPrevio,
         cadenaOriginal: this.cadenaOriginalFirmada,
-        firmaDigital: this.firmaDigital,
         folioFirma: this.folioFirma,
         curp: this.curpFirma,
         desFolio: this.folioFirma,
-        firmaElectronica: this.firma,
-        selloDigitalIMSS: this.certificado,
+        firmaElectronica:  this.firmaDigital,
+        selloDigitalIMSS: "",
+        certificado:  this.certificado,
         ...this.acuseParameters
       };
 
