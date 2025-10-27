@@ -15,12 +15,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode; 
+import com.fasterxml.jackson.databind.JsonNode; 
+
+
+import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.contadores.dto.CorreoDto;
 import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import mx.gob.imss.contadores.dto.MedioContactoContadoresDto;  
-import mx.gob.imss.contadores.dto.MediosContactoContadoresResponseDto; 
+import mx.gob.imss.contadores.dto.MediosContactoContadoresResponseDto;
+import mx.gob.imss.contadores.dto.SelloResponseDto;
 import reactor.core.publisher.Mono;  
  
 import org.springframework.http.HttpHeaders;  
@@ -34,6 +41,9 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
     @Value("${sideimss.catalogos.microservice.url}") 
     private String catalogosMicroserviceUrl;
+
+    @Value("${sideimss.acuses.microservice.url}")  
+    private String acusesMicroserviceUrl;
 	
     @Autowired
     private NdtPlantillaDatoRepository  ndtPlantillaDatoRepository;
@@ -47,6 +57,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
+
+
     @Override
     public Mono<DocumentoIndividualDto> cargarDocumentoAlmacenamiento(DocumentoIndividualDto documento, String jwtToken) {
         logger.info("Preparando para enviar documento '{}' al microservicio de documentos.", documento.getNomArchivo());
@@ -93,6 +105,89 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         logger.info("Guardando NdtPlantillaDato con datos: {}", plantillaDato.getDesDatos());
         return ndtPlantillaDatoRepository.save(plantillaDato);
     }
+
+
+
+
+
+
+    @Override
+    public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
+        logger.info("Iniciando proceso para obtener sello digital y guardar plantilla.");
+
+        // Extraer la cadenaOriginal del JSON de datos
+        String datosJson = ndtPlantillaDato.getDesDatos();
+        String cadenaOriginal = "";
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(datosJson);
+            JsonNode cadenaOriginalNode = rootNode.get("cadenaOriginal");
+            if (cadenaOriginalNode != null) {
+                cadenaOriginal = cadenaOriginalNode.asText();
+                logger.debug("Cadena original extraída: {}", cadenaOriginal);
+            } else {
+                logger.warn("No se encontró 'cadenaOriginal' en el JSON de datos.");
+                return Mono.error(new RuntimeException("Error: La cadenaOriginal no se encontró en los datos de la plantilla."));
+            }
+        } catch (Exception e) {
+            logger.error("Error al parsear datosJson para extraer cadenaOriginal: {}", e.getMessage(), e);
+            return Mono.error(new RuntimeException("Error al procesar los datos de la plantilla para obtener la cadena original."));
+        }
+
+        // Preparar la solicitud para el microservicio de acuses
+        CadenaOriginalRequestDto requestDto = new CadenaOriginalRequestDto();
+        requestDto.setCadenaOriginal(cadenaOriginal);
+        requestDto.setRfc(ndtPlantillaDato.getDesRfc()); 
+
+        String urlGeneraSello = acusesMicroserviceUrl.trim() + "/generaSello";
+        logger.info("Llamando al microservicio de acuses para generar sello en: {}", urlGeneraSello);
+
+        return webClient.post()
+            .uri(urlGeneraSello)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+            .bodyValue(requestDto)
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, response -> {
+                logger.error("Error HTTP {} al obtener sello digital de mssideimss-acuses.", response.statusCode());
+                return response.bodyToMono(String.class)
+                    .flatMap(errorBody -> Mono.error(new RuntimeException(
+                        "Error al generar el sello digital (" + response.statusCode().value() + "): " + errorBody
+                    )));
+            })
+            .bodyToMono(SelloResponseDto.class)
+            .flatMap(selloResponseDto -> {
+                if (selloResponseDto.getCodigo() == 0 && selloResponseDto.getSello() != null && !selloResponseDto.getSello().isEmpty()) {
+                    logger.info("Sello digital obtenido exitosamente.");
+                    String selloDigitalIMSS = selloResponseDto.getSello();
+
+                    // Insertar el sello en el JSON de datos
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        ObjectNode rootNode = (ObjectNode) objectMapper.readTree(datosJson);
+                        rootNode.put("selloDigitalIMSS", selloDigitalIMSS);
+                        ndtPlantillaDato.setDesDatos(objectMapper.writeValueAsString(rootNode));
+                        logger.info("Sello digital insertado en desDatos. Datos actualizados: {}", ndtPlantillaDato.getDesDatos());
+                    } catch (Exception e) {
+                        logger.error("Error al insertar el sello digital en el JSON de datos: {}", e.getMessage(), e);
+                        return Mono.error(new RuntimeException("Error al actualizar los datos con el sello digital."));
+                    }
+
+                    // Guardar la plantilla con los datos actualizados
+                    logger.info("Guardando NdtPlantillaDato con sello digital.");
+                    return Mono.just(ndtPlantillaDatoRepository.save(ndtPlantillaDato));
+                } else {
+                    logger.error("El microservicio de acuses devolvió un error al generar el sello: {} - {}", selloResponseDto.getCodigo(), selloResponseDto.getMensaje());
+                    return Mono.error(new RuntimeException("Ocurrio un error, por favor intente mas tarde: " + selloResponseDto.getMensaje()));
+                }
+            })
+            .onErrorResume(e -> {
+                logger.error("Fallo completo al obtener el sello o guardar la plantilla: {}", e.getMessage(), e);
+                return Mono.error(new RuntimeException("Ocurrio un error, por favor intente mas tarde: " + e.getMessage()));
+            });
+    }
+
+
+
 
     // Implementación del método para el envío de correo
     @Override

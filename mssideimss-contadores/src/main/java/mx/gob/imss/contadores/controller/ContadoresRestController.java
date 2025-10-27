@@ -10,6 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,17 +19,18 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.RequestMapping; 
 import io.jsonwebtoken.Claims;
-import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
-import mx.gob.imss.contadores.dto.PlantillaDatoDto;
+import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto; 
+import mx.gob.imss.contadores.dto.PlantillaDatoDto; 
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
 import mx.gob.imss.contadores.service.JwtUtilService;
-  
+ 
+
 import org.springframework.security.core.Authentication;  
 import java.util.Map;
+ 
 
 @Controller
 @CrossOrigin("*") 
@@ -41,6 +43,14 @@ public class ContadoresRestController {
 
     @Autowired
     private  JwtUtilService jwtUtilService;
+
+  
+
+
+
+    @Value("${sideimss.acuses.microservice.url}")  
+    private String acusesMicroserviceUrl;
+
  
     @GetMapping("/info")
 	public ResponseEntity<List<String>> info() {
@@ -121,6 +131,14 @@ public class ContadoresRestController {
             return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+
+
+
+
+ 
+
+        
+
         // Crear instancia de NdtPlantillaDato
         NdtPlantillaDato ndtPlantillaDato = new NdtPlantillaDato();
         ndtPlantillaDato.setDesRfc(rfc);
@@ -143,11 +161,12 @@ public class ContadoresRestController {
             logger.info("Resultado del intento de envío de correo: {}", mensajeCorreo);
 
             // **2. GUARDADO DE INFORMACIÓN (Este sí debe ser exitoso):**
-            logger.info("Iniciando el guardado de la plantilla de datos.");
-            NdtPlantillaDato plantillaGuardada = acreditacionMembresiaService.guardarPlantillaDato(ndtPlantillaDato);
-            urlDocumento = rfc + "|" + plantillaGuardada.getCveIdPlantillaDato().toString();
+           logger.info("Iniciando el proceso para obtener sello digital y guardar la plantilla.");
+            // Llama al nuevo método que se encarga de obtener el sello y luego guardar
+            NdtPlantillaDato plantillaGuardadaConSello = acreditacionMembresiaService.obtenerSelloYGuardarPlantilla(ndtPlantillaDato, jwtToken).block();
+            urlDocumento = rfc + "|" + plantillaGuardadaConSello.getCveIdPlantillaDato().toString();
             urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
-            logger.info("Plantilla de datos guardada exitosamente con ID: {}", plantillaGuardada.getCveIdPlantillaDato());
+            logger.info("Plantilla de datos guardada exitosamente con ID y sello: {}", plantillaGuardadaConSello.getCveIdPlantillaDato());
 
         } catch (Exception e) {
             // Si el guardado falla, entonces sí devolvemos un error 500
