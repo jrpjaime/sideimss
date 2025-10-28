@@ -272,11 +272,13 @@ public class AcusesRestController {
         String requestFirmaFiel = null; 
 
         try{
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd", new Locale("es", "MX"));
-            String fechafolio = sdf.format(fechaActual);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "MX"));
+            SimpleDateFormat sdfhora = new SimpleDateFormat("HH:mm:ss", new Locale("es", "MX"));
+            String fecha = sdf.format(fechaActual);
+             String hora = sdfhora.format(fechaActual);
 
             // La cadena original se arma completamente en el backend
-            String cadenaOriginal = "|Folio del acuse:"+desFolio+"|Rfc:"+rfcUsuario+"|Tipo de trámite:Acuse|Fecha de elaboración:"+fechafolio+"|";
+            String cadenaOriginal = "||VERSIÓN DEL ACUSE|1.0|INVOCANTE|" + rfcUsuario + "|FOLIO DEL ACUSE|"+desFolio+ "|FECHA|"+ fecha+ "|HORA|"+ hora + "|RFC|"+rfcUsuario+ "|CURP|"+ rfcUsuario+ "|HASH|"+ rfcUsuario+ "|ACTO|Acreditación o Membresía||";
             logger.info("cadenaOriginal: " + cadenaOriginal );
             
             // Lógica para armar el JSON del widget de firma
