@@ -1,5 +1,7 @@
 package mx.gob.imss.acuses.service;
  
+import java.util.Iterator;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -47,6 +49,17 @@ public class SelloService {
         JSONObject objetoJson;
         if (respuesta != null && !respuesta.isEmpty()) {
             objetoJson = new JSONObject(respuesta);
+
+
+           logger.info("Elementos de la respuesta del servicio de sellado:");
+            Iterator<String> keys = objetoJson.keys();
+            while(keys.hasNext()) {
+                String key = keys.next();
+                Object value = objetoJson.opt(key); // Usar opt para evitar NullPointerException si la clave no existe
+                logger.info("  {}: {}", key, value);
+            }
+
+
             String selloDigital = objetoJson.optString("sello"); 
             if (selloDigital == null || selloDigital.trim().isEmpty()) {
                 throw new Exception("El servicio de sellado no devolvió un sello válido.");

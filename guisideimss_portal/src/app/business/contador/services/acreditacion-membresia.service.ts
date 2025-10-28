@@ -8,14 +8,11 @@ import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResp
 import { PlantillaDatoDto } from '../model/PlantillaDatoDto';
 import { AcuseConfig } from '../model/AcuseConfig ';
 import { AcuseParameters } from '../model/AcuseParameters';
+import { FirmaRequestFrontendDto } from '../model/FirmaRequestFrontendDto';
+import { FirmaRequestBackendResponse } from '../model/FirmaRequestBackendResponse';
 
 
-export interface FirmaRequestBackendResponse {
-  cad_original: string;
-  peticionJSON: string;
-  error: boolean;
-  mensaje?: string; // Opcional, para mensajes de éxito/error
-}
+
 
 @Injectable({
   providedIn: 'root'
@@ -76,10 +73,10 @@ export class AcreditacionMembresiaService {
   }
 
 
-    generarRequestJsonFirma(rfcUsuario: string): Observable<FirmaRequestBackendResponse> {
-      const url = `${environment.acusesApiUrl}${EPs.acuses.generaRequestJSONFirmaAcuse}`;
-    // Creamos un objeto para enviar en el cuerpo de la solicitud POST
-    const requestBody = { rfcUsuario: rfcUsuario };
+  generarRequestJsonFirma(requestDto: FirmaRequestFrontendDto): Observable<FirmaRequestBackendResponse> {
+    const url = `${environment.acusesApiUrl}${EPs.acuses.generaRequestJSONFirmaAcuse}`;
+    // El requestBody ahora es directamente el DTO que recibes
+    const requestBody = requestDto;
     return this.httpClient.post<FirmaRequestBackendResponse>(url, requestBody);
   }
 

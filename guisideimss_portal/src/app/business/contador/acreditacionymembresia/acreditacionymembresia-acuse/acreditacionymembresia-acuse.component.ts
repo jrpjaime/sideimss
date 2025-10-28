@@ -18,13 +18,9 @@ import { AcuseConfig } from '../../model/AcuseConfig ';
 import { AcuseParameters } from '../../model/AcuseParameters';
 import { NAV } from '../../../../global/navigation';
 import { environment } from '../../../../../environments/environment';
+import { FirmaRequestFrontendDto } from '../../model/FirmaRequestFrontendDto';
+import { FirmaRequestBackendResponse } from '../../model/FirmaRequestBackendResponse';
 
-export interface FirmaRequestBackendResponse {
-  cad_original: string;
-  peticionJSON: string;
-  error: boolean;
-  mensaje?: string; // Opcional, para mensajes de éxito/error
-}
 
 
 export interface DatosAcuseExito {
@@ -56,12 +52,15 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   firmaWidgetUrl: SafeResourceUrl | null = null;
   private messageSubscription: Subscription | undefined;
 
+  fechaAcuse: string = '';
   cadenaOriginalFirmada: string = ''; // Esta será la cadena que armemos en el frontend
+  fechaFirma: string = '';
   firmaDigital: string = '';
   folioFirma: string = '';
   curpFirma: string = '';
-  firma: string = '';
+  //firma: string = '';
   certificado: string = '';
+  acuse: string = '';
 
   mostrarAcuse: boolean = false;
 
@@ -149,7 +148,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     if (!this.acuseParameters) {
       console.log('entro en if (!this.acuseParameters) {');
       this.acusePreviewError = 'La configuración del acuse no ha sido cargada.';
-      this.alertService.error(this.acusePreviewError, { autoClose: false });
+      this.alertService.error(this.acusePreviewError, { autoClose: true });
       return;
     }
 
@@ -226,29 +225,60 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     console.log("iniciarProcesoFirma - Solicitando JSON de firma al backend.");
     this.alertService.clear();
 
-    const rfcUsuario = this.rfcSesion; // Obtener el RFC del usuario de la sesión
+    const rfcUsuario = this.rfcSesion;
+    const desFolio = this.folioFirma + "PRUEBAFOLIOFIRMA";
+    const desCurp = this.curpSesion;
+    const nombreCompleto = this.nombreCompletoSync;
+
 
     if (!rfcUsuario) {
       this.alertService.error('No se pudo obtener el RFC del usuario. Por favor, inténtalo de nuevo.', { autoClose: false });
       return;
     }
 
+    if (!desFolio) {
+        this.alertService.error('El folio de firma es requerido.', { autoClose: false });
+        return;
+    }
+
+    if (!desCurp) {
+        this.alertService.error('La CURP de firma es requerida.', { autoClose: false });
+        return;
+    }
+
+    if (!nombreCompleto) {
+        this.alertService.error('No se pudo obtener el nombre completo del usuario.', { autoClose: false });
+        return;
+    }
+
     this.loaderService.show();
 
-    this.acreditacionMembresiaService.generarRequestJsonFirma(rfcUsuario).subscribe({
+
+    const firmaRequestDto: FirmaRequestFrontendDto = {
+      rfcUsuario: rfcUsuario,
+      desFolio: desFolio,
+      desCurp: desCurp,
+      nombreCompleto: nombreCompleto
+    };
+
+
+    this.acreditacionMembresiaService.generarRequestJsonFirma(firmaRequestDto).subscribe({
       next: (response: FirmaRequestBackendResponse) => {
         this.loaderService.hide();
         if (!response.error) {
           this.cadenaOriginalFirmada = response.cad_original; // Almacenar la cadena original del backend
           let peticionJSON = response.peticionJSON;
+          this.fechaAcuse=response.fechaParaAcuse;
 
           console.log("Cadena Original recibida del backend:", this.cadenaOriginalFirmada);
           console.log("Peticion JSON recibida del backend:", peticionJSON);
+          console.log("fechaParaAcuse:", response.fechaParaAcuse);
+
 
           this.displayFirmaModalAndSubmitForm(peticionJSON);
         } else {
           console.error('Error del backend al generar JSON de firma:', response.mensaje);
-          this.alertService.error(response.mensaje || 'Error al generar la petición de firma electrónica desde el backend.', { autoClose: false });
+          this.alertService.error(response.mensaje || 'Error al generar la petición de firma electrónica desde el backend.', { autoClose: true });
         }
       },
       error: (errorResponse: HttpErrorResponse) => {
@@ -258,7 +288,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         if (errorResponse.error && typeof errorResponse.error === 'object' && errorResponse.error.mensaje) {
           errorMessage = errorResponse.error.mensaje;
         }
-        this.alertService.error(errorMessage, { autoClose: false });
+        this.alertService.error(errorMessage, { autoClose: true });
       }
     });
   }
@@ -346,8 +376,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         this.firmaDigital = resultadoJSON.firma;
         this.folioFirma = resultadoJSON.folio;
         this.curpFirma = resultadoJSON.curp;
-        this.firma = resultadoJSON.firma;
+       // this.firma = resultadoJSON.firma;
         this.certificado = resultadoJSON.certificado;
+        this.acuse = resultadoJSON.acuse;
 
 
         this.isFirmaModalVisible = false;
@@ -389,6 +420,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         firmaElectronica:  this.firmaDigital,
         selloDigitalIMSS: "",
         certificado:  this.certificado,
+        acuse:  this.acuse,
+        fecha: this.fechaAcuse,
         ...this.acuseParameters
       };
 
@@ -465,7 +498,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.firmaDigital = '';
     this.folioFirma = '';
     this.curpFirma = '';
-    this.firma = '';
+    //this.firma = '';
     this.certificado = '';
   }
 
