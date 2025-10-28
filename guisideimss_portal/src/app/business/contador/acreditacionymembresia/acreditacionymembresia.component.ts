@@ -664,7 +664,8 @@ downloadFile(hdfsPath: string | null, fileName: string) {
 
 
 
-        const cadenaOriginal = `${nombreCompletoSesion}|${this.rfcSesion}|${this.curpSesion}|${numeroRegistroImssSesion}`;
+        //const cadenaOriginal = `${nombreCompletoSesion}|${this.rfcSesion}|${this.curpSesion}|${numeroRegistroImssSesion}`;
+        const cadenaOriginal: string | null = null;
 
         console.warn('nombreCompletoSesion: '+ nombreCompletoSesion);
         console.warn('rfcSesion: '+ curpSesion);
