@@ -23,6 +23,7 @@ import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
+import mx.gob.imss.catalogos.service.FolioService;
 import mx.gob.imss.catalogos.service.MediosContactoService; 
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
@@ -47,6 +48,10 @@ public class CatalogosRestController {
 
     @Autowired
     private MediosContactoService mediosContactoService; 
+
+
+	@Autowired
+    private FolioService folioService;
 	
  
     @GetMapping("/info")
@@ -121,7 +126,25 @@ public class CatalogosRestController {
 	} 
 
  
- 
+    /**
+     * Método para obtener un folio de solicitud  .
+     * Genera y devuelve un nuevo folio.
+     * @return ResponseEntity con el nuevo folio generado.
+     */
+    @GetMapping("/getNuevoFolioSolicitud")
+    public ResponseEntity<String> getNuevoFolioSolicitud() {
+        logger.info("Recibiendo solicitud para generar un nuevo folio de solicitud.");
+
+        String nuevoFolio = folioService.generarNuevoFolioSolicitud();
+
+        if (nuevoFolio != null && !nuevoFolio.isEmpty()) {
+            logger.info("Nuevo folio generado: {}", nuevoFolio);
+            return new ResponseEntity<>(nuevoFolio, HttpStatus.OK);
+        } else {
+            logger.error("Error al generar un nuevo folio.");
+            return new ResponseEntity<>("No se pudo generar un nuevo folio de solicitud.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
  
 
 }

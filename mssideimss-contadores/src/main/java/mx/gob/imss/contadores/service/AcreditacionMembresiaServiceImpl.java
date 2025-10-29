@@ -116,6 +116,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         logger.info("Iniciando proceso para obtener sello digital y guardar plantilla.");
 
         final String datosJson = ndtPlantillaDato.getDesDatos(); // Hacer final 
+        logger.info("obtenerSelloYGuardarPlantilla Contenido inicial de desDatos (datosJson): {}", datosJson);
         final String initialCadenaOriginal;
         final String nombreCompleto;
         final String curp;

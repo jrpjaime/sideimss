@@ -14,7 +14,7 @@ import { AlertService } from '../../../shared/services/alert.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModalService } from '../../../shared/services/modal.service';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { AcreditacionMembresiaDataService, FormDataToReturn } from '../services/acreditacion-membresia-data.service';
 import { NAV } from '../../../global/navigation';
 
@@ -41,9 +41,10 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
 
   loadingFileUno: boolean = false; //  Para el spinner del botón Adjuntar
   loadingFileDos: boolean = false; //  Para el spinner del botón Adjuntar
+  loadingFolio: boolean = false; // Para el spinner de la carga del folio
 
   responseDto: DocumentoIndividualResponseDto | null = null; // Para la respuesta final del submit, si aplica
-
+  folioSolicitud: string | null = null;
 
   constructor (
     private fb: FormBuilder,
@@ -73,6 +74,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
   override ngOnInit(): void {
     super.ngOnInit();
     this.cargarDatosPrevios();
+    this.generarFolioSolicitud();
   }
 
   // El validador de grupo se mantiene, pero ahora actuará sobre los `selectedFileUno` y `selectedFileDos` directamente,
@@ -685,7 +687,8 @@ downloadFile(hdfsPath: string | null, fileName: string) {
           RFC: rfcSesion,  // Añade el RFC
           CURP: curpSesion,// Añade el CURP
           numeroRegistroImss: numeroRegistroImssSesion,
-          cadenaOriginal: cadenaOriginal
+          cadenaOriginal: cadenaOriginal,
+          folioSolicitud: this.folioSolicitud
         };
 
         // Guardar los datos completos en el servicio
@@ -722,5 +725,25 @@ downloadFile(hdfsPath: string | null, fileName: string) {
   }
 
 
+
+
+
+  generarFolioSolicitud(): void {
+    this.loadingFolio = true; // Activar spinner
+    this.acreditacionMembresiaService.getNuevoFolioSolicitud()
+      .pipe(finalize(() => this.loadingFolio = false)) // Desactivar spinner al finalizar (éxito o error)
+      .subscribe({
+        next: (folio: string) => {
+          this.folioSolicitud = folio;
+          console.log("Folio generado y asignado:", this.folioSolicitud);
+
+        },
+        error: (error: HttpErrorResponse) => {
+          console.error("Error al obtener el folio:", error);
+          this.alertService.error('Error al generar el folio de solicitud. Por favor, inténtalo de nuevo.', { autoClose: false });
+          this.folioSolicitud = 'No disponible'; // Asignar un valor indicativo de error
+        }
+      });
+  }
 
 }

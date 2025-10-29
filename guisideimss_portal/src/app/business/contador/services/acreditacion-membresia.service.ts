@@ -92,4 +92,10 @@ export class AcreditacionMembresiaService {
   }
 
 
+
+    getNuevoFolioSolicitud(): Observable<string> {
+    const url = `${environment.catalogosApiUrl}${EPs.catalogo.getNuevoFolioSolicitud}`;
+    return this.httpClient.get(url, { responseType: 'text' });
+  }
+
 }

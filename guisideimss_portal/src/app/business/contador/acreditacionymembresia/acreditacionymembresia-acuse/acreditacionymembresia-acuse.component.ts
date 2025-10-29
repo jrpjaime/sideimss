@@ -410,6 +410,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         return;
       }
 
+      console.log('this.datosFormularioPrevio.folioSolicitud:', this.datosFormularioPrevio.folioSolicitud);
+
       this.datosFormularioPrevio.vistaPrevia = "NO";
       const datosParaSerializar = {
         ...this.datosFormularioPrevio,
@@ -422,6 +424,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         certificado:  this.certificado,
         acuse:  this.acuse,
         fecha: this.fechaAcuse,
+        numTramiteNotaria: this.datosFormularioPrevio.folioSolicitud,
         ...this.acuseParameters
       };
 
