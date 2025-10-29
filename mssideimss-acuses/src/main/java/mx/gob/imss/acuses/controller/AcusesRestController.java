@@ -47,47 +47,41 @@ import org.json.JSONObject;
 
 
 @Controller
-@CrossOrigin("*") 
+@CrossOrigin("*")
 @RequestMapping("/mssideimss-acuses/v1")
 public class AcusesRestController {
-	private final static Logger logger = LoggerFactory.getLogger(AcusesRestController.class);
-
-	@Autowired
-	private AcuseService acuseService;
-
-
-    @Autowired  
-    private AcuseConfigService acuseConfigService;
-
+    private final static Logger logger = LoggerFactory.getLogger(AcusesRestController.class);
 
     @Autowired
-    private SelloService selloService; 
-  
+    private AcuseService acuseService;
 
-    public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
+    @Autowired
+    private AcuseConfigService acuseConfigService;
+
+    @Autowired
+    private SelloService selloService;
+
  
+
     @GetMapping("/info")
-	public ResponseEntity<List<String>> info() {
-		logger.info("........................mssideimss-acuses info..............................");
-		List<String> list = new ArrayList<String>();
-		list.add("mssideimss-acuses");
-		list.add("20251007");
-		list.add("Acuses");
-		return new ResponseEntity<List<String>>(list, HttpStatus.OK);
-	}
+    public ResponseEntity<List<String>> info() {
+        logger.info("........................mssideimss-acuses info..............................");
+        List<String> list = new ArrayList<>(); // Mejor práctica: usar el diamante operador <>
+        list.add("mssideimss-acuses");
+        list.add("20251007");
+        list.add("Acuses");
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
 
-
-	@GetMapping("/list")
-	public ResponseEntity<List<String>> list() {
-		logger.info("........................mssideimss-acuses list..............................");
-		List<String> list = new ArrayList<String>();
-		list.add("mssideimss-acuses");
-		list.add("20251007");
-		list.add("Acuses");
-		return new ResponseEntity<List<String>>(list, HttpStatus.OK);
-	}
-
-
+    @GetMapping("/list")
+    public ResponseEntity<List<String>> list() {
+        logger.info("........................mssideimss-acuses list..............................");
+        List<String> list = new ArrayList<>(); // Mejor práctica: usar el diamante operador <>
+        list.add("mssideimss-acuses");
+        list.add("20251007");
+        list.add("Acuses");
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
 
     /**
      * endpoint para obtener la configuración de un tipo de acuse específico
@@ -99,14 +93,14 @@ public class AcusesRestController {
     @GetMapping("/getAcuseConfig")
     public ResponseEntity<Map<String, String>> getAcuseConfig(@RequestParam("tipoAcuse") String tipoAcuse) {
         logger.info("Recibida solicitud para obtener configuración del acuse tipo: {}", tipoAcuse);
-        
+
         try {
             TipoAcuse tipoAcuseIdentificado = TipoAcuse.valueOf(tipoAcuse.toUpperCase());
             AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseIdentificado);
-            
+
             if (config != null) {
                 Map<String, String> flatParams = new HashMap<>();
-                
+
                 // Añadir los campos directos de AcuseConfig
                 if (config.getNomDocumento() != null) {
                     flatParams.put("nomDocumento", config.getNomDocumento());
@@ -114,14 +108,12 @@ public class AcusesRestController {
                 if (config.getDesVersion() != null) {
                     flatParams.put("desVersion", config.getDesVersion());
                 }
-                
+
                 // Desanidar los imagePaths
                 if (config.getImagePaths() != null) {
-                    config.getImagePaths().forEach((key, value) -> {
-                        flatParams.put(key, value);
-                    });
+                    config.getImagePaths().forEach(flatParams::put); 
                 }
-                
+
                 return new ResponseEntity<>(flatParams, HttpStatus.OK);
             } else {
                 logger.warn("No se encontró configuración para el tipo de acuse: {}", tipoAcuse);
@@ -135,16 +127,12 @@ public class AcusesRestController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
- 
- 
-	
-    @PostMapping("/descargarAcuse")  
+
+    @PostMapping("/descargarAcuse")
     public ResponseEntity<byte[]> descargarAcuse(@RequestBody PlantillaDatoDto plantillaDatoDto) {
-        logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());                
+        logger.info("Recibida solicitud para descargar preview de acuse con DTO: {}", plantillaDatoDto);  
 
-        String urlDocumento = plantillaDatoDto.getUrlDocumento(); // Extrae urlDocumento del body
-
-         logger.info("descargarAcuse: {}", urlDocumento);
+        String urlDocumento = plantillaDatoDto.getUrlDocumento();
 
         if (urlDocumento == null || urlDocumento.isEmpty()) {
             logger.error("urlDocumento no proporcionada en el cuerpo de la solicitud POST.");
@@ -153,69 +141,51 @@ public class AcusesRestController {
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByUrlDocumento(urlDocumento);
 
-        if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
-            logger.error("Error al obtener el documento o documento vacío. Mensaje: " + decargarAcuseDto.getMensaje());
+        if (decargarAcuseDto == null || decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
+            logger.error("Error al obtener el documento o documento vacío. Mensaje: {}", decargarAcuseDto != null ? decargarAcuseDto.getMensaje() : "DTO de descarga es nulo");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        try {
-            String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
-            byte[] pdfBytes = Base64.getDecoder().decode(base64Content);
-            String fileName = decargarAcuseDto.getNombreDocumento();
-            if (fileName == null || fileName.isEmpty()) {
-                fileName = "acuse.pdf"; // Nombre por defecto 
-            }
-            if (!fileName.toLowerCase().endsWith(".pdf")) {
-                fileName += ".pdf";
-            }
-            String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()).replace("+", "%20");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("inline", encodedFileName); // "inline" para que el navegador lo muestre en lugar de descargarlo
-            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-
-        } catch (IllegalArgumentException e) {
-            logger.error("Error al decodificar la cadena Base64 del documento: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (UnsupportedEncodingException e) {
-            logger.error("Error al codificar el nombre del archivo: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            logger.error("Error inesperado al descargar el acuse: " + e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return buildPdfResponse(decargarAcuseDto, false);  
     }
- 
 
-   
     @PostMapping("/descargarAcusePreview")
     public ResponseEntity<byte[]> descargarAcusePreview(@RequestBody PlantillaDatoDto plantillaDatoDto) {
-        logger.info("Recibida solicitud para descargar preview de acuse con DTO: " + plantillaDatoDto.toString());
-        
-        if (plantillaDatoDto.getTipoAcuse() == null  ) {
+        logger.info("Recibida solicitud para descargar preview de acuse con DTO: {}", plantillaDatoDto);
+
+        if (plantillaDatoDto.getTipoAcuse() == null) {
+            logger.error("Tipo de acuse no proporcionado para la previsualización.");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
 
         DecargarAcuseDto decargarAcuseDto = acuseService.consultaAcuseByPlantillaDato(plantillaDatoDto);
 
-        logger.info("getMensaje: " + decargarAcuseDto.getMensaje());
-
-        if (decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
-            logger.error("Error al obtener el documento o documento vacío para preview. Mensaje: " + decargarAcuseDto.getMensaje());
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Retorna 404 Not Found si no se encuentra o hay error
+        if (decargarAcuseDto == null || decargarAcuseDto.getCodigo() != 0 || decargarAcuseDto.getDocumento() == null || decargarAcuseDto.getDocumento().isEmpty()) {
+            logger.error("Error al obtener el documento o documento vacío para preview. Mensaje: {}", decargarAcuseDto != null ? decargarAcuseDto.getMensaje() : "DTO de descarga es nulo");
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        logger.info(" String base64Content = " );
+
+        return buildPdfResponse(decargarAcuseDto, true);  
+    }
+
+    /**
+     * Método auxiliar para construir la respuesta HTTP para la descarga/previsualización de PDF.
+     * @param decargarAcuseDto DTO con los datos del documento.
+     * @param isPreview Indica si es una previsualización (true) o descarga (false).
+     * @return ResponseEntity con el PDF.
+     */
+    private ResponseEntity<byte[]> buildPdfResponse(DecargarAcuseDto decargarAcuseDto, boolean isPreview) {
         try {
-            String base64Content = decargarAcuseDto.getDocumento().split(",")[1];
+            // Asegurarse de que el prefijo "data:application/pdf;base64," no esté presente
+            String base64Content = decargarAcuseDto.getDocumento();
+            if (base64Content.contains(",")) {
+                base64Content = base64Content.split(",")[1];
+            }
             byte[] pdfBytes = Base64.getDecoder().decode(base64Content);
 
             String fileName = decargarAcuseDto.getNombreDocumento();
             if (fileName == null || fileName.isEmpty()) {
-                fileName = "preview_acuse.pdf"; // Nombre por defecto para la previsualización
+                fileName = isPreview ? "preview_acuse.pdf" : "acuse.pdf";
             }
             if (!fileName.toLowerCase().endsWith(".pdf")) {
                 fileName += ".pdf";
@@ -224,88 +194,101 @@ public class AcusesRestController {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("inline", encodedFileName); // "inline" para que el navegador lo muestre en lugar de descargarlo
+            // "inline" para mostrar en navegador, "attachment" para forzar descarga
+            String contentDisposition = isPreview ? "inline" : "attachment";
+            headers.setContentDispositionFormData(contentDisposition, encodedFileName);
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
         } catch (IllegalArgumentException e) {
-            logger.error("Error al decodificar la cadena Base64 del documento de preview: " + e.getMessage());
+            logger.error("Error al decodificar la cadena Base64 del documento: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (UnsupportedEncodingException e) {
-            logger.error("Error al codificar el nombre del archivo de preview: " + e.getMessage());
+            logger.error("Error al codificar el nombre del archivo: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            logger.error("Error inesperado al descargar el preview del acuse: " + e.getMessage(), e);
+            logger.error("Error inesperado al construir la respuesta del PDF: {}", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
- 
- 
+
+
     /**
-     * Nuevo servicio para generar el request para la firma desde el backend.
+     * Servicio para generar el request para la firma desde el backend.
      * Recibe los datos necesarios del frontend y devuelve la cadena original y el JSON de firma.
      * @param requestFirmaDto Objeto con los datos necesarios (ej. rfcUsuario)
      * @return Map con la cadena original y el JSON de petición para el widget.
      */
-    @PostMapping(value = {"/generaRequestJSONFirmaAcuse"}) // Cambiado a POST
+    @PostMapping(value = {"/generaRequestJSONFirmaAcuse"})
     public @ResponseBody Map<String, ? extends Object> generaRequestJSONFirmaAcuse(
-            @RequestBody RequestFirmaDto requestFirmaDto){ // Recibe el DTO
+            @RequestBody RequestFirmaDto requestFirmaDto) {
         logger.info("generaRequestJSONFirmaAcuse - Inicio");
-        Map<String , Object> result = new HashMap<String,Object>();
-        
-        String rfcUsuario = requestFirmaDto.getRfcUsuario(); // Obtiene RFC del DTO
-        logger.info("generaRequestJSONFirmaAcuse rfcUsuario: " + rfcUsuario);
-        
+        Map<String, Object> result = new HashMap<>();
+
+        String rfcUsuario = requestFirmaDto.getRfcUsuario();
+        logger.info("generaRequestJSONFirmaAcuse rfcUsuario: {}", rfcUsuario);
+
         if (rfcUsuario == null || rfcUsuario.isEmpty()) {
             result.put("error", Boolean.TRUE);
             result.put("mensaje", "RFC de usuario es requerido para generar la petición de firma.");
             return result;
         }
 
-        Date fechaActual = new Date();
-        
-        // Genera un folio nuevo (asumiendo que utileriasService ya existe)
-        String desFolio = "SIDEIMSS"+ "FOLIOSSSSS";
-        logger.info("generaRequestJSONFirmaAcuse desFolio: " + desFolio );
-        JSONObject jsonWidget = new JSONObject();
-        String requestFirmaFiel = null; 
+        Date fechaActual = new Date(); // Captura la fecha y hora 
 
-        try{
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "MX"));
-            SimpleDateFormat sdfhora = new SimpleDateFormat("HH:mm:ss", new Locale("es", "MX"));
-            String fecha = sdf.format(fechaActual);
-             String hora = sdfhora.format(fechaActual);
+        String desFolio = requestFirmaDto.getDesFolio();
+        logger.info("generaRequestJSONFirmaAcuse desFolio: {}", desFolio);
+        JSONObject jsonWidget = new JSONObject();
+        String requestFirmaFiel = null;
+
+        try {
+            // Formateadores de fecha inicializados una vez para esta operación
+            SimpleDateFormat sdfAcuse = new SimpleDateFormat("dd 'de' MMMM 'de' yyyy, HH:mm:ss", new Locale("es", "MX"));
+            SimpleDateFormat sdfFechaCadena = new SimpleDateFormat("dd/MM/yyyy", new Locale("es", "MX"));
+            SimpleDateFormat sdfHoraCadena = new SimpleDateFormat("HH:mm:ss", new Locale("es", "MX"));
+
+            
+            String fechaParaAcuse = sdfAcuse.format(fechaActual);
+            String fechaParaCadenaOriginal = sdfFechaCadena.format(fechaActual);
+            String horaParaCadenaOriginal = sdfHoraCadena.format(fechaActual);
 
             // La cadena original se arma completamente en el backend
-            String cadenaOriginal = "||VERSIÓN DEL ACUSE|1.0|INVOCANTE|" + rfcUsuario + "|FOLIO DEL ACUSE|"+desFolio+ "|FECHA|"+ fecha+ "|HORA|"+ hora + "|RFC|"+rfcUsuario+ "|CURP|"+ rfcUsuario+ "|HASH|"+ rfcUsuario+ "|ACTO|Acreditación o Membresía||";
-            logger.info("cadenaOriginal: " + cadenaOriginal );
-            
-            // Lógica para armar el JSON del widget de firma
-            jsonWidget.put("operacion","firmaCMS");
-            jsonWidget.put("aplicacion","GENERICO_ID_OP");
-            jsonWidget.put("rfc",rfcUsuario);
-            jsonWidget.put("acuse","GENERICO_ACUSE");
-            jsonWidget.put("cad_original",cadenaOriginal);
-            jsonWidget.put("salida","cert,rfc,curp,rfc_rl,curp_rl,vigIni,vigFin,acuse,cadori,folio,firmas");
-            jsonWidget.put("desFolio",desFolio);
+            String cadenaOriginal = "||VERSIÓN DEL ACUSE|1.0|INVOCANTE|" + requestFirmaDto.getNombreCompleto() +
+                    "|FOLIO DEL ACUSE|" + desFolio +
+                    "|FECHA|" + fechaParaCadenaOriginal +
+                    "|HORA|" + horaParaCadenaOriginal +
+                    "|RFC|" + rfcUsuario +
+                    "|CURP|" + requestFirmaDto.getDesCurp() +
+                    "|HASH|" + desFolio +
+                    "|ACTO|Acreditación o Membresía||";
+            logger.info("cadenaOriginal: {}", cadenaOriginal);
 
- 
+            // Lógica para armar el JSON del widget de firma
+            jsonWidget.put("operacion", "firmaCMS");
+            jsonWidget.put("aplicacion", "GENERICO_ID_OP");
+            jsonWidget.put("rfc", rfcUsuario);
+            jsonWidget.put("acuse", "GENERICO_ACUSE");
+            jsonWidget.put("cad_original", cadenaOriginal);
+            jsonWidget.put("salida", "cert,rfc,curp,rfc_rl,curp_rl,vigIni,vigFin,acuse,cadori,folio,firmas");
+            jsonWidget.put("desFolio", desFolio);
+             
 
             requestFirmaFiel = jsonWidget.toString();
-            
+
             // Reemplazo de caracteres especiales si es necesario (el frontend ya hace esto, pero es bueno tenerlo centralizado)
+            // Considerar el uso de StringEscapeUtils de Apache Commons Lang si hay muchos reemplazos.
             requestFirmaFiel = requestFirmaFiel.replaceAll("ñ", "\\u00d1").replaceAll("Ñ", "\\u00D1");
 
-
+            result.put("fechaParaAcuse", fechaParaAcuse);
             result.put("cad_original", cadenaOriginal);
             result.put("peticionJSON", requestFirmaFiel);
             result.put("error", Boolean.FALSE);
             result.put("mensaje", "Petición de firma generada exitosamente.");
 
-        }catch (Exception e){
-            logger.error("Error al generar JSON de firma: " + e.getMessage(), e);
-            result.put("peticionJSON", requestFirmaFiel); // Podría ser null en caso de error temprano
+        } catch (Exception e) {
+            logger.error("Error al generar JSON de firma: {}. Causa: {}", e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : "Desconocida", e);
+            result.put("peticionJSON", requestFirmaFiel);
             result.put("error", Boolean.TRUE);
             result.put("mensaje", "Error interno al generar la petición de firma: " + e.getMessage());
         }
@@ -315,19 +298,15 @@ public class AcusesRestController {
     }
 
 
-
-
-
-
-  /**
+    /**
      * Método POST para generar el sello a partir de una cadena original.
      * Recibe un objeto CadenaOriginalRequestDto y devuelve un SelloResponseDto.
-     * @param requestDto Objeto que contiene la cadenaOriginal.
+     * @param cadenaOriginalRequestDto Objeto que contiene la cadenaOriginal.
      * @return ResponseEntity con el objeto SelloResponseDto (sello, codigo, mensaje).
      */
     @PostMapping("/generaSello")
     public ResponseEntity<SelloResponseDto> generaSello(@RequestBody CadenaOriginalRequestDto cadenaOriginalRequestDto) {
-        logger.info("Recibida solicitud para generar sello con cadena original: {}", cadenaOriginalRequestDto.getCadenaOriginal());
+        logger.info("Recibida solicitud para generar sello."); // Evita loguear toda la cadena original, puede ser muy larga.
 
         SelloResponseDto response = new SelloResponseDto();
 
@@ -343,16 +322,13 @@ public class AcusesRestController {
             response.setSello(selloGenerado);
             response.setCodigo(0); // Correcto
             response.setMensaje("Sello generado exitosamente.");
-            logger.info("Sello generado exitosamente para la cadena original.");
+            logger.info("Sello generado exitosamente."); // No loguear el sello, puede ser información sensible.
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("Error al generar el sello para la cadena original: {}. Error: {}", cadenaOriginalRequestDto.getCadenaOriginal(), e.getMessage(), e);
+            logger.error("Error al generar el sello. Mensaje: {}. Causa: {}", e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : "Desconocida", e);
             response.setCodigo(1); // Error
             response.setMensaje("Error al generar el sello: " + e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }    
-
-
-
+    }
 }

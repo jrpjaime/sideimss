@@ -43,8 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Service("acuseService")
 public class AcuseServiceImpl implements AcuseService {
-	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class);
-    public static final String FORMATO_dd_MM_yyyy_HH_mm_ss = "dd/MM/yyyy HH:mm:ss";
+	private static final Logger logger = LogManager.getLogger(AcuseServiceImpl.class); 
 
 
 	@Autowired
@@ -93,35 +92,42 @@ public class AcuseServiceImpl implements AcuseService {
 
             String rfc = datos[0];
             logger.info("RFC: {}", rfc);
-            Long cveIdNdtPlantillaDato = Long.parseLong(datos[1]); // Renombrado para claridad
+            Long cveIdNdtPlantillaDato = Long.parseLong(datos[1]); 
             logger.info("cveIdNdtPlantillaDato: {}", cveIdNdtPlantillaDato);
 
             // Buscar en el nuevo repositorio
             NdtPlantillaDato ndtPlantillaDato = ndtPlantillaDatoRepository.findById(cveIdNdtPlantillaDato)
                     .orElseThrow(() -> new RuntimeException("NdtPlantillaDato no encontrada con ID: " + cveIdNdtPlantillaDato));
-            logger.info("NdtPlantillaDato encontrada. desDatos: {}", ndtPlantillaDato.getDesDatos());
+            logger.info("NdtPlantillaDato encontrada. desDatos: {}", ndtPlantillaDato.getDesDatos()); 
+     
 
-            // Usar desTipoAcuse del NdtPlantillaDato para obtener la configuración
-            TipoAcuse tipoAcuseDeterminado = TipoAcuse.valueOf(ndtPlantillaDato.getDesTipoAcuse().toUpperCase());
-            AcuseConfig config = acuseConfigService.getConfigForType(tipoAcuseDeterminado);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> desDatosMap = objectMapper.readValue(ndtPlantillaDato.getDesDatos(), new TypeReference<Map<String, Object>>() {});
 
-            if (config == null) {
-                throw new RuntimeException("No se encontró configuración para el TipoAcuse: " + tipoAcuseDeterminado.name());
+            String desVersionDelJson = (String) desDatosMap.get("desVersion");
+            String nomDocumentoDelJson = (String) desDatosMap.get("nomDocumento");
+
+            if (desVersionDelJson == null || nomDocumentoDelJson == null) {
+                logger.error("El JSON en desDatos no contiene 'desVersion' o 'nomDocumento'.");
+                throw new RuntimeException("El JSON de la plantilla de datos debe contener 'desVersion' y 'nomDocumento'.");
             }
 
+ 
+            TipoAcuse tipoAcuseDeterminado = TipoAcuse.valueOf(ndtPlantillaDato.getDesTipoAcuse().toUpperCase()); 
+
             PlantillaDatoDto plantillaDatoDto = new PlantillaDatoDto();
-            plantillaDatoDto.setCveIdPlantillaDatos(ndtPlantillaDato.getCveIdPlantillaDato()); // Usar el nuevo ID
+            plantillaDatoDto.setCveIdPlantillaDatos(ndtPlantillaDato.getCveIdPlantillaDato());  
             plantillaDatoDto.setDatosJson(ndtPlantillaDato.getDesDatos());
             plantillaDatoDto.setTipoAcuse(tipoAcuseDeterminado);
-            // El desVersion para generar el Jasper ahora se toma del AcuseConfig, no directamente de la entidad
-            // Si el DTO necesita `desVersion`, podemos tomarlo de `config.getDesVersion()`
-            plantillaDatoDto.setDesVersion(config.getDesVersion());
-            plantillaDatoDto.setNomDocumento(config.getNomDocumento()); // Para usar en consultaAcuseByPlantillaDato si se usa internamente
+         
+            plantillaDatoDto.setDesVersion(desVersionDelJson); 
+            plantillaDatoDto.setNomDocumento(nomDocumentoDelJson);  
 
             // Generar el acuse y obtener los bytes del PDF, usando el DTO
             byte[] pdfBytes = generarAcuseconDatosJSON(plantillaDatoDto);
 
-            String nombreDocumento = config.getNomDocumento(); // Usar el nombre del documento de la configuración
+            String nombreDocumento = nomDocumentoDelJson;
+             logger.info("Nombre documento: {}", nombreDocumento);
             String pdfBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
             decargarAcuseDto.setDocumento("data:application/pdf;base64," + pdfBase64);
@@ -148,7 +154,7 @@ public class AcuseServiceImpl implements AcuseService {
 
 
 private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throws JRException, java.io.IOException, Exception {
-        logger.info("Iniciando generación de acuse con datos JSON desde PlantillaDatoDto...");
+        logger.info("generarAcuseconDatosJSON Iniciando generación de acuse con datos JSON desde PlantillaDatoDto...");
 
         String datosJSON = plantillaDatoDto.getDatosJson();
         logger.info("Datos JSON recibidos: {}", datosJSON);
@@ -217,14 +223,9 @@ private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throw
                 logger.warn("El valor de 'cadenaOriginal' no es un String en el JSON.");
             }
         }
-
-        SimpleDateFormat formatter = new SimpleDateFormat(FORMATO_dd_MM_yyyy_HH_mm_ss);
+ 
         
-        // Obtener la fecha actual formateada
-        String fechaActual = formatter.format(new Date());
-
-        parameters.put("fecha", fechaActual);
-
+  
         if (cadenaOriginal != null) {
             InputStream qrImage = utileriasService.generaQRImageInputStream(cadenaOriginal);
             parameters.put("qrcode", qrImage);
