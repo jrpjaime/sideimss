@@ -29,6 +29,8 @@ public class SelloService {
 
     public String generarSelloDigital(CadenaOriginalRequestDto cadenaOriginalRequestDto) throws Exception {
         logger.info("Generando sello digital para cadena original: {}", cadenaOriginalRequestDto.getCadenaOriginal());
+        logger.info("Generando sello digital para curp: {}", cadenaOriginalRequestDto.getCurp());
+        logger.info("Generando sello digital para razon_social: {}", cadenaOriginalRequestDto.getNombreRazonSocial()); 
      
         JSONObject jsonWidget = new JSONObject(); 
         
@@ -36,6 +38,10 @@ public class SelloService {
         jsonWidget.put("aplicacion", "GENERICO_ID_OP");  
         jsonWidget.put("id_llavefirma", "IMSS_CSD_01"); 
         jsonWidget.put("cadenaoriginal", cadenaOriginalRequestDto.getCadenaOriginal());
+        jsonWidget.put("curp", cadenaOriginalRequestDto.getCurp());
+        jsonWidget.put("nombre_rs", cadenaOriginalRequestDto.getNombreRazonSocial());
+        jsonWidget.put("razon_social", cadenaOriginalRequestDto.getNombreRazonSocial());
+        jsonWidget.put("nombre", cadenaOriginalRequestDto.getNombreRazonSocial());
 
         // Usar ObjectFactory para crear la request
         FirmaSimpleRequestType request = objectFactory.createFirmaSimpleRequestType();

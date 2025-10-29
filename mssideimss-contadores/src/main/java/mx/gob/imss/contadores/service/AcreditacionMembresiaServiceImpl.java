@@ -112,32 +112,88 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
     @Override
-    public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
+ public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
         logger.info("Iniciando proceso para obtener sello digital y guardar plantilla.");
 
-        // Extraer la cadenaOriginal del JSON de datos
-        String datosJson = ndtPlantillaDato.getDesDatos();
-        String cadenaOriginal = "";
+        final String datosJson = ndtPlantillaDato.getDesDatos(); // Hacer final 
+        final String initialCadenaOriginal;
+        final String nombreCompleto;
+        final String curp;
+        final String folioFirma;
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(datosJson);
+
             JsonNode cadenaOriginalNode = rootNode.get("cadenaOriginal");
             if (cadenaOriginalNode != null) {
-                cadenaOriginal = cadenaOriginalNode.asText();
-                logger.debug("Cadena original extraída: {}", cadenaOriginal);
+                initialCadenaOriginal = cadenaOriginalNode.asText();
+                logger.debug("Cadena original extraída: {}", initialCadenaOriginal);
             } else {
                 logger.warn("No se encontró 'cadenaOriginal' en el JSON de datos.");
                 return Mono.error(new RuntimeException("Error: La cadenaOriginal no se encontró en los datos de la plantilla."));
             }
+
+            JsonNode nombreCompletoNode = rootNode.get("nombreCompleto");
+            nombreCompleto = (nombreCompletoNode != null) ? nombreCompletoNode.asText() : null;
+            if (nombreCompleto != null) logger.debug("Nombre completo extraído: {}", nombreCompleto);
+
+            JsonNode curpNode = rootNode.get("curp");
+            curp = (curpNode != null) ? curpNode.asText() : null;
+            if (curp != null) logger.debug("CURP extraída: {}", curp);
+
+            JsonNode folioFirmaNode = rootNode.get("folioFirma");
+            folioFirma = (folioFirmaNode != null) ? folioFirmaNode.asText() : null;
+            if (folioFirma != null) logger.debug("folioFirma extraída: {}", folioFirma);
+
         } catch (Exception e) {
             logger.error("Error al parsear datosJson para extraer cadenaOriginal: {}", e.getMessage(), e);
             return Mono.error(new RuntimeException("Error al procesar los datos de la plantilla para obtener la cadena original."));
         }
 
+     
+        final String modifiedCadenaOriginal;  
+
+        if (folioFirma != null && !folioFirma.isEmpty()) {
+            String hashTag = "|HASH|";
+            int indexHash = initialCadenaOriginal.indexOf(hashTag);
+            if (indexHash != -1) {
+                int startIndexHashValue = indexHash + hashTag.length();
+                int endIndexHashValue = initialCadenaOriginal.indexOf("|", startIndexHashValue);
+
+                String currentHashValue = "";
+                if (endIndexHashValue != -1) {
+                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue, endIndexHashValue);
+                } else {
+                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue);
+                }
+
+                String newHashSegment = hashTag + folioFirma + "|" + currentHashValue;
+                modifiedCadenaOriginal = initialCadenaOriginal.replace(hashTag + currentHashValue, newHashSegment);
+                logger.info("Cadena original modificada con folioFirma: {}", modifiedCadenaOriginal);
+            } else {
+                logger.warn("No se encontró el tag '|HASH|' en la cadena original para insertar folioFirma.");
+                modifiedCadenaOriginal = initialCadenaOriginal; // Si no se encuentra, usamos la original
+            }
+        } else {
+            modifiedCadenaOriginal = initialCadenaOriginal; // Si no hay folioFirma, usamos la original
+        }
+        // --- Fin de la lógica de modificación ---
+
+        // 'modifiedCadenaOriginal' ahora es efectivamente final y puede ser usada en las lambdas.
+
         // Preparar la solicitud para el microservicio de acuses
         CadenaOriginalRequestDto requestDto = new CadenaOriginalRequestDto();
-        requestDto.setCadenaOriginal(cadenaOriginal);
-        requestDto.setRfc(ndtPlantillaDato.getDesRfc()); 
+        requestDto.setCadenaOriginal(modifiedCadenaOriginal); // Usamos la variable final/effectively final
+        requestDto.setRfc(ndtPlantillaDato.getDesRfc());
+
+
+        if (nombreCompleto != null) {
+            requestDto.setNombreRazonSocial(nombreCompleto);
+        }
+        if (curp != null) {
+            requestDto.setCurp(curp);
+        }
 
         String urlGeneraSello = acusesMicroserviceUrl.trim() + "/generaSello";
         logger.info("Llamando al microservicio de acuses para generar sello en: {}", urlGeneraSello);
@@ -163,12 +219,18 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                     // Insertar el sello en el JSON de datos
                     try {
                         ObjectMapper objectMapper = new ObjectMapper();
+                        // Al crear el rootNode a partir de 'datosJson', obtenemos una copia.
+                        // Luego modificamos esta copia.
                         ObjectNode rootNode = (ObjectNode) objectMapper.readTree(datosJson);
                         rootNode.put("selloDigitalIMSS", selloDigitalIMSS);
+
+                        // Es crucial actualizar la cadenaOriginal dentro del JSON con la versión modificada
+                        rootNode.put("cadenaOriginal", modifiedCadenaOriginal); // Usamos la variable final/effectively final
+
                         ndtPlantillaDato.setDesDatos(objectMapper.writeValueAsString(rootNode));
-                        logger.info("Sello digital insertado en desDatos. Datos actualizados: {}", ndtPlantillaDato.getDesDatos());
+                        logger.info("Sello digital y cadenaOriginal (si fue modificada) insertados en desDatos. Datos actualizados: {}", ndtPlantillaDato.getDesDatos());
                     } catch (Exception e) {
-                        logger.error("Error al insertar el sello digital en el JSON de datos: {}", e.getMessage(), e);
+                        logger.error("Error al insertar el sello digital/actualizar cadenaOriginal en el JSON de datos: {}", e.getMessage(), e);
                         return Mono.error(new RuntimeException("Error al actualizar los datos con el sello digital."));
                     }
 
