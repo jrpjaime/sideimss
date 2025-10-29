@@ -258,7 +258,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         if (errorResponse.error && typeof errorResponse.error === 'object' && errorResponse.error.mensaje) {
           errorMessage = errorResponse.error.mensaje;
         }
-        this.alertService.error(errorMessage, { autoClose: false });
+        this.alertService.error(errorMessage, { autoClose: true });
       }
     });
   }
