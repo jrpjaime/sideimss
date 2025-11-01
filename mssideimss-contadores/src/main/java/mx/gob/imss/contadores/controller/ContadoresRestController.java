@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping; 
 import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto; 
-import mx.gob.imss.contadores.dto.PlantillaDatoDto; 
+import mx.gob.imss.contadores.dto.PlantillaDatoDto;
+import mx.gob.imss.contadores.dto.SolicitudBajaDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
+import mx.gob.imss.contadores.service.ContadorPublicoAutorizadoService;
 import mx.gob.imss.contadores.service.JwtUtilService;
  
 
@@ -45,7 +47,8 @@ public class ContadoresRestController {
     private  JwtUtilService jwtUtilService;
 
   
-
+    @Autowired
+    private ContadorPublicoAutorizadoService contadorPublicoAutorizadoService;
 
 
     @Value("${sideimss.acuses.microservice.url}")  
@@ -187,4 +190,56 @@ public class ContadoresRestController {
         logger.info("Operación realizada exitosamente.");
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
+
+
+
+
+
+/**
+     * Endpoint para obtener todos los datos del contador (personales, fiscales, contacto)
+     * a partir de su RFC extraído del token de seguridad.
+     * URL: GET /mssideimss-contadores/v1/datosContador
+     */
+    @GetMapping("/consultaDatosContador")
+    public ResponseEntity<SolicitudBajaDto> consultaDatosContador() {
+        logger.info("........................Iniciando consultaDatosContador..............................");
+
+        // 1. Obtener el token y extraer el RFC  
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String jwtToken = null;
+        String rfc = null;
+
+        if (authentication != null && authentication.getDetails() instanceof Map) {
+            Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+            jwtToken = (String) details.get("jwt");
+        }
+        
+        if (jwtToken == null) {
+            logger.warn("Token JWT no disponible. Se requiere autenticación.");
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+
+        try {
+            Claims claims = jwtUtilService.extractAllClaims(jwtToken);
+            rfc = (String) claims.get("rfc");
+            logger.info("RFC extraído del token JWT para consulta: {}", rfc);
+        } catch (Exception e) {
+            logger.error("Error al extraer RFC del token JWT: {}", e.getMessage(), e);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // 2. Llamar al servicio para obtener los datos
+        try {
+            SolicitudBajaDto datosContador = contadorPublicoAutorizadoService.getDatosContador(rfc);
+            logger.info("Consulta de datos del contador exitosa para RFC: {}", rfc);
+            return new ResponseEntity<>(datosContador, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Error al consultar los datos del contador con RFC {}: {}", rfc, e.getMessage(), e);
+            // Dependiendo del error, podrías devolver un 404 si el contador no existe.
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    
+
 }

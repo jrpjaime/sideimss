@@ -22,6 +22,7 @@ export const EPs = {
     info: "/v1/info",
     list: "/v1/list",
     acreditacionmembresia: "/v1/acreditacionMembresia",
+    consultaDatosContador: "/v1/consultaDatosContador",
 
   },
 
