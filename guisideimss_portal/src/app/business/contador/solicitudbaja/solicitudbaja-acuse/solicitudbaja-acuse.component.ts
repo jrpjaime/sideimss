@@ -138,7 +138,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       rfc: this.rfcSesion,
       curp: this.curpSesion,
       numeroRegistroImss: this.numeroRegistroImssSesion,
-      // Aquí podrías añadir cualquier otro dato del BaseComponent que necesites en la plantilla
+
     };
 
     const datosJson = JSON.stringify(datosParaPlantilla);
