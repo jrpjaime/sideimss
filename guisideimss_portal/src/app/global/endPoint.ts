@@ -23,6 +23,7 @@ export const EPs = {
     list: "/v1/list",
     acreditacionmembresia: "/v1/acreditacionMembresia",
     consultaDatosContador: "/v1/consultaDatosContador",
+    solicitudBaja: '/v1/solicitudBaja',
 
   },
 

@@ -226,7 +226,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     this.alertService.clear();
 
     const rfcUsuario = this.rfcSesion;
-    const desFolio = this.folioFirma + "PRUEBAFOLIOFIRMA";
+    const desFolio = this.folioFirma ;
     const desCurp = this.curpSesion;
     const nombreCompleto = this.nombreCompletoSync;
 

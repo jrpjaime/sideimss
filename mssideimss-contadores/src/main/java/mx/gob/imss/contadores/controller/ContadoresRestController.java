@@ -242,4 +242,99 @@ public class ContadoresRestController {
     
     
 
+
+
+
+    /**
+     * Endpoint para procesar la solicitud de baja de un contador público.
+     * Incluye lógica para obtener el JWT, extraer RFC/nombre, generar sello digital y guardar la plantilla.
+     * URL: POST /mssideimss-contadores/v1/solicitudBaja
+     */
+    @PostMapping("/solicitudBaja")
+    public ResponseEntity<AcreditacionMenbresiaResponseDto> solicitudBaja(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Recibiendo datos para Solicitud de Baja:");
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        LocalDate fechaActual = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fechaActualFormateada = fechaActual.format(formatter);
+
+        // Obtención del JWT Token y manejo de errores
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String jwtToken = null;
+        String rfc = null;
+        String nombreCompleto = null;
+
+        if (authentication != null && authentication.getDetails() instanceof Map) {
+            Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+            jwtToken = (String) details.get("jwt");
+        }
+
+        if (jwtToken == null) {
+            logger.warn("No se pudo obtener el token JWT del SecurityContext para Solicitud Baja.");
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("No se pudo obtener el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        try {
+            Claims claims = jwtUtilService.extractAllClaims(jwtToken);
+            rfc = (String) claims.get("rfc");
+            String nombre = (String) claims.get("nombre");
+            String primerApellido = (String) claims.get("primerApellido");
+            String segundoApellido = (String) claims.get("segundoApellido");
+            nombreCompleto = String.format("%s %s %s", nombre, primerApellido, segundoApellido != null ? segundoApellido : "").trim();
+            logger.info("RFC extraído del token JWT para Solicitud Baja: {}", rfc);
+        } catch (Exception e) {
+            logger.error("Error al extraer datos (RFC/Nombre) del token JWT para Solicitud Baja: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("Error al procesar el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // Crear instancia de NdtPlantillaDato
+        NdtPlantillaDato ndtPlantillaDato = new NdtPlantillaDato();
+        ndtPlantillaDato.setDesRfc(rfc);
+        ndtPlantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+        ndtPlantillaDato.setDesPathVersion(plantillaDatoDto.getDesVersion());
+        ndtPlantillaDato.setDesDatos(plantillaDatoDto.getDatosJson());
+        // Asegúrate de que TipoAcuse.name() sea el correcto para el enum o usa una cadena si es solo un String
+        ndtPlantillaDato.setDesTipoAcuse(plantillaDatoDto.getTipoAcuse().name());
+        ndtPlantillaDato.setFecRegistro(fechaActual);
+
+        String urlDocumentoBase64 = null;
+        String urlDocumento = null;
+        // String mensajeCorreo = "No se intentó enviar el correo."; // Si se requiere enviar correo para baja, se puede agregar
+
+        try {
+            // ** LLAMADA AL SERVICIO DE ContadorPublicoAutorizadoService **
+            // Esto reemplaza la llamada directa a ndtPlantillaDatoRepository.save()
+            NdtPlantillaDato plantillaGuardadaConSello = contadorPublicoAutorizadoService.obtenerSelloYGuardarPlantilla(ndtPlantillaDato, jwtToken).block();
+            urlDocumento = rfc + "|" + plantillaGuardadaConSello.getCveIdPlantillaDato().toString();
+            urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
+            logger.info("Plantilla de datos de Solicitud Baja guardada exitosamente con ID y sello: {}", plantillaGuardadaConSello.getCveIdPlantillaDato());
+
+        } catch (Exception e) {
+            logger.error("Fallo durante el guardado de datos de Solicitud Baja: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorDto.setMensaje("Error al guardar la plantilla de datos de Solicitud Baja. Por favor, intente más tarde.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
+        responseDto.setFechaActual(fechaActualFormateada);
+        responseDto.setCodigo(0);
+        responseDto.setMensaje("Solicitud de Baja realizada exitosamente.");
+        responseDto.setUrlDocumento(urlDocumentoBase64);
+        logger.info("Operación de Solicitud de Baja realizada exitosamente.");
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
 }

@@ -1,1 +1,114 @@
-<p>solicitudbaja-acuse works!</p>
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-0">Acuse de Solicitud de Baja</h3>
+        <hr class="red">
+    </div>
+</div>
+
+<!-- Contenedor para el acuse previo y los botones de firma -->
+@if (!firmaExitosa) {
+    <div class="row">
+        <div class="col-12">
+            @if (loadingAcusePreview) {
+                <div class="alert alert-info d-flex align-items-center">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Generando previsualización del acuse de baja...
+                </div>
+            } @else if (acusePreviewError) {
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {{ acusePreviewError }}
+                </div>
+            } @else if (acusePdfUrl) {
+                <div style="width: 100%; height: 600px; border: 1px solid #ccc; margin-bottom: 20px;">
+                    <iframe [src]="acusePdfUrl" width="100%" height="100%" frameborder="0" title="Previsualización del Acuse de Baja"></iframe>
+                </div>
+            } @else {
+                <div class="alert alert-warning">
+                    No hay previsualización disponible del acuse de baja.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="pull-right">
+        <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" (click)="regresarMantenerDatos()">Regresar</button>
+          <!-- El botón de enviar ahora inicia el proceso de firma -->
+          <button type="button" class="btn btn-primary" (click)="enviarSolicitudFinal()" [disabled]="!acusePdfUrl">
+            Enviar Solicitud de Baja
+          </button>
+        </div>
+    </div>
+}
+
+<!-- Sección para mostrar el acuse de éxito después de la firma -->
+@if (firmaExitosa) {
+    @if (mostrarAcuseFinal && acusePdfUrl) {
+        <div class="mt-4">
+            <h5>Acuse de Recibo Final:</h5>
+            <!-- El iframe cargará el PDF. Ajusta el estilo (width, height) según tus necesidades -->
+            <iframe [src]="acusePdfUrl" width="100%" height="600px" frameborder="0" title="Acuse Final de Solicitud de Baja"></iframe>
+        </div>
+    }
+
+    <div class="alert alert-success mt-4">
+        <h5 class="alert-heading">Su solicitud de baja ha sido procesada exitosamente.</h5>
+        <p>El acuse de recibo de su solicitud de baja ha sido enviado a su correo electrónico.</p>
+        <p class="mb-0">Estos son los datos de su trámite en línea:</p>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Folio</th>
+                            <th>Fecha y hora</th>
+                            <th>RFC</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ datosExitoAcuse.folio || 'N/A' }}</td>
+                            <td>{{ datosExitoAcuse.fechaHora || 'N/A' }}</td>
+                            <td>{{ datosExitoAcuse.rfc || 'N/A' }}</td>
+                            <td>{{ datosExitoAcuse.nombre || 'N/A' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="pull-right mt-3">
+        <button type="button" class="btn btn-primary" (click)="salirDelTramite()">Salir del Trámite</button>
+    </div>
+}
+
+<!-- Modal para la Firma Electrónica -->
+@if (isFirmaModalVisible) {
+    <div class="modal fade show modal-firma-amplio" tabindex="-1" role="dialog" [ngStyle]="{'display': 'block'}" aria-modal="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title me-auto">Firma Electrónica Avanzada</h4>
+                    <button type="button" class="close" aria-label="Close" (click)="closeFirmaModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div align="center">
+                        <p>
+                            <iframe id="formFirmaDigital" name="formFirmaDigital" [src]="firmaWidgetUrl" width="850" height="370" frameborder="0" title="Widget de Firma Electrónica">
+                            </iframe>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}

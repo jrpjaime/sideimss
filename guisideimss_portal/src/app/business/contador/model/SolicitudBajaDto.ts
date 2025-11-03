@@ -8,4 +8,5 @@ export interface SolicitudBajaDto {
   domicilioFiscalDto: DomicilioFiscalDto;
   datosContactoDto: DatosContactoDto;
   motivoBaja: string;
+
 }

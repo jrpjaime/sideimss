@@ -10,6 +10,7 @@ import { ModificaciondatosComponent } from './business/contador/modificaciondato
 import { SolicitudbajaComponent } from './business/contador/solicitudbaja/solicitudbaja.component';
 import { ContadorGuard } from './core/guards/contador.guard';
 import { AcreditacionymembresiaAcuseComponent } from './business/contador/acreditacionymembresia/acreditacionymembresia-acuse/acreditacionymembresia-acuse.component';
+import { SolicitudbajaAcuseComponent } from './business/contador/solicitudbaja/solicitudbaja-acuse/solicitudbaja-acuse.component';
 
 
 
@@ -44,6 +45,11 @@ export const routes: Routes = [
       {
         path: 'contador/solicitudbaja',
         component: SolicitudbajaComponent,
+        canActivate: [ContadorGuard],
+      },
+      {
+        path: 'contador/solicitudbajaacuse',
+        component: SolicitudbajaAcuseComponent,
         canActivate: [ContadorGuard],
       },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
