@@ -135,8 +135,8 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       ...this.datosSolicitudBaja, // Datos específicos de la solicitud de baja
       ...this.acuseParameters,    // Parámetros generales del acuse
       nombreCompleto: this.nombreCompletoSync,
-      rfc: this.rfcSesion,
-      curp: this.curpSesion,
+      RFC: this.rfcSesion,
+      CURP: this.curpSesion,
       numeroRegistroImss: this.numeroRegistroImssSesion,
 
     };
@@ -343,7 +343,9 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       ...this.datosSolicitudBaja, // Incluye todos los datos de la solicitud de baja
       cadenaOriginal: this.cadenaOriginalFirmada,
       folioFirma: this.folioFirma, // Folio del proceso de firma
-      curp: this.curpFirma,
+      CURP: this.curpFirma,
+      RFC: this.rfcSesion,
+      numeroRegistroImss: this.numeroRegistroImssSesion,
       firmaElectronica: this.firmaDigital,
       selloDigitalIMSS: "", // Si tu backend lo genera, déjalo vacío o con valor por defecto
       certificado: this.certificado,

@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
- 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import java.net.URLEncoder; 
  
 import org.springframework.http.HttpHeaders;  
@@ -152,6 +154,18 @@ public class AcusesRestController {
     @PostMapping("/descargarAcusePreview")
     public ResponseEntity<byte[]> descargarAcusePreview(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibida solicitud para descargar preview de acuse con DTO: {}", plantillaDatoDto);
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT); // Habilitar pretty print
+
+        try {
+            String plantillaDatoDtoJson = objectMapper.writeValueAsString(plantillaDatoDto);
+            logger.info("PlantillaDatoDto recibido (JSON): \n{}", plantillaDatoDtoJson);
+        } catch (Exception e) {
+            logger.error("Error al serializar PlantillaDatoDto a JSON para log: {}", e.getMessage());
+            logger.info("PlantillaDatoDto recibido (toString por defecto): {}", plantillaDatoDto); // Fallback
+        }
 
         if (plantillaDatoDto.getTipoAcuse() == null) {
             logger.error("Tipo de acuse no proporcionado para la previsualización.");

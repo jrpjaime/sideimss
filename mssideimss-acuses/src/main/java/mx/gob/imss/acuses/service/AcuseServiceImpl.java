@@ -159,7 +159,22 @@ private byte[] generarAcuseconDatosJSON(PlantillaDatoDto plantillaDatoDto) throw
         String datosJSON = plantillaDatoDto.getDatosJson();
         logger.info("Datos JSON recibidos: {}", datosJSON);
 
-        ObjectMapper objectMapper = new ObjectMapper();
+
+
+    ObjectMapper objectMapper = new ObjectMapper(); // Ya tienes uno, puedes reutilizarlo o crear uno nuevo aquí para el log
+/*    
+    try {
+        Object json = objectMapper.readValue(datosJSON, Object.class); // Leer como Object para manejar array o mapa
+        String prettyJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        logger.info("Datos JSON recibidos (formateados): \n{}", prettyJson);
+    } catch (Exception e) {
+        logger.error("Error al formatear y loggear el JSON: {}", e.getMessage());
+        logger.info("Datos JSON recibidos (sin formatear): {}", datosJSON); // Imprimir sin formatear si falla
+    }
+
+*/
+
+       
         Map<String, Object> allDataMap = new HashMap<>(); // Para almacenar todos los datos del JSON
         String desVersion = null; // Variable para almacenar desVersion
 

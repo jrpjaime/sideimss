@@ -58,12 +58,12 @@ public class AcuseConfigService {
         AcuseConfig solicitudCambioConfig = new AcuseConfig();
         solicitudCambioConfig.setNomDocumento("AcuseSolicitudCambio"); // Nombre final del PDF
         solicitudCambioConfig.setDesVersion("reportes\\contadores\\v20251103\\ActualizacionDatos"); // Ruta relativa del archivo .jasper
-       acreditacionMembresiaConfig.addImagePath("imgLogoImss", "reportes\\contadores\\v20251103\\img\\logoImss.jpg");
-        acreditacionMembresiaConfig.addImagePath("imgGobiernoRepublica", "reportes\\contadores\\v20251103\\img\\gobiernoMexico.png");
-        acreditacionMembresiaConfig.addImagePath("imgEscudoNacional", "reportes\\contadores\\v20251103\\img\\escudoNacional.jpg");
-        acreditacionMembresiaConfig.addImagePath("imgGobMx", "reportes\\contadores\\v20251103\\img\\gobmx.png");
-        acreditacionMembresiaConfig.addImagePath("imgGobMxFooter", "reportes\\contadores\\v20251103\\img\\imssGobmx.png");
-        acreditacionMembresiaConfig.addImagePath("imgMarcaAgua", "reportes\\contadores\\v20251103\\img\\watermark.png");
+        solicitudCambioConfig.addImagePath("imgLogoImss", "reportes\\contadores\\v20251103\\img\\logoImss.jpg");
+        solicitudCambioConfig.addImagePath("imgGobiernoRepublica", "reportes\\contadores\\v20251103\\img\\gobiernoMexico.png");
+        solicitudCambioConfig.addImagePath("imgEscudoNacional", "reportes\\contadores\\v20251103\\img\\escudoNacional.jpg");
+        solicitudCambioConfig.addImagePath("imgGobMx", "reportes\\contadores\\v20251103\\img\\gobmx.png");
+        solicitudCambioConfig.addImagePath("imgGobMxFooter", "reportes\\contadores\\v20251103\\img\\imssGobmx.png");
+        solicitudCambioConfig.addImagePath("imgMarcaAgua", "reportes\\contadores\\v20251103\\img\\watermark.png");
         configs.put(TipoAcuse.ACUSE_SOLICITUD_CAMBIO, solicitudCambioConfig);
 
 
@@ -72,12 +72,12 @@ public class AcuseConfigService {
         AcuseConfig solicitudBajaConfig = new AcuseConfig();
         solicitudBajaConfig.setNomDocumento("AcuseSolicitudBaja"); // Nombre final del PDF
         solicitudBajaConfig.setDesVersion("reportes\\contadores\\v20251103\\SolicitudBajaContador"); // Ruta relativa del archivo .jasper
-       acreditacionMembresiaConfig.addImagePath("imgLogoImss", "reportes\\contadores\\v20251103\\img\\logoImss.jpg");
-        acreditacionMembresiaConfig.addImagePath("imgGobiernoRepublica", "reportes\\contadores\\v20251103\\img\\gobiernoMexico.png");
-        acreditacionMembresiaConfig.addImagePath("imgEscudoNacional", "reportes\\contadores\\v20251103\\img\\escudoNacional.jpg");
-        acreditacionMembresiaConfig.addImagePath("imgGobMx", "reportes\\contadores\\v20251103\\img\\gobmx.png");
-        acreditacionMembresiaConfig.addImagePath("imgGobMxFooter", "reportes\\contadores\\v20251103\\img\\imssGobmx.png");
-        acreditacionMembresiaConfig.addImagePath("imgMarcaAgua", "reportes\\contadores\\v20251103\\img\\watermark.png");
+        solicitudBajaConfig.addImagePath("imgLogoImss", "reportes\\contadores\\v20251103\\img\\logoImss.jpg");
+        solicitudBajaConfig.addImagePath("imgGobiernoRepublica", "reportes\\contadores\\v20251103\\img\\gobiernoMexico.png");
+        solicitudBajaConfig.addImagePath("imgEscudoNacional", "reportes\\contadores\\v20251103\\img\\escudoNacional.jpg");
+        solicitudBajaConfig.addImagePath("imgGobMx", "reportes\\contadores\\v20251103\\img\\gobmx.png");
+        solicitudBajaConfig.addImagePath("imgGobMxFooter", "reportes\\contadores\\v20251103\\img\\imssGobmx.png");
+        solicitudBajaConfig.addImagePath("imgMarcaAgua", "reportes\\contadores\\v20251103\\img\\watermark.png");
         configs.put(TipoAcuse.ACUSE_SOLICITUD_BAJA, solicitudBajaConfig);
     }
 
