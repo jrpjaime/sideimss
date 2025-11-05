@@ -1,6 +1,7 @@
 package mx.gob.imss.contadores.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.*; 
 import lombok.Data; 
@@ -34,5 +35,5 @@ public class NdtPlantillaDato {
     
 
     @Column(name = "FEC_REGISTRO")
-    private LocalDate fecRegistro;
+    private LocalDateTime fecRegistro;
 }

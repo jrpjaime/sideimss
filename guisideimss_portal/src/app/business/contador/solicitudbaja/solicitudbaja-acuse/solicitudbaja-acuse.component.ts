@@ -28,6 +28,7 @@ import { take } from 'rxjs';
 })
 export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit, OnDestroy {
 
+
   datosSolicitudBaja: SolicitudBajaFormData | null = null;
   acusePdfUrl: SafeResourceUrl | null = null;
   loadingAcusePreview: boolean = false;
@@ -53,6 +54,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
   firmaExitosa: boolean = false;
   datosExitoAcuse: DatosAcuseExito = {
     folio: '',
+    urlDocumento: '',
     fechaHora: '',
     rfc: '',
     nombre: ''
@@ -378,8 +380,9 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
           // Ocultar el acuse previo y mostrar los datos de éxito
           this.firmaExitosa = true;
           this.datosExitoAcuse = {
-            folio: response.urlDocumento || this.datosSolicitudBaja?.folioSolicitud || 'N/A', // Usar URL o folio
-            fechaHora: response.fechaActual || new Date().toLocaleString(),
+            folio:  this.datosSolicitudBaja?.folioSolicitud || 'N/A', // Usar URL o folio
+            urlDocumento: response.urlDocumento,
+            fechaHora: response.fechaActual ,
             rfc: this.rfcSesion,
             nombre: nombreCompletoSesion
           };
@@ -488,4 +491,81 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       }
     });
   }
+
+
+
+
+
+  /**
+   * Este método se encarga de descargar el acuse firmado.
+   * Utiliza la URL del acuse que ya se ha obtenido del backend.
+   */
+  descargarAcuseFirmado(): void {
+    if (!this.acusePdfUrl) {
+      this.alertService.error('No hay un acuse final disponible para descargar.', { autoClose: true });
+      return;
+    }
+
+    this.loaderService.show();
+    this.alertService.clear();
+
+
+    let urlDocumentoParaDescargar: string = '';
+    if (this.datosExitoAcuse && this.datosExitoAcuse.urlDocumento) {
+      urlDocumentoParaDescargar = this.datosExitoAcuse.urlDocumento;
+    }
+
+    if (!urlDocumentoParaDescargar) {
+      this.loaderService.hide();
+      this.alertService.error('No se pudo obtener la referencia del acuse para descargar.', { autoClose: true });
+      return;
+    }
+
+    this.contadorPublicoAutorizadoService.getAcuseParaVisualizar(urlDocumentoParaDescargar).subscribe({
+      next: (response: HttpResponse<Blob>) => {
+        this.loaderService.hide();
+        if (response.body) {
+          const blob = new Blob([response.body], { type: 'application/pdf' });
+          const filename = `Acuse_Solicitud_Baja_${this.datosExitoAcuse.folio || 'firmado'}.pdf`;
+
+          // Crea un enlace temporal y simula un clic para descargar
+          const a = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url); // Libera la URL del objeto
+          document.body.removeChild(a);    // Elimina el enlace temporal
+          this.alertService.success('Acuse descargado exitosamente.', { autoClose: true });
+        } else {
+          this.alertService.error('No se recibió ningún documento para descargar el acuse firmado.', { autoClose: false });
+        }
+      },
+      error: (errorResponse: HttpErrorResponse) => {
+        this.loaderService.hide();
+        console.error('Error al descargar el acuse firmado:', errorResponse);
+        let errorMessage = 'Error al descargar el acuse firmado. Por favor, inténtalo de nuevo más tarde.';
+
+        if (errorResponse.error instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const errorBody = JSON.parse(reader.result as string);
+              errorMessage = errorBody.message || errorBody.error || errorMessage;
+            } catch (e) {
+              console.warn('No se pudo parsear el error como JSON:', reader.result);
+            }
+            this.alertService.error(errorMessage, { autoClose: false });
+          };
+          reader.readAsText(errorResponse.error);
+        } else if (errorResponse.message) {
+          errorMessage = errorResponse.message;
+        }
+        this.alertService.error(errorMessage, { autoClose: false });
+      }
+    });
+  }
+
+
 }

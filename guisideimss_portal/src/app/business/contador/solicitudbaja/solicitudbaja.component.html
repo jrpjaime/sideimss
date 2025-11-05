@@ -25,11 +25,14 @@
     <p>Paso 1 de 2: Datos Personales</p>
 
     <!-- SECCIÓN DE DATOS PERSONALES -->
-    <div class="card mb-3">
-      <div class="card-header bg-light">
-        <strong>Datos personales</strong>
-      </div>
-      <div class="card-body">
+
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-0">Datos personales</h3>
+            <hr class="red">
+          </div>
+        </div>
+
         <div class="row mb-2">
           <div class="col-sm-6">
             <label class="form-label-custom">RFC</label>
@@ -76,15 +79,18 @@
             <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.subdelegacion }}</p>
           </div>
         </div>
-      </div>
-    </div>
+
 
     <!-- SECCIÓN DE DOMICILIO FISCAL -->
-    <div class="card mb-3">
-      <div class="card-header bg-light">
-        <strong>Domicilio fiscal</strong>
-      </div>
-      <div class="card-body">
+
+
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-0">Domicilio fiscal</h3>
+            <hr class="red">
+          </div>
+        </div>
+
         <div class="row mb-2">
           <div class="col-sm-6">
             <label class="form-label-custom">Calle</label>
@@ -137,15 +143,17 @@
             <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.codigoPostal }}</p>
           </div>
         </div>
-      </div>
-    </div>
+
 
     <!-- SECCIÓN DE DATOS DE CONTACTO -->
-    <div class="card mb-3">
-      <div class="card-header bg-light">
-        <strong>Datos de contacto</strong>
-      </div>
-      <div class="card-body">
+
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0">Datos de contacto</h3>
+              <hr class="red">
+            </div>
+          </div>
+
         <div class="row mb-2">
           <div class="col-sm-6">
             <label class="form-label-custom">Correo electrónico 1</label>
@@ -173,15 +181,21 @@
             <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.telefono2 }}</p>
           </div>
         </div>
-      </div>
-    </div>
+
 
     <!-- SECCIÓN DE MOTIVO DE BAJA -->
-    <div class="card mb-3">
-      <div class="card-header bg-light">
+
+
         <strong>Motivo de baja</strong>
-      </div>
-      <div class="card-body">
+
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0">Motivo de baja</h3>
+              <hr class="red">
+            </div>
+          </div>
+
+
         <div class="row mb-2">
           <div class="col-12">
             <p class="form-label-custom">* El motivo de la solicitud baja:</p>
@@ -196,16 +210,22 @@
             <small class="form-text text-muted">{{ caracteresRestantes }} caracteres restantes.</small>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="row mt-4">
-      <div class="col-12 d-flex justify-content-end">
-        <p class="me-3">* Campo obligatorio</p>
-        <button type="button" class="btn btn-secondary me-2" (click)="onCancelar()">Cancelar</button>
-        <button type="button" class="btn btn-primary" (click)="continuarConAcuse()" [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud">Siguiente</button>
-      </div>
+
+
+
+
+  <div class="pull-right">
+    <div class="modal-footer">
+          <div class="col-12 d-flex justify-content-end">
+            <p class="me-3">* Campo obligatorio</p>
+          </div>
+          <button type="button" class="btn btn-secondary" (click)="onCancelar()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="continuarConAcuse()" [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud">Siguiente</button>
+
     </div>
+  </div>
+
 
   } @else {
     <p class="text-center">No hay datos disponibles para mostrar.</p>

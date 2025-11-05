@@ -2,6 +2,7 @@ package mx.gob.imss.contadores.controller;
 
  
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -93,8 +94,8 @@ public class ContadoresRestController {
         logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
         logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-        LocalDate fechaActual = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDateTime fechaActual = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String fechaActualFormateada = fechaActual.format(formatter);
 
         // Obtención del JWT Token y manejo de errores
@@ -256,8 +257,8 @@ public class ContadoresRestController {
         logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
         logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
         logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
-        LocalDate fechaActual = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDateTime fechaActual = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String fechaActualFormateada = fechaActual.format(formatter);
 
         // Obtención del JWT Token y manejo de errores

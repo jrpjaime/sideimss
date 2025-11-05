@@ -25,6 +25,7 @@ import { FirmaRequestBackendResponse } from '../../model/FirmaRequestBackendResp
 
 export interface DatosAcuseExito {
   folio: string;
+  urlDocumento: string;
   fechaHora: string;
   rfc: string;
   nombre: string;
@@ -43,7 +44,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
   acuseFinalError: string | null = null;
-  //nombreCompleto: string = '';
+  folioSolicitud: string = '';
 
    acuseParameters: AcuseParameters | null = null;
   private readonly TIPO_ACUSE = 'ACREDITACION_MEMBRESIA';
@@ -71,6 +72,7 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     firmaExitosa: boolean = false; // Controla la visibilidad del acuse de éxito
   datosExitoAcuse: DatosAcuseExito = { // Almacenará los datos a mostrar
     folio: '',
+    urlDocumento: '',
     fechaHora: '',
     rfc: '',
     nombre: ''
@@ -99,6 +101,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
     // 1. Obtener los datos previos
     this.datosFormularioPrevio = this.acreditacionMembresiaDataService.datosFormularioPrevio;
+
+    this.folioSolicitud=this.datosFormularioPrevio.folioSolicitud;
 
     this.obtenerConfiguracionYDescargarAcusePreview();
 
@@ -451,7 +455,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
             // Ocultar el acuse previo y mostrar los datos de éxito
             this.firmaExitosa = true;
             this.datosExitoAcuse = {
-                folio: response.urlDocumento,
+                folio: this.datosFormularioPrevio.folioSolicitud || 'N/A',
+                urlDocumento: response.urlDocumento,
                 fechaHora: response.fechaActual,
                 rfc: this.rfcSesion,
                 nombre: nombreCompletoSesion
