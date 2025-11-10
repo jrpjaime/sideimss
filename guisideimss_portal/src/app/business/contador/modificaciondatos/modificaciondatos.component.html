@@ -33,6 +33,7 @@
 
 <div class="row mb-3">
     <div class="col-sm-6">
+       <p>Selecciona la información que quieres actualizar. Debes firmar con FIEL para concluir el trámite.</p>
         <label for="tipoDato" class="form-label">Datos:</label>
         <select class="form-control" id="tipoDato" [(ngModel)]="selectedTipoDato" (change)="onTipoDatoChange($event)">
             <option value="">Elija opción</option>
@@ -47,8 +48,9 @@
 @if (mostrarSeccionColegio) {
     <div class="row mt-4">
         <div class="col-12">
-            <h4>Datos del Colegio</h4>
-            <hr>
+            <h4>Datos del Colegio o asociado profesional de contadores públicos</h4>
+            <hr class="red">
+
 
             @if (loadingColegio) {
                 <div class="text-center my-3">
@@ -65,7 +67,8 @@
                         <label class="form-label">Razón Social:</label>
                         <p><strong>{{ colegioContador.razonSocial }}</strong></p>
                     </div>
-
+                    <h4>Documentación comprobatoria</h4>
+                    <hr class="red">
                     <p>Los documentos se deberán adjuntar en formato pdf y que no sean mayores a 5MB.</p>
                     <div class="form-group row">
                         <label for="constanciaMembresia" class="col-md-3 col-form-label">* Constancia de membresía:</label>
