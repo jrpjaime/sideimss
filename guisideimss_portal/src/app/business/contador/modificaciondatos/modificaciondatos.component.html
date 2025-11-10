@@ -1,16 +1,49 @@
- <div class="row">
+<div class="row">
     <div class="col-12">
-        <h3 class="mb-0">Bienvenido </h3>
+        <h3 class="mb-0">Modificación de datos</h3>
         <hr class="red">
     </div>
-  </div>
+</div>
 
+<div class="row">
+  <div class="col-sm-6">
+      <div class="form-group">
+          <!-- Aquí se agrega el folio de la solicitud -->
+          <p>El folio de la solicitud es:
+            <strong *ngIf="folioSolicitud && !loadingFolio">{{ folioSolicitud }}</strong>
+            <strong *ngIf="loadingFolio">
+              <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+              Cargando folio...
+            </strong>
+            <strong *ngIf="!folioSolicitud && !loadingFolio">No disponible</strong>
+          </p>
+      </div>
+  </div>
+</div>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="form-group">
+            <p>Paso 1 de 2: Modificación de datos</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-sm-6">
+        <label for="tipoDato" class="form-label">Datos:</label>
+        <select class="form-control" id="tipoDato" [(ngModel)]="selectedTipoDato" (change)="onTipoDatoChange($event)">
+            <option value="">Elija opción</option>
+            <!-- *ngFor para llenar el combo con los datos del backend -->
+            <option *ngFor="let tipo of tiposDatosContador" [value]="tipo">{{ tipo }}</option>
+        </select>
+    </div>
+</div>
 
 <div class="row">
   <div class="col-12">
-      <div class="container d-flex  "  >
+      <div class="container d-flex">
         <div class="text-center">
-<p>modificaciondatos works!</p>
+          <p>Contenido adicional de Modificación de Datos</p>
         </div>
       </div>
   </div>

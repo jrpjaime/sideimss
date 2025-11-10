@@ -27,7 +27,7 @@ import mx.gob.imss.catalogos.service.FolioService;
 import mx.gob.imss.catalogos.service.MediosContactoService; 
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
-
+import mx.gob.imss.catalogos.service.TipoDatosContadorService;
 import jakarta.validation.Valid; 
  
 
@@ -52,6 +52,9 @@ public class CatalogosRestController {
 
 	@Autowired
     private FolioService folioService;
+
+	@Autowired  
+    private TipoDatosContadorService tipoDatosContadorService; 
 	
  
     @GetMapping("/info")
@@ -144,6 +147,18 @@ public class CatalogosRestController {
             logger.error("Error al generar un nuevo folio.");
             return new ResponseEntity<>("No se pudo generar un nuevo folio de solicitud.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+
+	/**
+     * Método para obtener la lista de tipos de datos de contador.
+     * @return ResponseEntity con la lista de tipos de datos de contador.
+     */
+    @GetMapping("/tiposDatosContador")
+    public ResponseEntity<List<String>> getTiposDatosContador() {
+        logger.info("Recibiendo solicitud para obtener tipos de datos de contador.");
+        List<String> tipos = tipoDatosContadorService.getTiposDatosContador();
+        return new ResponseEntity<>(tipos, HttpStatus.OK);
     }
  
 
