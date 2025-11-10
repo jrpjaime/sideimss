@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { EPs } from '../../../global/endPoint';
+import { TipoDatoContadorDto } from '../model/TipoDatoContadorDto';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +16,8 @@ export class CatalogosContadorService {
    * Obtiene la lista de tipos de datos de contador desde el backend.
    * @returns Un Observable que emite una lista de strings (ej: 'Personales', 'Del Despacho', 'Del Colegio').
    */
-  getTiposDatosContador(): Observable<string[]> {
+ getTiposDatosContador(): Observable<TipoDatoContadorDto[]> {
     const url = `${environment.catalogosApiUrl}${EPs.catalogo.tiposDatosContador}`;
-    return this.httpClient.get<string[]>(url);
+    return this.httpClient.get<TipoDatoContadorDto[]>(url);
   }
 }

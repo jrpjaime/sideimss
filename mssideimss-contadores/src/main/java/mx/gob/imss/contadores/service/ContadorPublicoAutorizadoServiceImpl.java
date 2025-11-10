@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
+import mx.gob.imss.contadores.dto.ColegioContadorDto;
 import mx.gob.imss.contadores.dto.DatosContactoDto;
 import mx.gob.imss.contadores.dto.DatosPersonalesDto;
 import mx.gob.imss.contadores.dto.DomicilioFiscalDto;
@@ -230,4 +231,36 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
                 return Mono.error(new RuntimeException("Ocurrió un error al procesar la solicitud de baja, por favor intente más tarde: " + e.getMessage()));
             });
     }
+
+
+
+
+
+    /**
+     * Método para consultar el colegio vinculado a un contador. 
+     *
+     * @param rfcContador El RFC del contador a consultar.
+     * @return Un objeto ColegioContadorDto con el RFC y nombre/razón social del colegio.
+     */
+    @Override
+    public ColegioContadorDto getColegioByRfcContador(String rfcContador) {
+        logger.info("Iniciando consulta de colegio para RFC de contador: {}", rfcContador);
+
+        // --- SIMULACIÓN DE LÓGICA DE NEGOCIO / CONSULTA A BASE DE DATOS ---
+        //  aquí consulta    base de datos para obtener el colegio
+        // vinculado al RFC del contador. Esto podría implicar JOINS entre tablas.
+        // Por ahora, simularemos con datos dummy basados en el RFC.
+
+        if (rfcContador != null && rfcContador.startsWith("MOG")) {
+            logger.info("Se encontró un colegio dummy para RFC: {}", rfcContador);
+            return new ColegioContadorDto("RFCCOLEGIO123", "Colegio Nacional de Contadores Públicos AC");
+     
+        } else {
+            logger.warn("No se encontró un colegio simulado para RFC: {}", rfcContador);
+            // Podrías devolver null, o un DTO con campos vacíos, o lanzar una excepción si no se encuentra.
+            // Para este ejemplo, devolvemos un DTO con valores por defecto.
+            return new ColegioContadorDto("N/A", "Colegio no encontrado");
+        }
+    }
+
 }

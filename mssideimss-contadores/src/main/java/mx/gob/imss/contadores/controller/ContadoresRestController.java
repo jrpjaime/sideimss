@@ -20,10 +20,14 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping; 
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.jsonwebtoken.Claims;
-import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto; 
+import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
+import mx.gob.imss.contadores.dto.ColegioContadorDto;
 import mx.gob.imss.contadores.dto.PlantillaDatoDto;
+import mx.gob.imss.contadores.dto.RfcRequestDto;
 import mx.gob.imss.contadores.dto.SolicitudBajaDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
@@ -35,7 +39,7 @@ import org.springframework.security.core.Authentication;
 import java.util.Map;
  
 
-@Controller
+@RestController 
 @CrossOrigin("*") 
 @RequestMapping("/mssideimss-contadores/v1")
 public class ContadoresRestController {
@@ -337,5 +341,40 @@ public class ContadoresRestController {
         logger.info("Operación de Solicitud de Baja realizada exitosamente.");
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
+
+
+    /**
+     * endpoint para consultar los datos del colegio de un contador.
+     * Recibe el RFC del contador en el cuerpo de la solicitud como un objeto JSON.
+     * URL: POST /mssideimss-contadores/v1/colegioContador
+     * @param rfcRequestDto Objeto con el RFC del contador.
+     * @return ResponseEntity con ColegioContadorDto si se encuentra, o un error.
+     */
+    @PostMapping("/colegioContador")
+    public ResponseEntity<ColegioContadorDto> getColegioContador(@RequestBody RfcRequestDto rfcRequestDto) {  
+        logger.info("Recibiendo solicitud para obtener colegio de contador con RFC: {}", rfcRequestDto.getRfcContador()); 
+
+        String rfcContador = rfcRequestDto.getRfcContador();  
+
+        if (rfcContador == null || rfcContador.trim().isEmpty()) {
+            logger.warn("RFC de contador nulo o vacío en la solicitud.");
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            ColegioContadorDto colegio = contadorPublicoAutorizadoService.getColegioByRfcContador(rfcContador);
+            if (colegio != null && !"N/A".equals(colegio.getRfcColegio())) {
+                logger.info("Colegio encontrado para RFC {}: {}", rfcContador, colegio.getRazonSocial());
+                return new ResponseEntity<>(colegio, HttpStatus.OK);
+            } else {
+                logger.warn("No se encontró colegio para el RFC de contador: {}", rfcContador);
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            logger.error("Error al consultar el colegio para el RFC {}: {}", rfcContador, e.getMessage(), e);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }

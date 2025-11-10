@@ -23,6 +23,7 @@ import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
+import mx.gob.imss.catalogos.dto.TipoDatoContadorDto;
 import mx.gob.imss.catalogos.service.FolioService;
 import mx.gob.imss.catalogos.service.MediosContactoService; 
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
@@ -151,15 +152,15 @@ public class CatalogosRestController {
 
 
 	/**
-     * Método para obtener la lista de tipos de datos de contador.
-     * @return ResponseEntity con la lista de tipos de datos de contador.
-     */
-    @GetMapping("/tiposDatosContador")
-    public ResponseEntity<List<String>> getTiposDatosContador() {
-        logger.info("Recibiendo solicitud para obtener tipos de datos de contador.");
-        List<String> tipos = tipoDatosContadorService.getTiposDatosContador();
-        return new ResponseEntity<>(tipos, HttpStatus.OK);
-    }
+	 * Método para obtener la lista de tipos de datos de contador.
+	 * @return ResponseEntity con la lista de tipos de datos de contador.
+	 */
+	@GetMapping("/tiposDatosContador")
+	public ResponseEntity<List<TipoDatoContadorDto>> getTiposDatosContador() { // Cambia el tipo de retorno
+		logger.info("Recibiendo solicitud para obtener tipos de datos de contador.");
+		List<TipoDatoContadorDto> tipos = tipoDatosContadorService.getTiposDatosContador(); // Cambia el tipo de la lista
+		return new ResponseEntity<>(tipos, HttpStatus.OK);
+	}
  
 
 }

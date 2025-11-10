@@ -25,6 +25,7 @@ export const EPs = {
     acreditacionmembresia: "/v1/acreditacionMembresia",
     consultaDatosContador: "/v1/consultaDatosContador",
     solicitudBaja: '/v1/solicitudBaja',
+    colegioContador: '/v1/colegioContador',
 
   },
 

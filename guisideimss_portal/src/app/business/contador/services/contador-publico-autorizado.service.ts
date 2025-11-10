@@ -9,6 +9,8 @@ import { PlantillaDatoDto } from '../model/PlantillaDatoDto';
 import { AcuseParameters } from '../model/AcuseParameters';
 import { FirmaRequestFrontendDto } from '../model/FirmaRequestFrontendDto';
 import { FirmaRequestBackendResponse } from '../model/FirmaRequestBackendResponse';
+import { ColegioContadorDto } from '../model/ColegioContadorDto';
+import { RfcRequestDto } from '../model/RfcRequestDto';
 
 @Injectable({
   providedIn: 'root'
@@ -97,5 +99,18 @@ export class ContadorPublicoAutorizadoService {
     getNuevoFolioSolicitud(): Observable<string> {
       const url = `${environment.catalogosApiUrl}${EPs.catalogo.getNuevoFolioSolicitud}`;
       return this.httpClient.get(url, { responseType: 'text' });
+    }
+
+    /**
+     * Consulta los datos del colegio vinculado a un contador.
+     * @param rfcContador El RFC del contador para el que se busca el colegio.
+     * @returns Un Observable con el objeto ColegioContadorDto.
+     */
+    getColegioByRfcContador(rfcContador: string): Observable<ColegioContadorDto> {
+      const url = `${environment.contadoresApiUrl}${EPs.contadores.colegioContador}`;
+      console.log('URL de consulta de colegio de contador:', url); // Para depuración
+
+      const requestBody: RfcRequestDto = { rfcContador: rfcContador };
+      return this.httpClient.post<ColegioContadorDto>(url, requestBody);
     }
 }

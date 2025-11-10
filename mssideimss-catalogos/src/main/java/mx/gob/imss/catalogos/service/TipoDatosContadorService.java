@@ -2,8 +2,10 @@ package mx.gob.imss.catalogos.service;
 
 import java.util.List;
 
+import mx.gob.imss.catalogos.dto.TipoDatoContadorDto;
+
 public interface TipoDatosContadorService {
-     List<String> getTiposDatosContador();
+    public List<TipoDatoContadorDto> getTiposDatosContador();
     
 }
 
