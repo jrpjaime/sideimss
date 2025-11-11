@@ -59,26 +59,112 @@
                 </div>
             } @else if (colegioContador) {
                 <div>
+                    <!-- PREGUNTA Y BOTONES -->
+                    <div class="mb-3">
+                        <p>¿Desea actualizar los datos del colegio o asociación al que pertenece?</p>
+                        <button class="btn btn-primary me-2" (click)="respuestaActualizarColegio(true)">Sí</button>
+                        <button class="btn btn-secondary" (click)="respuestaActualizarColegio(false)">No</button>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">RFC del Colegio:</label>
-                        <p><strong>{{ colegioContador.rfcColegio }}</strong></p>
+                        @if (!habilitarEdicionRfcColegio) {
+                            <p><strong>{{ colegioContador.rfcColegio }}</strong></p>
+                        } @else {
+                            <!-- CAMBIO AQUI: Añadir clase para validación visual -->
+                            <input type="text" class="form-control"
+                                [class.is-invalid]="!rfcColegioValido && nuevoRfcColegio"
+                                [(ngModel)]="nuevoRfcColegio"
+                                [placeholder]="'Ingrese nuevo RFC'">
+                            @if (!rfcColegioValido && nuevoRfcColegio) {
+                                <div class="invalid-feedback">
+                                    El formato del RFC no es válido.
+                                </div>
+                            }
+                        }
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Razón Social:</label>
                         <p><strong>{{ colegioContador.razonSocial }}</strong></p>
                     </div>
+
+                    @if (habilitarEdicionRfcColegio) {
+                         <div  >
+                            <button type="button" class="btn btn-primary me-2" (click)="buscarNuevoColegio()">Buscar</button>
+                            <button type="button" class="btn btn-secondary" (click)="limpiarNuevoRfcColegio()">Limpiar</button>
+                        </div>
+
+  
+                    }
+
+                     
                     <h4>Documentación comprobatoria</h4>
                     <hr class="red">
                     <p>Los documentos se deberán adjuntar en formato pdf y que no sean mayores a 5MB.</p>
-                    <div class="form-group row">
+                    <!-- SECCIÓN PARA ARCHIVO DE CONSTANCIA DE MEMBRESÍA -->
+                    <div class="form-group row mb-3">
                         <label for="constanciaMembresia" class="col-md-3 col-form-label">* Constancia de membresía:</label>
-                        <div class="col-md-6">
-                            <input type="file" class="form-control-file" id="constanciaMembresia" disabled>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-primary" disabled>Adjuntar</button>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <div class="row w-100 m-0">
+                                    <div class="col-sm-8 p-0">
+                                        <input type="file" class="form-control" id="constanciaMembresia"
+                                               (change)="onFileSelected($event, 'constanciaMembresia')"
+                                               accept="application/pdf"
+                                               [disabled]="fileConstanciaUploadSuccess || loadingFileConstancia">
+                                    </div>
+                                    <div class="col-sm-4 pr-0">
+                                        <button type="button" class="btn btn-primary w-100"
+                                                (click)="uploadFile('constanciaMembresia')"
+                                                [disabled]="!selectedFileConstancia || fileConstanciaUploadSuccess || loadingFileConstancia">
+                                            @if (loadingFileConstancia) {
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                Adjuntando...
+                                            } @else {
+                                                Adjuntar
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (selectedFileConstancia && !fileConstanciaUploadSuccess && !loadingFileConstancia) {
+                                <small class="text-muted d-block mt-1">Archivo seleccionado: {{ selectedFileConstancia.name }}</small>
+                            }
+
+                            <!-- Mensaje de éxito para constanciaMembresia -->
+                            @if (fileConstanciaUploadSuccess) {
+                                <div class="alert alert-success mt-2 d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    Constancia de membresía cargada exitosamente.
+                                    <div class="action-icons ms-3">
+                                        <a href="javascript:void(0)" (click)="downloadFile(fileConstanciaHdfsPath, selectedFileConstancia?.name || 'constancia_membresia')" class="icon-link" title="Descargar">
+                                            <i class="bi bi-download"></i>
+                                            <span class="icon-text"> </span>
+                                        </a>
+                                        <a href="javascript:void(0)" (click)="deleteFile('constanciaMembresia')" class="icon-link text-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="icon-text"> </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                            <!-- Mensaje de error específico para constanciaMembresia -->
+                            @if (fileConstanciaError) {
+                                <div class="alert alert-danger mt-2 d-flex align-items-center">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    {{ fileConstanciaError }}
+                                </div>
+                            }
+                            @if (formSubmitted && !fileConstanciaUploadSuccess) {
+                                <small class="text-danger">La constancia de membresía es obligatoria.</small>
+                            }
                         </div>
                     </div>
+
+
+
+                    
                 </div>
             } @else if (selectedTipoDato === '3') {
                 <div class="alert alert-info my-3">
@@ -88,13 +174,3 @@
         </div>
     </div>
 }
-
-<div class="row">
-  <div class="col-12">
-      <div class="container d-flex">
-        <div class="text-center">
-          <p>Contenido adicional de Modificación de Datos</p>
-        </div>
-      </div>
-  </div>
-</div>

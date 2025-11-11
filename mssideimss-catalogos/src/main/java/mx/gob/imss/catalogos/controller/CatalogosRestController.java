@@ -20,12 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
  
 
 import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
+import mx.gob.imss.catalogos.dto.RfcColegioRequestDto;
+import mx.gob.imss.catalogos.dto.RfcColegioResponseDto;
 import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
 import mx.gob.imss.catalogos.dto.TipoDatoContadorDto;
 import mx.gob.imss.catalogos.service.FolioService;
-import mx.gob.imss.catalogos.service.MediosContactoService; 
+import mx.gob.imss.catalogos.service.MediosContactoService;
+import mx.gob.imss.catalogos.service.SatService;
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
 import mx.gob.imss.catalogos.service.TipoDatosContadorService;
@@ -56,7 +59,9 @@ public class CatalogosRestController {
 
 	@Autowired  
     private TipoDatosContadorService tipoDatosContadorService; 
-	
+
+	@Autowired 
+    private SatService satService;
  
     @GetMapping("/info")
 	public ResponseEntity<List<String>> info() {
@@ -162,5 +167,25 @@ public class CatalogosRestController {
 		return new ResponseEntity<>(tipos, HttpStatus.OK);
 	}
  
+   /**
+     * Método para consultar RFC y Nombre/Razón Social.
+     * @param rfcColegioRequestDto DTO que contiene el RFC a consultar.
+     * @return ResponseEntity con el RfcResponseDto que contiene RFC y Nombre/Razón Social.
+     */
+    @PostMapping("/datoRfc")
+    public ResponseEntity<RfcColegioResponseDto> getDatoRfc(@Valid @RequestBody RfcColegioRequestDto rfcColegioRequestDto) {
+        logger.info("Recibiendo solicitud para /datoRfc con RFC: {}", rfcColegioRequestDto.getRfc());
+        RfcColegioResponseDto response = satService.consultarRfc(rfcColegioRequestDto);
+
+        if (response != null && response.getNombreRazonSocial() != null && !response.getNombreRazonSocial().isEmpty()) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            logger.warn("No se encontró información para el RFC: {}", rfcColegioRequestDto.getRfc());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+
 
 }
