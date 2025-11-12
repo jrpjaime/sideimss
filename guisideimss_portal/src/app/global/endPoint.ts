@@ -17,6 +17,8 @@ export const EPs = {
     getNuevoFolioSolicitud: "/v1/getNuevoFolioSolicitud",
     tiposDatosContador: '/v1/tiposDatosContador',
     datoRfc: '/v1/datoRfc',
+    tiposSociedadFormaParte: '/v1/tiposSociedadFormaParte',
+    cargosContador: '/v1/cargosContador',
   },
 
   // ********** CONTADORES /mssideimss-contadores**********

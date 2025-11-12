@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
- 
 
+import mx.gob.imss.catalogos.dto.CargoContadorDto;
 import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.RfcColegioRequestDto;
 import mx.gob.imss.catalogos.dto.RfcColegioResponseDto;
@@ -26,12 +26,15 @@ import mx.gob.imss.catalogos.dto.SdcDelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionDto;
 import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
 import mx.gob.imss.catalogos.dto.TipoDatoContadorDto;
+import mx.gob.imss.catalogos.dto.TipoSociedadFormaParteDto;
+import mx.gob.imss.catalogos.service.CargoContadorService;
 import mx.gob.imss.catalogos.service.FolioService;
 import mx.gob.imss.catalogos.service.MediosContactoService;
 import mx.gob.imss.catalogos.service.SatService;
 import mx.gob.imss.catalogos.service.SdcDelegacionService;
 import mx.gob.imss.catalogos.service.SdcSubdelegacionService;
 import mx.gob.imss.catalogos.service.TipoDatosContadorService;
+import mx.gob.imss.catalogos.service.TipoSociedadContadorService;
 import jakarta.validation.Valid; 
  
 
@@ -62,6 +65,14 @@ public class CatalogosRestController {
 
 	@Autowired 
     private SatService satService;
+
+
+	@Autowired 
+    private TipoSociedadContadorService tipoSociedadContadorService;
+
+
+    @Autowired  
+    private CargoContadorService cargoContadorService;	
  
     @GetMapping("/info")
 	public ResponseEntity<List<String>> info() {
@@ -95,12 +106,12 @@ public class CatalogosRestController {
     @GetMapping("/mediosContacto/{rfc}")
     public ResponseEntity<MediosContactoResponseDto> getMediosContactoByRfc(@PathVariable String rfc) {
         logger.info("Recibiendo solicitud para /mediosContacto/{}", rfc);
-        MediosContactoResponseDto response = mediosContactoService.recuperarMediosContactoPorRfc(rfc); // <-- CAMBIADO
+        MediosContactoResponseDto response = mediosContactoService.recuperarMediosContactoPorRfc(rfc);  
         
         if (response != null && !response.getMedios().isEmpty()) {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } else if (response != null) {
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND); // O un código 200 con lista vacía
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);  
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -186,6 +197,28 @@ public class CatalogosRestController {
     }
 
 
+    /**
+     * Método para obtener la lista de tipos de sociedad a la que puede pertenecer un contador.
+     * @return ResponseEntity con la lista de tipos de sociedad.
+     */
+    @GetMapping("/tiposSociedadFormaParte")
+    public ResponseEntity<List<TipoSociedadFormaParteDto>> getTiposSociedadFormaParte() {
+        logger.info("Recibiendo solicitud para obtener tipos de sociedad a la que forma parte un contador.");
+        List<TipoSociedadFormaParteDto> tipos = tipoSociedadContadorService.getTiposSociedadFormaParte();
+        return new ResponseEntity<>(tipos, HttpStatus.OK);
+    }
 
+
+
+	/**
+     * Método para obtener la lista de cargos de contador.
+     * @return ResponseEntity con la lista de cargos de contador.
+     */
+    @GetMapping("/cargosContador")
+    public ResponseEntity<List<CargoContadorDto>> getCargosContador() {
+        logger.info("Recibiendo solicitud para obtener cargos de contador.");
+        List<CargoContadorDto> cargos = cargoContadorService.getCargosContador();
+        return new ResponseEntity<>(cargos, HttpStatus.OK);
+    }
 
 }

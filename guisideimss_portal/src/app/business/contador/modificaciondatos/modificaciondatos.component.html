@@ -75,7 +75,7 @@
                             <input type="text" class="form-control"
                                 [class.is-invalid]="!rfcColegioValido && nuevoRfcColegio"
                                 [(ngModel)]="nuevoRfcColegio"
-                                [placeholder]="'Ingrese nuevo RFC'">
+                                [placeholder]="'Ingrese nuevo RFC'" maxlength="12">
                             @if (!rfcColegioValido && nuevoRfcColegio) {
                                 <div class="invalid-feedback">
                                     El formato del RFC no es válido.
@@ -169,6 +169,158 @@
             } @else if (selectedTipoDato === '3') {
                 <div class="alert alert-info my-3">
                     No se encontraron datos de colegio asociados al RFC del contador.
+                </div>
+            }
+        </div>
+    </div>
+}
+
+
+
+
+
+<!-- SECCIÓN PARA MOSTRAR DATOS DEL DESPACHO (condicional) -->
+@if (mostrarSeccionDespacho) {
+    <div class="row mt-4">
+        <div class="col-12">
+            <h4>Datos del despacho</h4>
+            <hr class="red">
+
+            @if (loadingDespacho) {
+                <div class="text-center my-3">
+                    <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                    Cargando datos del despacho...
+                </div>
+            } @else if (despachoContador) {
+                <!-- SIEMPRE SE MUESTRA LA PREGUNTA DESPUÉS DE CARGAR LOS DATOS -->
+                <div class="mb-3">
+                    <p>¿Desea actualizar los datos de su despacho?</p>
+                    <button class="btn btn-primary me-2" (click)="respuestaActualizarDespacho(true)">Sí</button>
+                    <button class="btn btn-secondary" (click)="respuestaActualizarDespacho(false)">No</button>
+                </div>
+
+                <!-- CONTENIDO DEL DESPACHO: Etiquetas (si no está en modo edición) o Campos Editables (si habilitarCamposDespacho es true) -->
+                @if (deseaActualizarDespacho === true) {
+                    <!-- SECCIÓN DE EDICIÓN: CAMPOS HABILITADOS -->
+                    <div class="card p-3 mb-3">
+                        <div class="mb-3">
+                            <label for="tipoSociedad" class="form-label">* ¿Forma parte de un despacho o es profesional independiente?</label>
+                            <select id="tipoSociedad" class="form-control"
+                                [(ngModel)]="selectedTipoSociedad"
+                                [disabled]="!habilitarCamposDespacho">
+                                <option value="">Seleccione</option>
+                                @for (tipo of tiposSociedad; track tipo.cveIdTipoSociedad) {
+                                    <option [value]="tipo.cveIdTipoSociedad">{{ tipo.desTipoSociedad }}</option>
+                                }
+                            </select>
+                            @if (formSubmitted && !selectedTipoSociedad) {
+                                <small class="text-danger">Este campo es obligatorio.</small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rfcDespacho" class="form-label">* RFC:</label>
+                            <input type="text" id="rfcDespacho" class="form-control"
+                                [class.is-invalid]="!rfcDespachoValido && nuevoRfcDespacho"
+                                [(ngModel)]="nuevoRfcDespacho"
+                                [disabled]="!habilitarCamposDespacho"
+                                placeholder="Ingrese el RFC del despacho"
+                                maxlength="13">
+                            @if (!rfcDespachoValido && nuevoRfcDespacho) {
+                                <div class="invalid-feedback">
+                                    El formato del RFC no es válido.
+                                </div>
+                            }
+                             @if (formSubmitted && (!nuevoRfcDespacho || !rfcDespachoValido)) {
+                                <small class="text-danger">El RFC es obligatorio y debe tener un formato válido.</small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre, denominación o razón social:</label>
+                            <p><strong>{{ despachoContador?.nombreRazonSocial || 'N/A' }}</strong></p>
+                        </div>
+
+                        <div >
+                            <button type="button" class="btn btn-primary me-2"
+                                (click)="buscarDatosDespacho()"
+                                [disabled]="!habilitarCamposDespacho || !nuevoRfcDespacho || !rfcDespachoValido">Buscar</button>
+                            <button type="button" class="btn btn-secondary"
+                                (click)="limpiarDatosDespacho()"
+                                [disabled]="!habilitarCamposDespacho">Limpiar</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cargoDesempena" class="form-label">* Cargo que desempeña:</label>
+                            <select id="cargoDesempena" class="form-control"
+                                [(ngModel)]="selectedCargoDesempena"
+                                [disabled]="!habilitarCamposDespacho">
+                                <option value="">Seleccione</option>
+                                @for (cargo of cargosContador; track cargo.cveIdCargoContador) {
+                                    <option [value]="cargo.cveIdCargoContador">{{ cargo.desCargoContador }}</option>
+                                }
+                            </select>
+                            @if (formSubmitted && !selectedCargoDesempena) {
+                                <small class="text-danger">Este campo es obligatorio.</small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
+                            <input type="text" id="telefonoFijo" class="form-control"
+                                [(ngModel)]="telefonoFijoDespacho"
+                                [disabled]="!habilitarCamposDespacho"
+                                placeholder="Ej. 5512345678"
+                                maxlength="10">
+                            @if (formSubmitted && (!telefonoFijoDespacho || telefonoFijoDespacho.length < 8)) {
+                                <small class="text-danger">El teléfono fijo es obligatorio y debe tener al menos 8 dígitos.</small>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Botones Guardar y Cancelar para la sección de Despacho (en modo edición) -->
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary me-2"
+                            (click)="guardarDatosDespacho()"
+                            [disabled]="!habilitarCamposDespacho">Guardar cambios</button>
+                        <button type="button" class="btn btn-secondary"
+                            (click)="cancelarEdicionDespacho()"
+                            [disabled]="!habilitarCamposDespacho">Cancelar</button>
+                    </div>
+
+                } @else {
+                    <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
+                    <div class="card p-3 mb-3">
+                        <div class="mb-3">
+                            <label class="form-label">¿Forma parte de un despacho o es profesional independiente?</label>
+                            <p><strong>{{ despachoContador?.desTipoSociedad || 'N/A' }}</strong></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">RFC:</label>
+                            <p><strong>{{ despachoContador?.rfcDespacho || 'N/A' }}</strong></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre, denominación o razón social:</label>
+                            <p><strong>{{ despachoContador?.nombreRazonSocial || 'N/A' }}</strong></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cargo que desempeña:</label>
+                            <p><strong>{{ despachoContador?.desCargoContador || 'N/A' }}</strong></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono fijo:</label>
+                            <p><strong>{{ despachoContador?.telefonoFijo || 'N/A' }}</strong></p>
+                        </div>
+                    </div>
+                }
+            } @else if (despachoContador === null && !loadingDespacho && selectedTipoDato === '2') {
+                <!-- Mensaje si no se encontraron datos de despacho después de la carga inicial -->
+                <div class="alert alert-info my-3">
+                    No se encontraron datos de despacho asociados a su RFC. ¿Desea registrar uno nuevo?
+                    <div class="mt-2">
+                        <button class="btn btn-primary me-2" (click)="respuestaActualizarDespacho(true)">Sí</button>
+                        <button class="btn btn-secondary" (click)="respuestaActualizarDespacho(false)">No</button>
+                    </div>
                 </div>
             }
         </div>

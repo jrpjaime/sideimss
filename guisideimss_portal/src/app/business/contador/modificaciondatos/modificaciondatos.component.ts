@@ -16,6 +16,9 @@ import { RfcColegioResponseDto } from '../model/RfcColegioResponseDto';
 import { ModalService } from '../../../shared/services/modal.service';
 import { AcreditacionMembresiaService } from '../services/acreditacion-membresia.service';
 import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResponseDto ';
+import { TipoSociedadFormaParteDto } from '../model/TipoSociedadFormaParteDto';
+import { CargoContadorDto } from '../model/CargoContadorDto';
+import { DespachoContadorDto } from '../model/DespachoContadorDto';
 
 @Component({
   selector: 'app-modificaciondatos',
@@ -51,6 +54,29 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   formSubmitted: boolean = false; // Para controlar cuándo mostrar los mensajes de validación
 
 
+
+  
+  // --- PROPIEDADES para la sección de DESPACHO ---
+  mostrarSeccionDespacho: boolean = false; // Controla la visibilidad de toda la sección del despacho
+  deseaActualizarDespacho: boolean | null = null; // null: no ha respondido, true/false: sí/no desea actualizar
+
+  tiposSociedad: TipoSociedadFormaParteDto[] = []; // Catálogo de tipos de sociedad
+  cargosContador: CargoContadorDto[] = []; // Catálogo de cargos
+
+  despachoContador: DespachoContadorDto | null = null; // Datos actuales/a modificar del despacho
+  loadingDespacho: boolean = false;
+
+  // Propiedades para los campos de edición/selección
+  selectedTipoSociedad: string = ''; // ngModel para el select de tipo de sociedad
+  nuevoRfcDespacho: string = ''; // ngModel para el RFC del despacho a buscar
+  rfcDespachoValido: boolean = true; // Validación del formato del RFC
+  selectedCargoDesempena: string = ''; // ngModel para el select de cargo
+  telefonoFijoDespacho: string = ''; // ngModel para el teléfono fijo
+
+  habilitarCamposDespacho: boolean = false; // Controla si los campos son editables
+
+
+
   constructor(
     private catalogosContadorService: CatalogosContadorService,
     private alertService: AlertService,
@@ -69,6 +95,8 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.generarFolioSolicitud();
     this.cargarTiposDatosContador();
 
+    this.cargarTiposSociedad();
+    this.cargarCargosContador();
     console.log('RFC de sesión en ModificaciondatosComponent:', this.rfcSesion);
   }
 
@@ -93,12 +121,28 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.selectedTipoDato = (event.target as HTMLSelectElement).value;
     console.log('Opción seleccionada:', this.selectedTipoDato);
 
+    // Resetear todas las secciones
     this.colegioContador = null;
     this.mostrarSeccionColegio = false;
+    this.despachoContador = null; // Limpiar datos del despacho
+    this.mostrarSeccionDespacho = false;
+    this.deseaActualizarDespacho = null; // Resetear la respuesta
+    this.habilitarCamposDespacho = false; // Deshabilitar campos de edición
 
-     if (this.selectedTipoDato === '3') {
+    // También resetear los campos de edición
+    this.selectedTipoSociedad = '';
+    this.nuevoRfcDespacho = '';
+    this.rfcDespachoValido = true;
+    this.selectedCargoDesempena = '';
+    this.telefonoFijoDespacho = '';
+
+
+    if (this.selectedTipoDato === '3') { // Datos del Colegio
       this.mostrarSeccionColegio = true;
       this.consultarDatosColegio();
+    } else if (this.selectedTipoDato === '2') { // Datos del Despacho
+      this.mostrarSeccionDespacho = true;
+      this.consultarDatosDespacho(); // <-- Al seleccionar, cargamos los datos y los mostramos.
     }
   }
 
@@ -234,6 +278,29 @@ buscarNuevoColegio(): void {
     const isValid = rfcMoralRegex.test(rfc.toUpperCase());
     console.log(`Validando RFC '${rfc}': ${isValid ? 'Válido' : 'Inválido'}`);
     return isValid;
+  }
+
+  /**
+   * Valida si el RFC ingresado corresponde a una Persona Física (13 caracteres) o Persona Moral (12 caracteres).
+   * Formato Persona Moral: XXXNNNNNNNNN (3 letras, 6 números, 3 alfanuméricos)
+   * Formato Persona Física: XXXXNNNNNNNNN (4 letras, 6 números, 3 alfanuméricos)
+   * @param rfc El RFC a validar.
+   * @returns true si el RFC es válido, false en caso contrario.
+   */
+  validarRfc(rfc: string): boolean {
+      if (!rfc) {
+          return false;
+      }
+      const rfcUpper = rfc.toUpperCase();
+
+      // Expresión regular para RFC de persona moral (12 caracteres)
+      const rfcMoralRegex = /^[A-Z&Ñ]{3}[0-9]{6}[A-Z0-9]{3}$/;
+      // Expresión regular para RFC de persona física (13 caracteres)
+      const rfcFisicaRegex = /^[A-Z&Ñ]{4}[0-9]{6}[A-Z0-9]{3}$/;
+
+      const isValid = rfcMoralRegex.test(rfcUpper) || rfcFisicaRegex.test(rfcUpper);
+      console.log(`Validando RFC '${rfc}': ${isValid ? 'Válido' : 'Inválido'}`);
+      return isValid;
   }
 
 
@@ -488,6 +555,247 @@ buscarNuevoColegio(): void {
     // Después de guardar, podrías redirigir o mostrar un acuse.
     // this.router.navigate(['/home']);
   }
+
+
+
+
+
+
+
+
+
+  // --- MÉTODOS para la sección de DESPACHO ---
+
+  /**
+   * Carga el catálogo de tipos de sociedad desde el servicio.
+   */
+  cargarTiposSociedad(): void {
+    this.catalogosContadorService.getTiposSociedadFormaParte().subscribe({
+      next: (data: TipoSociedadFormaParteDto[]) => {
+        this.tiposSociedad = data;
+        console.log('Tipos de sociedad cargados:', this.tiposSociedad);
+      },
+      error: (error) => {
+        console.error('Error al cargar los tipos de sociedad:', error);
+        this.alertService.error('Error al cargar las opciones de tipo de sociedad. Inténtalo de nuevo más tarde.', { autoClose: false });
+      }
+    });
+  }
+
+  /**
+   * Carga el catálogo de cargos de contador desde el servicio.
+   */
+  cargarCargosContador(): void {
+    this.catalogosContadorService.getCargosContador().subscribe({
+      next: (data: CargoContadorDto[]) => {
+        this.cargosContador = data;
+        console.log('Cargos de contador cargados:', this.cargosContador);
+      },
+      error: (error) => {
+        console.error('Error al cargar los cargos de contador:', error);
+        this.alertService.error('Error al cargar las opciones de cargos. Inténtalo de nuevo más tarde.', { autoClose: false });
+      }
+    });
+  }
+
+  /**
+   * Simula la carga de datos del despacho (puedes reemplazar con un servicio real).
+   * Por ahora, genera datos de MOC si no existen.
+   */
+  consultarDatosDespacho(): void {
+    console.log('consultarDatosDespacho');
+    this.loadingDespacho = true;
+    this.despachoContador = null; // Limpiar datos previos
+
+    // Simulación de una llamada a un servicio
+    setTimeout(() => {
+      if (this.rfcSesion === 'MOGF5304159BA') { // Ejemplo con un RFC de sesión fijo
+        this.despachoContador = {
+          rfcDespacho: 'MOSB650818PB4',
+          nombreRazonSocial: 'BEATRIZ MORENO SALINAS',
+          cveIdTipoSociedad: '1', // Despacho
+          desTipoSociedad: 'Despacho',
+          cveIdCargoContador: '2', // Director
+          desCargoContador: 'Director',
+          telefonoFijo: '5857564355'
+        };
+        this.alertService.success('Datos del despacho cargados exitosamente.', { autoClose: true });
+
+        // IMPORTANTE: Inicializamos los campos de edición con los datos actuales
+        // para que, si el usuario decide "Sí" actualizar, los campos ya estén pre-cargados.
+        this.selectedTipoSociedad = this.despachoContador.cveIdTipoSociedad;
+        this.nuevoRfcDespacho = this.despachoContador.rfcDespacho;
+        this.selectedCargoDesempena = this.despachoContador.cveIdCargoContador;
+        this.telefonoFijoDespacho = this.despachoContador.telefonoFijo;
+
+      } else {
+        this.despachoContador = null; // No se encontraron datos
+        this.alertService.info('No se encontraron datos de despacho asociados a su RFC.', { autoClose: false });
+        // Si no hay datos, inicializamos el despachoContador vacío para que se muestre la pregunta y la opción de captura
+        this.despachoContador = {
+          rfcDespacho: '', nombreRazonSocial: '',
+          cveIdTipoSociedad: '', desTipoSociedad: '',
+          cveIdCargoContador: '', desCargoContador: '',
+          telefonoFijo: ''
+        };
+        // Y precargamos con "Profesional Independiente" como valor por defecto si no hay despacho
+        this.selectedTipoSociedad = '2'; // ID para Profesional Independiente
+        const tipoIndependiente = this.tiposSociedad.find(t => t.cveIdTipoSociedad === '2');
+        if (tipoIndependiente && this.despachoContador) {
+            this.despachoContador.cveIdTipoSociedad = tipoIndependiente.cveIdTipoSociedad;
+            this.despachoContador.desTipoSociedad = tipoIndependiente.desTipoSociedad;
+        }
+
+      }
+      this.loadingDespacho = false;
+    }, 1000);
+  }
+
+
+  /**
+   * Maneja la respuesta a la pregunta "¿Desea actualizar los datos de su despacho?".
+   * @param respuesta true si desea actualizar, false si no.
+   */
+  respuestaActualizarDespacho(respuesta: boolean): void {
+    this.deseaActualizarDespacho = respuesta;
+    if (respuesta) {
+      this.habilitarCamposDespacho = true;
+      // Los campos de edición ya están pre-cargados desde `consultarDatosDespacho()`
+      this.alertService.info('Campos de despacho habilitados para edición.', { autoClose: true });
+    } else {
+      this.habilitarCamposDespacho = false;
+      this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
+    }
+  }
+
+  /**
+   * Busca los datos de un despacho por RFC.
+   */
+  buscarDatosDespacho(): void {
+    if (!this.nuevoRfcDespacho) {
+      this.alertService.warn('Por favor, ingresa el RFC del despacho para buscar.');
+      this.rfcDespachoValido = false;
+      return;
+    }
+
+    if (!this.validarRfc(this.nuevoRfcDespacho)) {
+      this.alertService.error('El formato del RFC del despacho no es válido. Por favor, verifícalo.');
+      this.rfcDespachoValido = false;
+      return;
+    }
+
+    this.rfcDespachoValido = true;
+    this.loadingDespacho = true; // Activar spinner
+
+    const request: RfcColegioRequestDto = { rfcColegio: this.nuevoRfcDespacho }; // Se usa el mismo DTO para RFC de persona moral
+
+    this.catalogosContadorService.getDatoRfcColegio(request) // Usamos el mismo servicio SAT para RFCs de persona moral
+      .pipe(finalize(() => this.loadingDespacho = false))
+      .subscribe({
+        next: (data: RfcColegioResponseDto) => {
+          if (!this.despachoContador) {
+            this.despachoContador = {
+              rfcDespacho: '', nombreRazonSocial: '',
+              cveIdTipoSociedad: '', desTipoSociedad: '',
+              cveIdCargoContador: '', desCargoContador: '',
+              telefonoFijo: ''
+            };
+          }
+          this.despachoContador.rfcDespacho = data.rfc;
+          this.despachoContador.nombreRazonSocial = data.nombreRazonSocial;
+          this.alertService.success('Datos del despacho encontrados.');
+          console.log('Datos del despacho obtenidos:', this.despachoContador);
+        },
+        error: (error: HttpErrorResponse) => {
+          console.error('Error al buscar el RFC del despacho:', error);
+          if (error.status === 404) {
+            this.alertService.error('No se encontró información para el RFC del despacho proporcionado. Por favor, verifica el RFC.');
+          } else {
+            this.alertService.error('Error al consultar el RFC del despacho. Inténtalo de nuevo más tarde.');
+          }
+          if (this.despachoContador) {
+            this.despachoContador.nombreRazonSocial = ''; // Limpiar si no se encuentra
+          }
+        }
+      });
+  }
+
+  /**
+   * Limpia los campos de RFC y razón social del despacho.
+   */
+  limpiarDatosDespacho(): void {
+    this.nuevoRfcDespacho = '';
+    this.rfcDespachoValido = true;
+    if (this.despachoContador) {
+      this.despachoContador.nombreRazonSocial = '';
+      this.despachoContador.rfcDespacho = '';
+    }
+    this.alertService.info('Campos de RFC y Razón Social del despacho limpiados.');
+  }
+
+  /**
+   * Guarda los cambios en los datos del despacho (simulado).
+   */
+  guardarDatosDespacho(): void {
+    this.formSubmitted = true; // Para mostrar validaciones
+
+    // Validaciones básicas antes de guardar
+    if (!this.selectedTipoSociedad) {
+      this.alertService.error('Por favor, selecciona el tipo de sociedad.', { autoClose: true });
+      return;
+    }
+    if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho)) {
+      this.alertService.error('Por favor, ingresa un RFC válido para el despacho.', { autoClose: true });
+      this.rfcDespachoValido = false;
+      return;
+    }
+    if (!this.despachoContador?.nombreRazonSocial) {
+      this.alertService.error('Por favor, busca y carga la razón social del despacho.', { autoClose: true });
+      return;
+    }
+    if (!this.selectedCargoDesempena) {
+      this.alertService.error('Por favor, selecciona el cargo que desempeña.', { autoClose: true });
+      return;
+    }
+    if (!this.telefonoFijoDespacho || this.telefonoFijoDespacho.length < 8) { // Ejemplo de validación de teléfono
+      this.alertService.error('Por favor, ingresa un número de teléfono fijo válido (mínimo 8 dígitos).', { autoClose: true });
+      return;
+    }
+
+    // Actualizar el DTO del despacho con los valores seleccionados/ingresados
+    if (this.despachoContador) {
+      this.despachoContador.cveIdTipoSociedad = this.selectedTipoSociedad;
+      this.despachoContador.desTipoSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
+      this.despachoContador.rfcDespacho = this.nuevoRfcDespacho;
+      // La razón social ya debería estar cargada por `buscarDatosDespacho`
+      this.despachoContador.cveIdCargoContador = this.selectedCargoDesempena;
+      this.despachoContador.desCargoContador = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
+      this.despachoContador.telefonoFijo = this.telefonoFijoDespacho;
+    }
+
+    // Aquí iría la llamada al servicio para guardar los datos del despacho
+    console.log('Guardando datos del despacho:', this.despachoContador);
+    this.alertService.success('Los datos del despacho han sido guardados exitosamente (simulado).');
+
+    // Deshabilita los campos después de guardar si no hay más edición
+    this.habilitarCamposDespacho = false;
+    this.deseaActualizarDespacho = false; // O mantener true si se permite edición continua
+    // Opcionalmente, redirigir: this.router.navigate(['/home']);
+  }
+
+  cancelarEdicionDespacho(): void {
+    // Si cancela, volvemos al estado inicial (preguntar si desea actualizar)
+    this.deseaActualizarDespacho = null;
+    this.habilitarCamposDespacho = false;
+    this.alertService.info('Edición de datos del despacho cancelada.');
+    // Podrías recargar los datos iniciales del despacho si quieres revertir cualquier cambio
+    // this.consultarDatosDespacho();
+  }
+
+
+
+
+
 
 
 
