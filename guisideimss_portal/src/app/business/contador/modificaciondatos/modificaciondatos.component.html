@@ -326,3 +326,195 @@
         </div>
     </div>
 }
+
+
+
+
+<!-- SECCIÓN PARA MOSTRAR DATOS PERSONALES (condicional) -->
+@if (mostrarSeccionPersonales) {
+
+<div class="container-fluid mt-3">
+
+  @if (loading) {
+    <div class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p>Cargando datos del contador...</p>
+    </div>
+  } @else if (error) {
+    <div class="alert alert-danger" role="alert">
+      {{ error }}
+      <button type="button" class="btn btn-primary btn-sm ms-3" (click)="cargarDatosContador()">Reintentar</button>
+    </div>
+  } @else if (datosContadorData) {
+ 
+    <!-- SECCIÓN DE DATOS PERSONALES -->
+
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-0">Datos personales</h3>
+            <hr class="red">
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">RFC</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.rfc }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">CURP</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.curp }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Apellido paterno</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.apellidoPaterno }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Apellido materno</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.apellidoMaterno }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Nombre(s)</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.nombre }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Registro IMSS</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.registroIMSS }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Estatus</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.estatus }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Delegación</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.delegacion }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Subdelegación</label>
+            <p class="form-value-custom">{{ datosContadorData.datosPersonalesDto.subdelegacion }}</p>
+          </div>
+        </div>
+
+
+    <!-- SECCIÓN DE DOMICILIO FISCAL -->
+
+
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-0">Domicilio fiscal</h3>
+            <hr class="red">
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Calle</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.calle }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Número exterior</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.numeroExterior }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Número interior</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.numeroInterior }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Entre la calle de</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.entreCalle }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Y la calle de</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.yCalle }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Colonia (asentamiento)</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.colonia }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Localidad</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.localidad }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Municipio o delegación</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.municipioODelegacion }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Entidad federativa</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.entidadFederativa }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Código postal</label>
+            <p class="form-value-custom">{{ datosContadorData.domicilioFiscalDto.codigoPostal }}</p>
+          </div>
+        </div>
+
+
+    <!-- SECCIÓN DE DATOS DE CONTACTO -->
+
+          <div class="row">
+            <div class="col-12">
+              <h3 class="mb-0">Datos de contacto</h3>
+              <hr class="red">
+            </div>
+          </div>
+
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Correo electrónico 1</label>
+            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.correoElectronico1 }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Teléfono</label>
+            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.telefono1 }}</p>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Correo electrónico 2</label>
+            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.correoElectronico2 }}</p>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-custom">Correo electrónico 3</label>
+            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.correoElectronico3 }}</p>
+          </div>
+        </div>
+        <!-- Si tienes telefono2 en tu DTO, lo puedes añadir aquí -->
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <label class="form-label-custom">Teléfono 2</label>
+            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.telefono2 }}</p>
+          </div>
+        </div>
+
+ 
+
+
+ 
+
+  } @else {
+    <p class="text-center">No hay datos disponibles para mostrar.</p>
+  }
+</div>
+
+}

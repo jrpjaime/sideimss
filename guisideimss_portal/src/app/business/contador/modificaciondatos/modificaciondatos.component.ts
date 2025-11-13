@@ -19,6 +19,9 @@ import { DocumentoIndividualResponseDto } from '../model/DocumentoIndividualResp
 import { TipoSociedadFormaParteDto } from '../model/TipoSociedadFormaParteDto';
 import { CargoContadorDto } from '../model/CargoContadorDto';
 import { DespachoContadorDto } from '../model/DespachoContadorDto';
+import { SolicitudBajaDto } from '../model/SolicitudBajaDto';
+import { LoaderService } from '../../../shared/services/loader.service';
+import { DatosContadorData } from '../model/DatosContadorData';
 
 @Component({
   selector: 'app-modificaciondatos',
@@ -76,6 +79,12 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   habilitarCamposDespacho: boolean = false; // Controla si los campos son editables
 
 
+  datosContadorData: DatosContadorData | null = null;
+  loading: boolean = true;
+  error: string | null = null;
+
+
+  mostrarSeccionPersonales: boolean = false;
 
   constructor(
     private catalogosContadorService: CatalogosContadorService,
@@ -84,6 +93,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     private router: Router, 
     private modalService: ModalService, 
     private acreditacionMembresiaService: AcreditacionMembresiaService,
+    private loaderService: LoaderService,
     sharedService: SharedService
   )  {
     super(sharedService);
@@ -135,14 +145,17 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.rfcDespachoValido = true;
     this.selectedCargoDesempena = '';
     this.telefonoFijoDespacho = '';
+     this.mostrarSeccionPersonales = false; // Ocultar sección personales
 
-
-    if (this.selectedTipoDato === '3') { // Datos del Colegio
+    if (this.selectedTipoDato === '1') { // Datos Personales
+        this.mostrarSeccionPersonales = true;
+        this.cargarDatosContador();
+    } else if (this.selectedTipoDato === '3') { // Datos del Colegio
       this.mostrarSeccionColegio = true;
       this.consultarDatosColegio();
     } else if (this.selectedTipoDato === '2') { // Datos del Despacho
       this.mostrarSeccionDespacho = true;
-      this.consultarDatosDespacho(); // <-- Al seleccionar, cargamos los datos y los mostramos.
+      this.consultarDatosDespacho();  
     }
   }
 
@@ -795,7 +808,38 @@ buscarNuevoColegio(): void {
 
 
 
+  cargarDatosContador(): void {
+    // Si llegamos aquí, folioSolicitud ya debería estar inicializado por generarFolioSolicitud()
+    if (!this.folioSolicitud) {
+      // Esto solo debería pasar si hubo un error en generarFolioSolicitud, pero es una buena salvaguarda
+      this.error = 'No se pudo obtener un folio de solicitud. Intente de nuevo.';
+      this.loading = false;
+      this.loaderService.hide();
+      this.alertService.error(this.error, { autoClose: false });
+      return;
+    }
 
+    this.loading = true;
+    this.error = null;
+    this.contadorPublicoAutorizadoService.getDatosContador().subscribe({
+      next: (data) => {
+        // Asegúrate de que `data` no sobrescriba el folio si ya lo tiene.
+        // Pero idealmente, la API debería devolver los datos del contador sin el folio
+        // y nosotros lo adjuntamos.
+        this.datosContadorData = { ...data, folioSolicitud: this.folioSolicitud!  }; // Aquí usamos el operador !
+        this.loading = false;
+        this.loaderService.hide();
+        console.log('Datos del contador cargados:', this.datosContadorData);
+      },
+      error: (err) => {
+        console.error('Error al cargar los datos del contador:', err);
+        this.error = 'No se pudieron cargar los datos del contador. Intente de nuevo más tarde.';
+        this.loading = false;
+        this.loaderService.hide();
+        this.alertService.error(this.error, { autoClose: false });
+      }
+    });
+  }
 
 
 
