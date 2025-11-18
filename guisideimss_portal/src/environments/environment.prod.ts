@@ -7,3 +7,6 @@ export const environment = {
     documentosApiUrl: 'http://prod:4113/mssideimss-documentos',
     firmaDigitalUrl: 'https://firmadigitalssl.imss.gob.mx'
   };
+
+
+

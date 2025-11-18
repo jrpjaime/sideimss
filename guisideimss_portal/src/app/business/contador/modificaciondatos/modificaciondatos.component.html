@@ -238,7 +238,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Nombre, denominación o razón social:</label>
-                            <p><strong>{{ despachoContador?.nombreRazonSocial || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
                         </div>
 
                         <div >
@@ -293,23 +293,23 @@
                     <div class="card p-3 mb-3">
                         <div class="mb-3">
                             <label class="form-label">¿Forma parte de un despacho o es profesional independiente?</label>
-                            <p><strong>{{ despachoContador?.desTipoSociedad || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.desTipoSociedad || 'N/A' }}</strong></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">RFC:</label>
-                            <p><strong>{{ despachoContador?.rfcDespacho || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.rfcDespacho || 'N/A' }}</strong></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Nombre, denominación o razón social:</label>
-                            <p><strong>{{ despachoContador?.nombreRazonSocial || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Cargo que desempeña:</label>
-                            <p><strong>{{ despachoContador?.desCargoContador || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.desCargoContador || 'N/A' }}</strong></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Teléfono fijo:</label>
-                            <p><strong>{{ despachoContador?.telefonoFijo || 'N/A' }}</strong></p>
+                            <p><strong>{{ despachoContador.telefonoFijo || 'N/A' }}</strong></p>
                         </div>
                     </div>
                 }
@@ -494,7 +494,7 @@
                 <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
                 Cargando datos de contacto...
               </div>
-            } @else if (datosContadorData?.datosContactoDto) {
+            } @else if (datosContadorData.datosContactoDto) {
               <!-- PREGUNTA Y BOTONES PARA EDICIÓN -->
               <div class="mb-3">
                 <p>¿Los datos son correctos?</p>
