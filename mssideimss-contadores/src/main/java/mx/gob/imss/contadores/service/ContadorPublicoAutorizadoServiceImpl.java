@@ -89,8 +89,9 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
             "laura.sanchez@contador.com.mx",
             "5512345678",
             "laura.contacto@otroemail.com",
-            null, // Correo 3 vacío
-            "5598765432"
+            "Pedro.contacto@otroemail.com", // Correo 3 vacío
+            "5598765432",
+            "55556666666"
         );
 
         SolicitudBajaDto solicitud = new SolicitudBajaDto(

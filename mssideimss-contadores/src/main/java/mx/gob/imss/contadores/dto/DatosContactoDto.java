@@ -13,4 +13,5 @@ public class DatosContactoDto {
     private String correoElectronico2;
     private String correoElectronico3;
     private String telefono2; // El segundo campo Telefono2
+    private String cedulaprofesional;
 }

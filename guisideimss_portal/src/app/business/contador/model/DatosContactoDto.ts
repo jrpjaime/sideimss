@@ -4,4 +4,5 @@ export interface DatosContactoDto {
   correoElectronico2: string;
   correoElectronico3: string;
   telefono2: string;
+  cedulaprofesional: string;
 }

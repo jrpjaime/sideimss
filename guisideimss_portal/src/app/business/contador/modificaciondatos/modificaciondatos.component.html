@@ -470,14 +470,6 @@
         </div>
 
 
-    <!-- SECCIÓN DE DATOS DE CONTACTO -->
-
-          <div class="row">
-            <div class="col-12">
-              <h3 class="mb-0">Datos de contacto</h3>
-              <hr class="red">
-            </div>
-          </div>
 
         <div class="row mb-2">
           <div class="col-sm-6">
@@ -489,26 +481,163 @@
             <p class="form-value-custom">{{ datosContadorData.datosContactoDto.telefono1 }}</p>
           </div>
         </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Correo electrónico 2</label>
-            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.correoElectronico2 }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Correo electrónico 3</label>
-            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.correoElectronico3 }}</p>
-          </div>
-        </div>
-        <!-- Si tienes telefono2 en tu DTO, lo puedes añadir aquí -->
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Teléfono 2</label>
-            <p class="form-value-custom">{{ datosContadorData.datosContactoDto.telefono2 }}</p>
-          </div>
-        </div>
 
- 
+    <!-- SECCIÓN DE DATOS DE CONTACTO -->
 
+        <div class="row mt-4">
+          <div class="col-12">
+            <h3 class="mb-0">Datos de contacto</h3>
+            <hr class="red">
+          </div>
+            @if (loadingContacto) {
+              <div class="text-center my-3">
+                <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                Cargando datos de contacto...
+              </div>
+            } @else if (datosContadorData?.datosContactoDto) {
+              <!-- PREGUNTA Y BOTONES PARA EDICIÓN -->
+              <div class="mb-3">
+                <p>¿Los datos son correctos?</p>
+                <button class="btn btn-primary me-2" (click)="respuestaActualizarContacto(false)">Sí</button>
+                <button class="btn btn-secondary" (click)="respuestaActualizarContacto(true)">No</button>
+              </div>
+
+              @if (deseaActualizarContacto === true) {
+                
+                 <!-- SECCIÓN DE EDICIÓN: CAMPOS HABILITADOS -->
+                <div class="card p-3 mb-3">
+
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <label for="correoElectronico2" class="form-label">Correo electrónico 2:</label>
+                            <input type="email" id="correoElectronico2" class="form-control"
+                                   [(ngModel)]="nuevoCorreoElectronico2"
+                                   placeholder="Ingrese correo electrónico 2"
+                                   [class.is-invalid]="formSubmitted && !nuevoCorreoElectronico2">
+                            @if (formSubmitted && !nuevoCorreoElectronico2) {
+                                <small class="text-danger">El Correo electrónico 2 es obligatorio.</small>
+                            }
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="confirmarCorreoElectronico2" class="form-label">Confirmar correo electrónico 2:</label>
+                            <input type="email" id="confirmarCorreoElectronico2" class="form-control"
+                                   [(ngModel)]="confirmarCorreoElectronico2"
+                                   placeholder="Confirme correo electrónico 2"
+                                   [class.is-invalid]="formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2">
+                            @if (formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2) {
+                                <small class="text-danger">Los correos electrónicos no coinciden.</small>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <label for="correoElectronico3" class="form-label">Correo electrónico 3:</label>
+                            <input type="email" id="correoElectronico3" class="form-control"
+                                   [(ngModel)]="nuevoCorreoElectronico3"
+                                   placeholder="Ingrese correo electrónico 3"
+                                   [class.is-invalid]="formSubmitted && !nuevoCorreoElectronico3">
+                            @if (formSubmitted && !nuevoCorreoElectronico3) {
+                                <small class="text-danger">El Correo electrónico 3 es obligatorio.</small>
+                            }
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="confirmarCorreoElectronico3" class="form-label">Confirmar correo electrónico 3:</label>
+                            <input type="email" id="confirmarCorreoElectronico3" class="form-control"
+                                   [(ngModel)]="confirmarCorreoElectronico3"
+                                   placeholder="Confirme correo electrónico 3"
+                                   [class.is-invalid]="formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3">
+                            @if (formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3) {
+                                <small class="text-danger">Los correos electrónicos no coinciden.</small>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <label for="telefono2" class="form-label">Teléfono 2:</label>
+                            <input type="text" id="telefono2" class="form-control"
+                                   [(ngModel)]="nuevoTelefono2"
+                                   placeholder="Ej. 5512345678" maxlength="10"
+                                   [class.is-invalid]="formSubmitted && (!nuevoTelefono2 || nuevoTelefono2.length < 8)">
+                            @if (formSubmitted && (!nuevoTelefono2 || nuevoTelefono2.length < 8)) {
+                                <small class="text-danger">El Teléfono 2 es obligatorio y debe tener al menos 8 dígitos.</small>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+              <div class="col-12">
+                <h3 class="mb-0">Información profesional</h3>
+                <hr class="red">
+              </div>
+
+
+              
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <label for="cedulaprofesional" class="form-label">Número de cédula profesional</label>
+                            <input type="text" id="cedulaprofesional" class="form-control"
+                                   [(ngModel)]="nuevacedulaprofesional"
+                                   placeholder="Ingrese la cédula profesional"
+                                   [class.is-invalid]="formSubmitted && !nuevacedulaprofesional">
+                            @if (formSubmitted && !nuevacedulaprofesional) {
+                                <small class="text-danger">La cédula profesional es obligatoria.</small>
+                            }
+                        </div>
+                        
+                    </div>
+
+
+                <!-- Botones Guardar y Cancelar para la sección de Contacto -->
+                <div class="mt-4">
+                    <button type="button" class="btn btn-primary me-2" (click)="guardarDatosContacto()">Guardar cambios</button>
+                    <button type="button" class="btn btn-secondary" (click)="cancelarEdicionContacto()">Cancelar</button>
+                </div>
+
+         
+
+              } @else {
+                <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
+                <div class="card p-3 mb-3">
+                   
+                  <div class="row mb-3">
+                    <div class="col-sm-6">
+                      <label class="form-label">Correo electrónico 2</label>
+                      <p><strong>{{ datosContadorData.datosContactoDto.correoElectronico2 || 'N/A' }}</strong></p>
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label">Correo electrónico 3</label>
+                      <p><strong>{{ datosContadorData.datosContactoDto.correoElectronico3 || 'N/A' }}</strong></p>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-sm-6">
+                      <label class="form-label">Teléfono 2</label>
+                      <p><strong>{{ datosContadorData.datosContactoDto.telefono2 || 'N/A' }}</strong></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12">
+                <h3 class="mb-0">Información profesional</h3>
+                <hr class="red">
+                </div>
+                <div class="card p-3 mb-3">
+                  <div class="row mb-3">
+                    <div class="col-sm-6">
+                      <label class="form-label">Número de cédula profesional</label>
+                      <p><strong>{{ datosContadorData.datosContactoDto.cedulaprofesional || 'N/A' }}</strong></p>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="alert alert-info my-3">
+                No hay datos de contacto disponibles.
+              </div>
+            }
+          
+        </div>
 
  
 

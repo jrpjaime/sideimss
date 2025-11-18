@@ -86,6 +86,21 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
 
   mostrarSeccionPersonales: boolean = false;
 
+
+
+
+  // --- PROPIEDADES para la sección de CONTACTO ---
+   loadingContacto: boolean = false;
+  deseaActualizarContacto: boolean | null = null;
+  nuevoCorreoElectronico2: string = '';
+  confirmarCorreoElectronico2: string = ''; //  campo de confirmación
+  nuevoCorreoElectronico3: string = '';
+  confirmarCorreoElectronico3: string = ''; //  campo de confirmación
+  nuevoTelefono2: string = '';
+
+  nuevacedulaprofesional: string = '';
+
+
   constructor(
     private catalogosContadorService: CatalogosContadorService,
     private alertService: AlertService,
@@ -632,7 +647,7 @@ buscarNuevoColegio(): void {
           desCargoContador: 'Director',
           telefonoFijo: '5857564355'
         };
-        this.alertService.success('Datos del despacho cargados exitosamente.', { autoClose: true });
+        //this.alertService.success('Datos del despacho cargados exitosamente.', { autoClose: true });
 
         // IMPORTANTE: Inicializamos los campos de edición con los datos actuales
         // para que, si el usuario decide "Sí" actualizar, los campos ya estén pre-cargados.
@@ -674,7 +689,7 @@ buscarNuevoColegio(): void {
     if (respuesta) {
       this.habilitarCamposDespacho = true;
       // Los campos de edición ya están pre-cargados desde `consultarDatosDespacho()`
-      this.alertService.info('Campos de despacho habilitados para edición.', { autoClose: true });
+     // this.alertService.info('Campos de despacho habilitados para edición.', { autoClose: true });
     } else {
       this.habilitarCamposDespacho = false;
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
@@ -841,6 +856,153 @@ buscarNuevoColegio(): void {
     });
   }
 
+
+
+
+  
+
+  // --- MÉTODOS para la sección de CONTACTO ---
+
+  /**
+   * Maneja la respuesta a la pregunta "¿Los datos son correctos?" para la sección de contacto.
+   * @param respuesta true si no son correctos (habilitar edición), false si son correctos (solo lectura).
+   */
+  respuestaActualizarContacto(respuesta: boolean): void {
+    this.deseaActualizarContacto = respuesta;
+    this.formSubmitted = false; // Resetear el estado de validación al cambiar de modo
+
+    if (respuesta) { // Si el usuario dice "No" (desea actualizar)
+      this.precargarDatosContacto(); // <<-- LLAMADA CRÍTICA AQUÍ
+      this.alertService.info('Campos de contacto habilitados para edición.', { autoClose: true });
+    } else {
+      // Si el usuario confirma que los datos son correctos, no hay edición.
+      // Limpiamos los campos del formulario de edición en caso de que hubieran sido editados y luego el usuario cambió de opinión.
+      this.limpiarCamposEdicionContacto();
+      this.alertService.success('Datos de contacto confirmados como correctos.', { autoClose: true });
+      // this.router.navigate(['/home']); // O redirigir a donde sea apropiado
+    }
+  }
+
+  /**
+   * Método para precargar los campos del formulario con los datos existentes
+   */
+  precargarDatosContacto() {
+    if (this.datosContadorData && this.datosContadorData.datosContactoDto) {
+      this.nuevoCorreoElectronico2 = this.datosContadorData.datosContactoDto.correoElectronico2 || '';
+      this.confirmarCorreoElectronico2 = this.datosContadorData.datosContactoDto.correoElectronico2 || '';
+      this.nuevoCorreoElectronico3 = this.datosContadorData.datosContactoDto.correoElectronico3 || '';
+      this.confirmarCorreoElectronico3 = this.datosContadorData.datosContactoDto.correoElectronico3 || '';
+      this.nuevoTelefono2 = this.datosContadorData.datosContactoDto.telefono2 || '';
+      this.nuevacedulaprofesional = this.datosContadorData.datosContactoDto.cedulaprofesional || '';
+    }
+  }
+
+  /**
+   * Método para limpiar los campos del formulario de edición (opcional)
+   */
+  limpiarCamposEdicionContacto() {
+    this.nuevoCorreoElectronico2 = '';
+    this.confirmarCorreoElectronico2 = '';
+    this.nuevoCorreoElectronico3 = '';
+    this.confirmarCorreoElectronico3 = '';
+    this.nuevoTelefono2 = '';
+    this.nuevacedulaprofesional = '';
+  }
+
+  /**
+   * Guarda los cambios en los datos de contacto (simulado).
+   */
+ 
+   /**
+   * Guarda los cambios en los datos de contacto (simulado).
+   */
+  guardarDatosContacto(): void {
+    this.formSubmitted = true; // Para mostrar validaciones
+
+    // Validaciones básicas para Correo 2 y Teléfono 2
+    if (!this.nuevoCorreoElectronico2) {
+      //this.alertService.error('El Correo electrónico 2 es obligatorio.', { autoClose: true });
+      return;
+    }
+    if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
+     // this.alertService.error('El Correo electrónico 2 y su confirmación no coinciden.', { autoClose: true });
+      return;
+    }
+    if (!this.nuevoTelefono2 || this.nuevoTelefono2.length < 8) {
+      //this.alertService.error('El Teléfono 2 es obligatorio y debe tener al menos 8 dígitos.', { autoClose: true });
+      return;
+    }
+
+    if (!this.nuevacedulaprofesional || this.nuevacedulaprofesional.length < 8) {
+     // this.alertService.error('La cédula profesional es obligatoria.', { autoClose: true });
+      return;
+    }
+
+    
+
+    // Validaciones para Correo 3 (si es obligatorio)
+    if (!this.nuevoCorreoElectronico3) {
+     // this.alertService.error('El Correo electrónico 3 es obligatorio.', { autoClose: true });
+      return;
+    }
+    if (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3) {
+     // this.alertService.error('El Correo electrónico 3 y su confirmación no coinciden.', { autoClose: true });
+      return;
+    }
+
+    // Puedes añadir más validaciones para el formato de correo electrónico o número de teléfono
+
+    // Actualizar el DTO de contacto en `datosContadorData`
+    if (this.datosContadorData && this.datosContadorData.datosContactoDto) {
+      this.datosContadorData.datosContactoDto.correoElectronico2 = this.nuevoCorreoElectronico2;
+      this.datosContadorData.datosContactoDto.correoElectronico3 = this.nuevoCorreoElectronico3;
+      this.datosContadorData.datosContactoDto.telefono2 = this.nuevoTelefono2;
+      this.datosContadorData.datosContactoDto.cedulaprofesional = this.nuevacedulaprofesional;
+
+    }
+
+    // Aquí iría la llamada al servicio para guardar los datos de contacto
+    console.log('Guardando datos de contacto:', this.datosContadorData?.datosContactoDto);
+    this.alertService.success('Los datos de contacto han sido guardados exitosamente (simulado).');
+
+    // Después de guardar, volver al modo de solo lectura
+    this.deseaActualizarContacto = false;
+    this.formSubmitted = false; // Resetear el estado de envío del formulario
+  }
+
+  /**
+   * Cancela la edición de los datos de contacto y revierte los cambios.
+   */
+  cancelarEdicionContacto(): void {
+    this.deseaActualizarContacto = false;
+    this.formSubmitted = false; // Resetear el estado de envío del formulario
+    this.alertService.info('Edición de datos de contacto cancelada.');
+
+    // Opcional: Recargar los datos originales si se cancela la edición
+    if (this.datosContadorData?.datosContactoDto) {
+      this.nuevoCorreoElectronico2 = this.datosContadorData.datosContactoDto.correoElectronico2 || '';
+      this.confirmarCorreoElectronico2 = this.datosContadorData.datosContactoDto.correoElectronico2 || ''; // Revertir confirmación también
+      this.nuevoCorreoElectronico3 = this.datosContadorData.datosContactoDto.correoElectronico3 || '';
+      this.confirmarCorreoElectronico3 = this.datosContadorData.datosContactoDto.correoElectronico3 || ''; // Revertir confirmación también
+      this.nuevoTelefono2 = this.datosContadorData.datosContactoDto.telefono2 || '';
+      this.nuevacedulaprofesional = this.datosContadorData.datosContactoDto.cedulaprofesional || '';
+      
+    }
+  }
+
+
+  // Métodos para el flujo general del formulario
+  siguientePaso(): void {
+    // Lógica para ir al siguiente paso del formulario
+    this.alertService.success('Pasando al siguiente paso (simulado).');
+    // this.router.navigate(['/ruta-siguiente-paso']);
+  }
+
+  cancelarGlobal(): void {
+    // Lógica para cancelar el proceso completo
+    this.alertService.info('Proceso de modificación de datos cancelado.', { autoClose: true });
+    this.router.navigate(['/home']);
+  }
 
 
 }
