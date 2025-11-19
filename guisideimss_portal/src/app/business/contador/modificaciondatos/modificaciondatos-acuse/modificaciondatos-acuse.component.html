@@ -1,1 +1,105 @@
-<p>modificaciondatos-acuse works!</p>
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-0">Acuse de Modificación de Datos</h3>
+        <hr class="red">
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-sm-6">
+        <p>El folio de la solicitud es: <strong>{{ folioSolicitud }}</strong></p>
+    </div>
+</div>
+
+<!-- VISTA PREVIA DEL ACUSE (ANTES DE FIRMAR) -->
+@if (!firmaExitosa) {
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Previsualización del documento</h4>
+            
+            @if (loadingAcusePreview) {
+                <div class="alert alert-info d-flex align-items-center">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Generando previsualización...
+                </div>
+            } @else if (acusePreviewError) {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ acusePreviewError }}
+                </div>
+            } @else if (acusePdfUrl) {
+                <div style="width: 100%; height: 600px; border: 1px solid #ccc;" class="mb-3">
+                    <iframe [src]="acusePdfUrl" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-secondary" (click)="regresar()">Regresar</button>
+        <button class="btn btn-primary" (click)="iniciarProcesoFirma()" [disabled]="!acusePdfUrl || loadingAcusePreview">
+            Firmar y Enviar
+        </button>
+    </div>
+}
+
+<!-- PANTALLA DE ÉXITO (DESPUÉS DE FIRMAR) -->
+@if (firmaExitosa) {
+    <div class="alert alert-success mt-4">
+        <h5 class="alert-heading">La modificación de datos ha sido exitosa.</h5>
+        <p>El acuse ha sido enviado a su correo electrónico.</p>
+    </div>
+
+    <!-- Muestra el PDF final firmado -->
+    @if (mostrarAcuse && acusePdfUrl) {
+        <div class="mt-4 mb-3">
+            <h5>Acuse de Recibo Final:</h5>
+            <iframe [src]="acusePdfUrl" width="100%" height="600px" frameborder="0"></iframe>
+        </div>
+    }
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Folio</th>
+                            <th>Fecha y hora</th>
+                            <th>RFC</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ datosExitoAcuse.folio }}</td>
+                            <td>{{ datosExitoAcuse.fechaHora }}</td>
+                            <td>{{ datosExitoAcuse.rfc }}</td>
+                            <td>{{ datosExitoAcuse.nombre }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-3">
+        <button class="btn btn-primary" (click)="salir()">Salir del Trámite</button>
+    </div>
+}
+
+<!-- MODAL FIRMA ELECTRÓNICA -->
+@if (isFirmaModalVisible) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Firma Electrónica Avanzada</h4>
+                    <button type="button" class="btn-close" (click)="closeFirmaModal()"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <iframe id="formFirmaDigitalMod" name="formFirmaDigitalMod" [src]="firmaWidgetUrl" width="100%" height="400" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+}

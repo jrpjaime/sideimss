@@ -22,6 +22,9 @@ import { DespachoContadorDto } from '../model/DespachoContadorDto';
 import { SolicitudBajaDto } from '../model/SolicitudBajaDto';
 import { LoaderService } from '../../../shared/services/loader.service';
 import { DatosContadorData } from '../model/DatosContadorData';
+import { DatePipe } from '@angular/common';
+import { ModificacionDatosDataService } from '../services/ModificacionDatosDataService';
+import { NAV } from '../../../global/navigation';
 
 @Component({
   selector: 'app-modificaciondatos',
@@ -113,6 +116,8 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     private modalService: ModalService, 
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private loaderService: LoaderService,
+    private modificacionDatosDataService: ModificacionDatosDataService,  
+    private datePipe: DatePipe,
     sharedService: SharedService
   )  {
     super(sharedService);
@@ -278,46 +283,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.router.navigate(['/home']);
   }
 
-  /**
-   * Guarda los datos del colegio si todas las validaciones pasan.
-   */
-  guardarDatosColegio(): void {
-    this.formSubmitted = true;
-
-    // Validaciones de seguridad (aunque el botón esté deshabilitado)
-    if (!this.habilitarEdicionRfcColegio) {
-        return;
-    }
-
-    if (!this.nuevoRfcColegio || !this.rfcColegioValido) {
-      this.alertService.error('Por favor, verifique que el RFC del colegio sea válido.', { autoClose: true });
-      return;
-    }
-
-    if (!this.fileConstanciaUploadSuccess || !this.fileConstanciaHdfsPath) {
-      this.alertService.error('Es obligatorio adjuntar la constancia de membresía correctamente.', { autoClose: true });
-      return;
-    }
-
-    // Preparar objeto para enviar (Ejemplo)
-    const datosColegioGuardar = {
-        rfcColegio: this.nuevoRfcColegio,
-        razonSocial: this.colegioContador?.razonSocial,
-        rutaConstancia: this.fileConstanciaHdfsPath
-        // ... otros datos necesarios
-    };
-
-    console.log('Guardando datos del colegio:', datosColegioGuardar);
-    
-    // AQUÍ LLAMAS EL SERVICIO DE GUARDADO
-    // this.contadorPublicoAutorizadoService.guardarColegio(datosColegioGuardar).subscribe(...)
-
-    this.alertService.success('Datos del colegio y constancia validados para el siguiente paso.');
-    
-    // Lógica post-guardado: Navegar o resetear
-    // this.router.navigate(['/siguiente-ruta']);
-    this.formSubmitted = false;
-  }
+ 
 
 
 
@@ -861,55 +827,7 @@ buscarNuevoColegio(): void {
     this.alertService.info('Campos de RFC y Razón Social del despacho limpiados.');
   }
 
-  /**
-   * Guarda los cambios en los datos del despacho (simulado).
-   */
-  guardarDatosDespacho(): void {
-    this.formSubmitted = true; // Para mostrar validaciones
 
-    // Validaciones básicas antes de guardar
-    if (!this.selectedTipoSociedad) {
-      this.alertService.error('Por favor, selecciona el tipo de sociedad.', { autoClose: true });
-      return;
-    }
-    if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho)) {
-      this.alertService.error('Por favor, ingresa un RFC válido para el despacho.', { autoClose: true });
-      this.rfcDespachoValido = false;
-      return;
-    }
-    if (!this.despachoContador?.nombreRazonSocial) {
-      this.alertService.error('Por favor, busca y carga la razón social del despacho.', { autoClose: true });
-      return;
-    }
-    if (!this.selectedCargoDesempena) {
-      this.alertService.error('Por favor, selecciona el cargo que desempeña.', { autoClose: true });
-      return;
-    }
-    if (!this.telefonoFijoDespacho || this.telefonoFijoDespacho.length < 8) { // Ejemplo de validación de teléfono
-      this.alertService.error('Por favor, ingresa un número de teléfono fijo válido (mínimo 8 dígitos).', { autoClose: true });
-      return;
-    }
-
-    // Actualizar el DTO del despacho con los valores seleccionados/ingresados
-    if (this.despachoContador) {
-      this.despachoContador.cveIdTipoSociedad = this.selectedTipoSociedad;
-      this.despachoContador.desTipoSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
-      this.despachoContador.rfcDespacho = this.nuevoRfcDespacho;
-      // La razón social ya debería estar cargada por `buscarDatosDespacho`
-      this.despachoContador.cveIdCargoContador = this.selectedCargoDesempena;
-      this.despachoContador.desCargoContador = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
-      this.despachoContador.telefonoFijo = this.telefonoFijoDespacho;
-    }
-
-    // Aquí iría la llamada al servicio para guardar los datos del despacho
-    console.log('Guardando datos del despacho:', this.despachoContador);
-    this.alertService.success('Los datos del despacho han sido guardados exitosamente (simulado).');
-
-    // Deshabilita los campos después de guardar si no hay más edición
-    this.habilitarCamposDespacho = false;
-    this.deseaActualizarDespacho = false; // O mantener true si se permite edición continua
-    // Opcionalmente, redirigir: this.router.navigate(['/home']);
-  }
 
   cancelarEdicionDespacho(): void {
     // Si cancela, volvemos al estado inicial (preguntar si desea actualizar)
@@ -1026,65 +944,6 @@ buscarNuevoColegio(): void {
     this.nuevacedulaprofesional = '';
   }
 
-  /**
-   * Guarda los cambios en los datos de contacto (simulado).
-   */
- 
-   /**
-   * Guarda los cambios en los datos de contacto (simulado).
-   */
-  guardarDatosContacto(): void {
-    this.formSubmitted = true;
-
-    // 1. Validar Correo 2
-    if (!this.nuevoCorreoElectronico2) {
-      // Error: Vacío (ya se muestra en HTML)
-      return;
-    }
-    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2)) { 
-      return;
-    }
-    if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
-      // Error: No coinciden
-      return;
-    }
-
-    // 2. Validar Correo 3
-    if (!this.nuevoCorreoElectronico3) {
-       // Error: Vacío
-       return;
-    }
-    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) { 
-      return;
-    }
-    if (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3) {
-       // Error: No coinciden
-       return;
-    }
-
-    // 3. Validar Teléfono
-    if (!this.nuevoTelefono2 || !this.validarFormatoTelefono(this.nuevoTelefono2)) { 
-      return;
-    }
-
-    if (!this.nuevacedulaprofesional) {
-      // Validación existente...
-      return;
-    }
-
-    // Si pasa todas las validaciones, actualizamos el objeto y guardamos
-    if (this.datosContadorData && this.datosContadorData.datosContactoDto) {
-      this.datosContadorData.datosContactoDto.correoElectronico2 = this.nuevoCorreoElectronico2;
-      this.datosContadorData.datosContactoDto.correoElectronico3 = this.nuevoCorreoElectronico3;
-      this.datosContadorData.datosContactoDto.telefono2 = this.nuevoTelefono2; 
-    }
-
-    console.log('Guardando datos de contacto:', this.datosContadorData?.datosContactoDto);
-    this.alertService.success('Los datos de contacto han sido guardados exitosamente.');
-    
-    this.deseaActualizarContacto = false;
-    this.formSubmitted = false;
-  }
 
   /**
    * Cancela la edición de los datos de contacto y revierte los cambios.
@@ -1149,6 +1008,184 @@ buscarNuevoColegio(): void {
       event.preventDefault();
     }
   }
+
+
+
+
+
+
+
+ /**
+   * Guarda los datos del colegio si todas las validaciones pasan.
+   */
+  guardarDatosColegio(): void {
+    this.formSubmitted = true;
+
+    if (!this.habilitarEdicionRfcColegio) return;
+
+    if (!this.nuevoRfcColegio || !this.rfcColegioValido) {
+      this.alertService.error('Por favor, verifique que el RFC del colegio sea válido.', { autoClose: true });
+      return;
+    }
+
+    if (!this.fileConstanciaUploadSuccess || !this.fileConstanciaHdfsPath) {
+      this.alertService.error('Es obligatorio adjuntar la constancia de membresía correctamente.', { autoClose: true });
+      return;
+    }
+
+    // Preparar datos para el Acuse
+    const datosParaAcuse = {
+      folioSolicitud: this.folioSolicitud,
+      rfcUsuario: this.rfcSesion,
+      nombreCompleto: this.nombreCompletoSync,
+      curp: this.curpSesion,
+      
+      // Datos específicos del trámite
+      rfcColegio: this.nuevoRfcColegio,
+      razonSocialColegio: this.colegioContador?.razonSocial,
+      rutaConstancia: this.fileConstanciaHdfsPath,
+      nomArchivoConstancia: this.selectedFileConstancia?.name,
+      
+      // Identificador para saber qué plantilla cargar en el Acuse
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO' 
+    };
+
+    // Guardar en el servicio y navegar
+    this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
+    this.router.navigate(['/contador/modificacion-acuse']); // <--- AJUSTA LA RUTA SEGÚN TU ROUTING
+  }
+
+
+
+
+
+  /**
+   * Guarda los cambios en los datos del despacho (simulado).
+   */
+  guardarDatosDespacho(): void {
+    this.formSubmitted = true; // Para mostrar validaciones
+
+    // Validaciones básicas antes de guardar
+    if (!this.selectedTipoSociedad) {
+      this.alertService.error('Por favor, selecciona el tipo de sociedad.', { autoClose: true });
+      return;
+    }
+    if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho)) {
+      this.alertService.error('Por favor, ingresa un RFC válido para el despacho.', { autoClose: true });
+      this.rfcDespachoValido = false;
+      return;
+    }
+    if (!this.despachoContador?.nombreRazonSocial) {
+      this.alertService.error('Por favor, busca y carga la razón social del despacho.', { autoClose: true });
+      return;
+    }
+    if (!this.selectedCargoDesempena) {
+      this.alertService.error('Por favor, selecciona el cargo que desempeña.', { autoClose: true });
+      return;
+    }
+    if (!this.telefonoFijoDespacho || this.telefonoFijoDespacho.length < 8) { // Ejemplo de validación de teléfono
+      this.alertService.error('Por favor, ingresa un número de teléfono fijo válido (mínimo 8 dígitos).', { autoClose: true });
+      return;
+    }
+
+    // Actualizar el DTO del despacho con los valores seleccionados/ingresados
+    if (!this.selectedTipoSociedad || !this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
+       this.alertService.error('Verifique los campos obligatorios del despacho.', { autoClose: true });
+       return;
+    }
+
+    const datosParaAcuse = {
+      folioSolicitud: this.folioSolicitud,
+      rfcUsuario: this.rfcSesion,
+      nombreCompleto: this.nombreCompletoSync,
+      curp: this.curpSesion,
+
+      // Datos específicos
+      cveIdTipoSociedad: this.selectedTipoSociedad,
+      desTipoSociedad: this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad,
+      rfcDespacho: this.nuevoRfcDespacho,
+      razonSocialDespacho: this.despachoContador?.nombreRazonSocial,
+      cveIdCargoContador: this.selectedCargoDesempena,
+      desCargoContador: this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador,
+      telefonoFijo: this.telefonoFijoDespacho,
+
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
+    };
+
+    this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
+    this.router.navigate(['/contador/modificacion-acuse']);
+  }
+
+
+ 
+ 
+   /**
+   * Guarda los cambios en los datos de contacto (simulado).
+   */
+  guardarDatosContacto(): void {
+    this.formSubmitted = true;
+
+    // 1. Validar Correo 2
+    if (!this.nuevoCorreoElectronico2) {
+      // Error: Vacío (ya se muestra en HTML)
+      return;
+    }
+    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2)) { 
+      return;
+    }
+    if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
+      // Error: No coinciden
+      return;
+    }
+
+    // 2. Validar Correo 3
+    if (!this.nuevoCorreoElectronico3) {
+       // Error: Vacío
+       return;
+    }
+    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) { 
+      return;
+    }
+    if (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3) {
+       // Error: No coinciden
+       return;
+    }
+
+    // 3. Validar Teléfono
+    if (!this.nuevoTelefono2 || !this.validarFormatoTelefono(this.nuevoTelefono2)) { 
+      return;
+    }
+
+    if (!this.nuevacedulaprofesional) {
+      // Validación existente...
+      return;
+    }
+
+    // Si pasa todas las validaciones, actualizamos el objeto y guardamos
+    if (!this.nuevoCorreoElectronico2 || !this.nuevoCorreoElectronico3 || !this.nuevoTelefono2) {
+        return;
+    }
+    // (Asegúrate de que pasen tus validaciones de formato)
+
+    const datosParaAcuse = {
+      folioSolicitud: this.folioSolicitud,
+      rfcUsuario: this.rfcSesion,
+      nombreCompleto: this.nombreCompletoSync,
+      curp: this.curpSesion,
+
+      correoElectronico2: this.nuevoCorreoElectronico2,
+      correoElectronico3: this.nuevoCorreoElectronico3,
+      telefono2: this.nuevoTelefono2,
+      cedulaProfesional: this.nuevacedulaprofesional, // Si aplica
+
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
+    };
+
+    this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse); 
+     this.router.navigate([NAV.contadormodificaciondatosacuse]);
+  }
+
+
 
 
 }
