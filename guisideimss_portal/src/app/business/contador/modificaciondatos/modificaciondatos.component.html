@@ -162,7 +162,23 @@
                         </div>
                     </div>
 
-
+            <div class="pull-right">
+                <div class="modal-footer">
+                    <div class="col-12 d-flex justify-content-end">
+                        <p class="me-3">* Campo obligatorio</p>
+                    </div>
+                    <!-- Botón Cancelar -->
+                    <button type="button" class="btn btn-secondary"   (click)="cancelarEdicionColegio()">Cancelar </button> 
+                    <!-- Botón Siguiente -->
+                    <!-- Se deshabilita si:
+                         1. No está en modo edición (habilitarEdicionRfcColegio false)
+                         2. No hay nuevo RFC
+                         3. El RFC no es válido
+                         4. No se ha subido la constancia exitosamente
+                    -->
+                    <button type="button" class="btn btn-primary"  (click)="guardarDatosColegio()" [disabled]="!habilitarEdicionRfcColegio || !nuevoRfcColegio || !rfcColegioValido || !fileConstanciaUploadSuccess">Siguiente</button>
+                </div>
+            </div>
 
                     
                 </div>
@@ -278,15 +294,17 @@
                         </div>
                     </div>
 
-                    <!-- Botones Guardar y Cancelar para la sección de Despacho (en modo edición) -->
-                    <div class="mt-4">
-                        <button type="button" class="btn btn-primary me-2"
-                            (click)="guardarDatosDespacho()"
-                            [disabled]="!habilitarCamposDespacho">Guardar cambios</button>
-                        <button type="button" class="btn btn-secondary"
-                            (click)="cancelarEdicionDespacho()"
-                            [disabled]="!habilitarCamposDespacho">Cancelar</button>
-                    </div>
+                    <!-- Botones Guardar y Cancelar para la sección de Despacho (en modo edición) --> 
+                <div class="pull-right">
+                  <div class="modal-footer">
+                        <div class="col-12 d-flex justify-content-end">
+                          <p class="me-3">* Campo obligatorio</p>
+                        </div> 
+                        <button type="button" class="btn btn-secondary" (click)="cancelarEdicionDespacho()" [disabled]="!habilitarCamposDespacho">Cancelar</button>
+                        <button type="button" class="btn btn-primary" (click)="guardarDatosDespacho()" [disabled]="!habilitarCamposDespacho">Siguiente</button>
+                  </div>
+                </div>
+
 
                 } @else {
                     <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
@@ -485,10 +503,7 @@
     <!-- SECCIÓN DE DATOS DE CONTACTO -->
 
         <div class="row mt-4">
-          <div class="col-12">
-            <h3 class="mb-0">Datos de contacto</h3>
-            <hr class="red">
-          </div>
+
             @if (loadingContacto) {
               <div class="text-center my-3">
                 <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
@@ -498,139 +513,135 @@
               <!-- PREGUNTA Y BOTONES PARA EDICIÓN -->
               <div class="mb-3">
                 <p>¿Los datos son correctos?</p>
-                <button class="btn btn-primary me-2" (click)="respuestaActualizarContacto(false)">Sí</button>
-                <button class="btn btn-secondary" (click)="respuestaActualizarContacto(true)">No</button>
+                <button class="btn btn-primary me-2" (click)="respuestaActualizarContacto(true)">Sí</button>
+                <button class="btn btn-secondary" (click)="respuestaActualizarContacto(false)">No</button>
               </div>
 
               @if (deseaActualizarContacto === true) {
                 
                  <!-- SECCIÓN DE EDICIÓN: CAMPOS HABILITADOS -->
                 <div class="card p-3 mb-3">
-
+                    <div class="col-12">
+                      <h3 class="mb-0">Datos de contacto</h3>
+                      <hr class="red">
+                    </div>
+ 
+                    <!-- CORREO 2 -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
-                            <label for="correoElectronico2" class="form-label">Correo electrónico 2:</label>
+                            <label for="correoElectronico2" class="form-label">* Correo electrónico 2:</label>
                             <input type="email" id="correoElectronico2" class="form-control"
                                    [(ngModel)]="nuevoCorreoElectronico2"
                                    placeholder="Ingrese correo electrónico 2"
-                                   [class.is-invalid]="formSubmitted && !nuevoCorreoElectronico2">
+                                   [class.is-invalid]="formSubmitted && (!nuevoCorreoElectronico2 || !validarFormatoCorreo(nuevoCorreoElectronico2))">
+                            
+                            <!-- Validación: Requerido -->
                             @if (formSubmitted && !nuevoCorreoElectronico2) {
                                 <small class="text-danger">El Correo electrónico 2 es obligatorio.</small>
                             }
+                            <!-- Validación: Formato -->
+                            @else if (formSubmitted && nuevoCorreoElectronico2 && !validarFormatoCorreo(nuevoCorreoElectronico2)) {
+                                <!-- CORRECCIÓN AQUÍ: Se cambió @ por &#64; -->
+                                <small class="text-danger">El formato del correo no es válido (ej: usuario&#64;dominio.com).</small>
+                            }
                         </div>
+                        
+                        <!-- Resto del código de confirmación... -->
                         <div class="col-sm-6">
-                            <label for="confirmarCorreoElectronico2" class="form-label">Confirmar correo electrónico 2:</label>
+                            <label for="confirmarCorreoElectronico2" class="form-label">* Confirmar correo electrónico 2:</label>
                             <input type="email" id="confirmarCorreoElectronico2" class="form-control"
                                    [(ngModel)]="confirmarCorreoElectronico2"
                                    placeholder="Confirme correo electrónico 2"
                                    [class.is-invalid]="formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2">
+                            
                             @if (formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2) {
                                 <small class="text-danger">Los correos electrónicos no coinciden.</small>
                             }
                         </div>
                     </div>
 
+                    <!-- CORREO 3 -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
-                            <label for="correoElectronico3" class="form-label">Correo electrónico 3:</label>
+                            <label for="correoElectronico3" class="form-label">* Correo electrónico 3:</label>
                             <input type="email" id="correoElectronico3" class="form-control"
                                    [(ngModel)]="nuevoCorreoElectronico3"
                                    placeholder="Ingrese correo electrónico 3"
-                                   [class.is-invalid]="formSubmitted && !nuevoCorreoElectronico3">
+                                   [class.is-invalid]="formSubmitted && (!nuevoCorreoElectronico3 || !validarFormatoCorreo(nuevoCorreoElectronico3))">
+                            
+                            <!-- Validación: Requerido -->
                             @if (formSubmitted && !nuevoCorreoElectronico3) {
                                 <small class="text-danger">El Correo electrónico 3 es obligatorio.</small>
                             }
+                            <!-- Validación: Formato -->
+                            @else if (formSubmitted && nuevoCorreoElectronico3 && !validarFormatoCorreo(nuevoCorreoElectronico3)) {
+                                <small class="text-danger">El formato del correo no es válido.</small>
+                            }
                         </div>
                         <div class="col-sm-6">
-                            <label for="confirmarCorreoElectronico3" class="form-label">Confirmar correo electrónico 3:</label>
+                            <label for="confirmarCorreoElectronico3" class="form-label">* Confirmar correo electrónico 3:</label>
                             <input type="email" id="confirmarCorreoElectronico3" class="form-control"
                                    [(ngModel)]="confirmarCorreoElectronico3"
                                    placeholder="Confirme correo electrónico 3"
                                    [class.is-invalid]="formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3">
+                            
                             @if (formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3) {
                                 <small class="text-danger">Los correos electrónicos no coinciden.</small>
                             }
                         </div>
                     </div>
 
+                    <!-- TELÉFONO 2 -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
-                            <label for="telefono2" class="form-label">Teléfono 2:</label>
+                            <label for="telefono2" class="form-label">* Teléfono 2:</label>
+                            <!-- Se agrega (keypress) para bloquear letras y se ajusta la validación visual -->
                             <input type="text" id="telefono2" class="form-control"
                                    [(ngModel)]="nuevoTelefono2"
-                                   placeholder="Ej. 5512345678" maxlength="10"
-                                   [class.is-invalid]="formSubmitted && (!nuevoTelefono2 || nuevoTelefono2.length < 8)">
-                            @if (formSubmitted && (!nuevoTelefono2 || nuevoTelefono2.length < 8)) {
-                                <small class="text-danger">El Teléfono 2 es obligatorio y debe tener al menos 8 dígitos.</small>
+                                   (keypress)="permitirSoloNumeros($event)"
+                                   placeholder="Ej. 5512345678" 
+                                   maxlength="10"
+                                   [class.is-invalid]="formSubmitted && (!nuevoTelefono2 || !validarFormatoTelefono(nuevoTelefono2))">
+                            
+                            <!-- Mensajes de error -->
+                            @if (formSubmitted && !nuevoTelefono2) {
+                                <small class="text-danger d-block">El Teléfono 2 es obligatorio.</small>
+                            } 
+                            @else if (formSubmitted && !validarFormatoTelefono(nuevoTelefono2)) {
+                                <small class="text-danger d-block">El teléfono debe tener exactamente 10 dígitos.</small>
                             }
                         </div>
                     </div>
                 </div>
-
+ 
               <div class="col-12">
                 <h3 class="mb-0">Información profesional</h3>
                 <hr class="red">
-              </div>
+                </div>
+           
+                <div class="row mb-3">
+                  <div class="col-sm-6">
+                    <label class="form-label">Número de cédula profesional</label>
+                    <p><strong>{{ datosContadorData.datosContactoDto.cedulaprofesional || 'N/A' }}</strong></p>
+                  </div>
+                </div>
 
-
-              
-                    <div class="row mb-3">
-                        <div class="col-sm-6">
-                            <label for="cedulaprofesional" class="form-label">Número de cédula profesional</label>
-                            <input type="text" id="cedulaprofesional" class="form-control"
-                                   [(ngModel)]="nuevacedulaprofesional"
-                                   placeholder="Ingrese la cédula profesional"
-                                   [class.is-invalid]="formSubmitted && !nuevacedulaprofesional">
-                            @if (formSubmitted && !nuevacedulaprofesional) {
-                                <small class="text-danger">La cédula profesional es obligatoria.</small>
-                            }
+                <!-- Botones Guardar y Cancelar para la sección de Contacto --> 
+                <div class="pull-right">
+                  <div class="modal-footer">
+                        <div class="col-12 d-flex justify-content-end">
+                          <p class="me-3">* Campo obligatorio</p>
                         </div>
-                        
-                    </div>
-
-
-                <!-- Botones Guardar y Cancelar para la sección de Contacto -->
-                <div class="mt-4">
-                    <button type="button" class="btn btn-primary me-2" (click)="guardarDatosContacto()">Guardar cambios</button>
-                    <button type="button" class="btn btn-secondary" (click)="cancelarEdicionContacto()">Cancelar</button>
-                </div>
-
-         
-
-              } @else {
-                <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
-                <div class="card p-3 mb-3">
-                   
-                  <div class="row mb-3">
-                    <div class="col-sm-6">
-                      <label class="form-label">Correo electrónico 2</label>
-                      <p><strong>{{ datosContadorData.datosContactoDto.correoElectronico2 || 'N/A' }}</strong></p>
-                    </div>
-                    <div class="col-sm-6">
-                      <label class="form-label">Correo electrónico 3</label>
-                      <p><strong>{{ datosContadorData.datosContactoDto.correoElectronico3 || 'N/A' }}</strong></p>
-                    </div>
-                  </div>
-                  <div class="row mb-3">
-                    <div class="col-sm-6">
-                      <label class="form-label">Teléfono 2</label>
-                      <p><strong>{{ datosContadorData.datosContactoDto.telefono2 || 'N/A' }}</strong></p>
-                    </div>
+                        <button type="button" class="btn btn-secondary" (click)="cancelarEdicionContacto()">Cancelar</button>
+                        <button type="button" class="btn btn-primary" (click)="guardarDatosContacto()"  >Siguiente</button>
                   </div>
                 </div>
-                <div class="col-12">
-                <h3 class="mb-0">Información profesional</h3>
-                <hr class="red">
-                </div>
-                <div class="card p-3 mb-3">
-                  <div class="row mb-3">
-                    <div class="col-sm-6">
-                      <label class="form-label">Número de cédula profesional</label>
-                      <p><strong>{{ datosContadorData.datosContactoDto.cedulaprofesional || 'N/A' }}</strong></p>
-                    </div>
-                  </div>
-                </div>
-              }
+
+
+              }  
+
+
+            
             } @else {
               <div class="alert alert-info my-3">
                 No hay datos de contacto disponibles.

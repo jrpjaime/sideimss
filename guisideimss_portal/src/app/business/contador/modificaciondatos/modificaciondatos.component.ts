@@ -33,6 +33,10 @@ import { DatosContadorData } from '../model/DatosContadorData';
 })
 export class ModificaciondatosComponent extends BaseComponent implements OnInit {
 
+      // Expresión regular para validar formato de correo estándar
+  private emailPattern: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+
   tiposDatosContador: TipoDatoContadorDto[] = [];
   selectedTipoDato: string = '';
   folioSolicitud: string | null = null;
@@ -219,6 +223,102 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
         }
       });
   }
+
+
+
+
+ /**
+   * Cancela la edición. Si existe un archivo subido, lo elimina del servidor antes de salir.
+   */
+  cancelarEdicionColegio(): void {
+    // 1. Verificamos si hay un archivo cargado en el servidor (tiene path HDFS)
+    if (this.fileConstanciaHdfsPath) {
+      
+      // Opcional: Avisar al usuario que se está limpiando
+      // this.alertService.info('Eliminando archivo adjunto y cancelando...', { autoClose: true });
+
+      this.acreditacionMembresiaService.deleteDocument(this.fileConstanciaHdfsPath).subscribe({
+        next: () => {
+          console.log('Archivo temporal eliminado correctamente al cancelar.');
+          this.resetearVariablesYSalir();
+        },
+        error: (error) => {
+          console.error('Error al eliminar el archivo al cancelar:', error);
+          // Aunque falle la eliminación (ej. error de red), 
+          // permitimos al usuario salir para no bloquear la navegación.
+          this.resetearVariablesYSalir();
+        }
+      });
+    } else {
+      // 2. Si no hay archivo, simplemente limpiamos y salimos
+      this.resetearVariablesYSalir();
+    }
+  }
+
+  /**
+   * Método auxiliar para limpiar variables de estado y redirigir
+   */
+  private resetearVariablesYSalir(): void {
+    this.habilitarEdicionRfcColegio = false;
+    this.limpiarNuevoRfcColegio();
+    
+    // Limpiar variables del archivo
+    this.fileConstanciaUploadSuccess = false;
+    this.fileConstanciaHdfsPath = null;
+    this.selectedFileConstancia = null;
+    this.fileConstanciaError = null;
+
+    // Limpiar el input file del HTML si existe
+    const fileInput = document.getElementById('constanciaMembresia') as HTMLInputElement;
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+  //  this.alertService.info('Edición cancelada.');
+    this.router.navigate(['/home']);
+  }
+
+  /**
+   * Guarda los datos del colegio si todas las validaciones pasan.
+   */
+  guardarDatosColegio(): void {
+    this.formSubmitted = true;
+
+    // Validaciones de seguridad (aunque el botón esté deshabilitado)
+    if (!this.habilitarEdicionRfcColegio) {
+        return;
+    }
+
+    if (!this.nuevoRfcColegio || !this.rfcColegioValido) {
+      this.alertService.error('Por favor, verifique que el RFC del colegio sea válido.', { autoClose: true });
+      return;
+    }
+
+    if (!this.fileConstanciaUploadSuccess || !this.fileConstanciaHdfsPath) {
+      this.alertService.error('Es obligatorio adjuntar la constancia de membresía correctamente.', { autoClose: true });
+      return;
+    }
+
+    // Preparar objeto para enviar (Ejemplo)
+    const datosColegioGuardar = {
+        rfcColegio: this.nuevoRfcColegio,
+        razonSocial: this.colegioContador?.razonSocial,
+        rutaConstancia: this.fileConstanciaHdfsPath
+        // ... otros datos necesarios
+    };
+
+    console.log('Guardando datos del colegio:', datosColegioGuardar);
+    
+    // AQUÍ LLAMAS EL SERVICIO DE GUARDADO
+    // this.contadorPublicoAutorizadoService.guardarColegio(datosColegioGuardar).subscribe(...)
+
+    this.alertService.success('Datos del colegio y constancia validados para el siguiente paso.');
+    
+    // Lógica post-guardado: Navegar o resetear
+    // this.router.navigate(['/siguiente-ruta']);
+    this.formSubmitted = false;
+  }
+
 
 
   
@@ -871,14 +971,31 @@ buscarNuevoColegio(): void {
     this.deseaActualizarContacto = respuesta;
     this.formSubmitted = false; // Resetear el estado de validación al cambiar de modo
 
-    if (respuesta) { // Si el usuario dice "No" (desea actualizar)
-      this.precargarDatosContacto(); // <<-- LLAMADA CRÍTICA AQUÍ
-      this.alertService.info('Campos de contacto habilitados para edición.', { autoClose: true });
+
+
+    if (respuesta === false) {
+      this.modalService.showDialog(
+        'alert', // Tipo: Al no ser 'confirm', el modal.component ocultará el botón secundario
+        'info', // Estilo: Define el icono (puedes cambiar a 'warning' si prefieres el triángulo amarillo)
+        'Mensaje de sistema', // Título del modal
+        'Favor de llevar a cabo la actualización del domicilio fiscal ante las oficinas del Servicio de Administración Tributaria SAT.', // Texto del cuerpo
+        () => {
+          // Acción al pulsar "Aceptar"
+          this.deseaActualizarContacto = false; // Aseguramos que se cierre la sección de edición si estaba abierta
+        },
+        'Aceptar' // Texto del botón principal
+      );
+      return; // Detenemos la ejecución aquí para que no haga nada más
+    }
+
+    if (respuesta) { // Si el usuario dice "Si" (abre la actualización)
+      this.precargarDatosContacto(); 
+      
     } else {
-      // Si el usuario confirma que los datos son correctos, no hay edición.
+      // Si el usuario confirma que los datos no son correctos, 
       // Limpiamos los campos del formulario de edición en caso de que hubieran sido editados y luego el usuario cambió de opinión.
       this.limpiarCamposEdicionContacto();
-      this.alertService.success('Datos de contacto confirmados como correctos.', { autoClose: true });
+      //this.alertService.success('Datos de contacto confirmados como correctos.', { autoClose: true });
       // this.router.navigate(['/home']); // O redirigir a donde sea apropiado
     }
   }
@@ -917,57 +1034,56 @@ buscarNuevoColegio(): void {
    * Guarda los cambios en los datos de contacto (simulado).
    */
   guardarDatosContacto(): void {
-    this.formSubmitted = true; // Para mostrar validaciones
+    this.formSubmitted = true;
 
-    // Validaciones básicas para Correo 2 y Teléfono 2
+    // 1. Validar Correo 2
     if (!this.nuevoCorreoElectronico2) {
-      //this.alertService.error('El Correo electrónico 2 es obligatorio.', { autoClose: true });
+      // Error: Vacío (ya se muestra en HTML)
+      return;
+    }
+    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2)) { 
       return;
     }
     if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
-     // this.alertService.error('El Correo electrónico 2 y su confirmación no coinciden.', { autoClose: true });
-      return;
-    }
-    if (!this.nuevoTelefono2 || this.nuevoTelefono2.length < 8) {
-      //this.alertService.error('El Teléfono 2 es obligatorio y debe tener al menos 8 dígitos.', { autoClose: true });
+      // Error: No coinciden
       return;
     }
 
-    if (!this.nuevacedulaprofesional || this.nuevacedulaprofesional.length < 8) {
-     // this.alertService.error('La cédula profesional es obligatoria.', { autoClose: true });
-      return;
-    }
-
-    
-
-    // Validaciones para Correo 3 (si es obligatorio)
+    // 2. Validar Correo 3
     if (!this.nuevoCorreoElectronico3) {
-     // this.alertService.error('El Correo electrónico 3 es obligatorio.', { autoClose: true });
+       // Error: Vacío
+       return;
+    }
+    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) { 
       return;
     }
     if (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3) {
-     // this.alertService.error('El Correo electrónico 3 y su confirmación no coinciden.', { autoClose: true });
+       // Error: No coinciden
+       return;
+    }
+
+    // 3. Validar Teléfono
+    if (!this.nuevoTelefono2 || !this.validarFormatoTelefono(this.nuevoTelefono2)) { 
       return;
     }
 
-    // Puedes añadir más validaciones para el formato de correo electrónico o número de teléfono
+    if (!this.nuevacedulaprofesional) {
+      // Validación existente...
+      return;
+    }
 
-    // Actualizar el DTO de contacto en `datosContadorData`
+    // Si pasa todas las validaciones, actualizamos el objeto y guardamos
     if (this.datosContadorData && this.datosContadorData.datosContactoDto) {
       this.datosContadorData.datosContactoDto.correoElectronico2 = this.nuevoCorreoElectronico2;
       this.datosContadorData.datosContactoDto.correoElectronico3 = this.nuevoCorreoElectronico3;
-      this.datosContadorData.datosContactoDto.telefono2 = this.nuevoTelefono2;
-      this.datosContadorData.datosContactoDto.cedulaprofesional = this.nuevacedulaprofesional;
-
+      this.datosContadorData.datosContactoDto.telefono2 = this.nuevoTelefono2; 
     }
 
-    // Aquí iría la llamada al servicio para guardar los datos de contacto
     console.log('Guardando datos de contacto:', this.datosContadorData?.datosContactoDto);
-    this.alertService.success('Los datos de contacto han sido guardados exitosamente (simulado).');
-
-    // Después de guardar, volver al modo de solo lectura
+    this.alertService.success('Los datos de contacto han sido guardados exitosamente.');
+    
     this.deseaActualizarContacto = false;
-    this.formSubmitted = false; // Resetear el estado de envío del formulario
+    this.formSubmitted = false;
   }
 
   /**
@@ -976,7 +1092,7 @@ buscarNuevoColegio(): void {
   cancelarEdicionContacto(): void {
     this.deseaActualizarContacto = false;
     this.formSubmitted = false; // Resetear el estado de envío del formulario
-    this.alertService.info('Edición de datos de contacto cancelada.');
+    //this.alertService.info('Edición de datos de contacto cancelada.');
 
     // Opcional: Recargar los datos originales si se cancela la edición
     if (this.datosContadorData?.datosContactoDto) {
@@ -1002,6 +1118,36 @@ buscarNuevoColegio(): void {
     // Lógica para cancelar el proceso completo
     this.alertService.info('Proceso de modificación de datos cancelado.', { autoClose: true });
     this.router.navigate(['/home']);
+  }
+
+
+
+
+  /**
+   * Valida si una cadena tiene formato de correo electrónico válido
+   */
+  validarFormatoCorreo(correo: string): boolean {
+    if (!correo) return false; // Si está vacío se maneja como "requerido"
+    return this.emailPattern.test(correo);
+  }
+
+  /**
+   * Valida si el teléfono tiene exactamente 10 dígitos numéricos
+   */
+  validarFormatoTelefono(telefono: string): boolean {
+    const phonePattern = /^[0-9]{10}$/;
+    return phonePattern.test(telefono);
+  }
+
+  /**
+   * Evita que el usuario escriba letras o caracteres especiales en el input de teléfono
+   */
+  permitirSoloNumeros(event: KeyboardEvent): void {
+    const charCode = event.which ? event.which : event.keyCode;
+    // Solo permite números (códigos ASCII del 48 al 57)
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
   }
 
 
