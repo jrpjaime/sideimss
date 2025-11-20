@@ -17,7 +17,6 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([tokenInterceptor, loaderInterceptor ])
     ),
-    provideAnimationsAsync(),
     DatePipe
 
 
