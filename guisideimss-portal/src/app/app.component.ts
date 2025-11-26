@@ -11,7 +11,7 @@ import { ModalComponent } from './shared/shared/components/modal/modal.component
     styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'guisideimss_portal';
+  title = 'guisideimss-portal';
 
   constructor( private authService: AuthService) {
 
