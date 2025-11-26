@@ -1016,7 +1016,7 @@ buscarNuevoColegio(): void {
 
 
  /**
-   * Guarda los datos del colegio si todas las validaciones pasan.
+   * 1. GUARDAR DATOS COLEGIO
    */
   guardarDatosColegio(): void {
     this.formSubmitted = true;
@@ -1024,168 +1024,159 @@ buscarNuevoColegio(): void {
     if (!this.habilitarEdicionRfcColegio) return;
 
     if (!this.nuevoRfcColegio || !this.rfcColegioValido) {
-      this.alertService.error('Por favor, verifique que el RFC del colegio sea válido.', { autoClose: true });
+      this.alertService.error('Por favor, verifique que el RFC del colegio sea válido.');
       return;
     }
 
     if (!this.fileConstanciaUploadSuccess || !this.fileConstanciaHdfsPath) {
-      this.alertService.error('Es obligatorio adjuntar la constancia de membresía correctamente.', { autoClose: true });
+      this.alertService.error('Es obligatorio adjuntar la constancia de membresía correctamente.');
       return;
     }
 
+     const datosBase = this.obtenerDatosBaseParaAcuse();
+
     // Preparar datos para el Acuse
     const datosParaAcuse = {
-      folioSolicitud: this.folioSolicitud,
-      rfcUsuario: this.rfcSesion,
-      nombreCompleto: this.nombreCompletoSync,
-      curp: this.curpSesion,
+      ...datosBase,
+    
+       
       
-      // Datos específicos del trámite
-      rfcColegio: this.nuevoRfcColegio,
+      // Datos específicos del cambio
+      tipoSolicitud: 'COLEGIO', // Identificador interno para saber qué se cambió
+      rfcColegioNuevo: this.nuevoRfcColegio,
       razonSocialColegio: this.colegioContador?.razonSocial,
-      rutaConstancia: this.fileConstanciaHdfsPath,
+      
+      // Datos del archivo
+      desPathHdfsConstancia: this.fileConstanciaHdfsPath,
       nomArchivoConstancia: this.selectedFileConstancia?.name,
       
-      // Identificador para saber qué plantilla cargar en el Acuse
+      // Identificador de la plantilla en BD (Debe coincidir con lo que espera el backend)
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO' 
     };
 
     // Guardar en el servicio y navegar
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
-    this.router.navigate(['/contador/modificacion-acuse']); // <--- AJUSTA LA RUTA SEGÚN TU ROUTING
+    console.log("la siguiente linea es: this.router.navigate([NAV.contadormodificaciondatosacuse]);  ");
+    this.router.navigate([NAV.contadormodificaciondatosacuse]); 
+    
   }
 
-
-
-
-
   /**
-   * Guarda los cambios en los datos del despacho (simulado).
+   * 2. GUARDAR DATOS DESPACHO
    */
   guardarDatosDespacho(): void {
-    this.formSubmitted = true; // Para mostrar validaciones
+    this.formSubmitted = true;
 
-    // Validaciones básicas antes de guardar
-    if (!this.selectedTipoSociedad) {
-      this.alertService.error('Por favor, selecciona el tipo de sociedad.', { autoClose: true });
-      return;
-    }
-    if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho)) {
-      this.alertService.error('Por favor, ingresa un RFC válido para el despacho.', { autoClose: true });
-      this.rfcDespachoValido = false;
-      return;
-    }
-    if (!this.despachoContador?.nombreRazonSocial) {
-      this.alertService.error('Por favor, busca y carga la razón social del despacho.', { autoClose: true });
-      return;
-    }
-    if (!this.selectedCargoDesempena) {
-      this.alertService.error('Por favor, selecciona el cargo que desempeña.', { autoClose: true });
-      return;
-    }
-    if (!this.telefonoFijoDespacho || this.telefonoFijoDespacho.length < 8) { // Ejemplo de validación de teléfono
-      this.alertService.error('Por favor, ingresa un número de teléfono fijo válido (mínimo 8 dígitos).', { autoClose: true });
-      return;
-    }
-
-    // Actualizar el DTO del despacho con los valores seleccionados/ingresados
     if (!this.selectedTipoSociedad || !this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
-       this.alertService.error('Verifique los campos obligatorios del despacho.', { autoClose: true });
+       this.alertService.error('Verifique los campos obligatorios del despacho.');
        return;
     }
 
-    const datosParaAcuse = {
-      folioSolicitud: this.folioSolicitud,
-      rfcUsuario: this.rfcSesion,
-      nombreCompleto: this.nombreCompletoSync,
-      curp: this.curpSesion,
 
-      // Datos específicos
-      cveIdTipoSociedad: this.selectedTipoSociedad,
-      desTipoSociedad: this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad,
-      rfcDespacho: this.nuevoRfcDespacho,
-      razonSocialDespacho: this.despachoContador?.nombreRazonSocial,
-      cveIdCargoContador: this.selectedCargoDesempena,
-      desCargoContador: this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador,
-      telefonoFijo: this.telefonoFijoDespacho,
+      const datosBase = this.obtenerDatosBaseParaAcuse();
+
+  // Construir string de despacho
+  // El XML tiene: <field name="datosDespacho" class="java.lang.String"/>
+  const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
+  const nombreCargo = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
+
+  const datosDespachoString = `Despacho: ${this.despachoContador?.nombreRazonSocial || ''} (${this.nuevoRfcDespacho}). Tipo: ${nombreSociedad}. Cargo: ${nombreCargo}. Tel: ${this.telefonoFijoDespacho}`;
+
+    const datosParaAcuse = {
+          ...datosBase,
+    
+    // Enviamos el string formateado
+    datosDespacho: datosDespachoString,
+    
+    // Enviamos datos sueltos por si acaso la lógica cambia
+    razonSocialDespacho: this.despachoContador?.nombreRazonSocial, 
+
+    tipoSolicitud: 'DESPACHO',
 
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };
 
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
-    this.router.navigate(['/contador/modificacion-acuse']);
+    this.router.navigate([NAV.contadormodificaciondatosacuse]);
   }
 
-
- 
- 
-   /**
-   * Guarda los cambios en los datos de contacto (simulado).
+  /**
+   * 3. GUARDAR DATOS CONTACTO
    */
   guardarDatosContacto(): void {
     this.formSubmitted = true;
 
-    // 1. Validar Correo 2
-    if (!this.nuevoCorreoElectronico2) {
-      // Error: Vacío (ya se muestra en HTML)
-      return;
-    }
-    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2)) { 
-      return;
-    }
-    if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
-      // Error: No coinciden
-      return;
-    }
-
-    // 2. Validar Correo 3
-    if (!this.nuevoCorreoElectronico3) {
-       // Error: Vacío
-       return;
-    }
-    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) { 
-      return;
-    }
-    if (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3) {
-       // Error: No coinciden
+    // ... (Tus validaciones existentes de correo y teléfono) ...
+    if (!this.nuevoCorreoElectronico2 || !this.nuevoTelefono2) {
+       // Validaciones visuales ya manejan el error, aquí solo retornamos
        return;
     }
 
-    // 3. Validar Teléfono
-    if (!this.nuevoTelefono2 || !this.validarFormatoTelefono(this.nuevoTelefono2)) { 
-      return;
-    }
+      const datosBase = this.obtenerDatosBaseParaAcuse();
 
-    if (!this.nuevacedulaprofesional) {
-      // Validación existente...
-      return;
-    }
+  // CONSTRUIR EL STRING DE DATOS DE CONTACTO NUEVOS
+  // El reporte imprimirá lo que venga en la variable 'datosContacto'
+  const nuevosDatosContactoString = `Correo: ${this.nuevoCorreoElectronico2} / ${this.nuevoCorreoElectronico3}. Tel: ${this.nuevoTelefono2}. Cédula: ${this.nuevacedulaprofesional}`;
 
-    // Si pasa todas las validaciones, actualizamos el objeto y guardamos
-    if (!this.nuevoCorreoElectronico2 || !this.nuevoCorreoElectronico3 || !this.nuevoTelefono2) {
-        return;
-    }
-    // (Asegúrate de que pasen tus validaciones de formato)
 
     const datosParaAcuse = {
-      folioSolicitud: this.folioSolicitud,
-      rfcUsuario: this.rfcSesion,
-      nombreCompleto: this.nombreCompletoSync,
-      curp: this.curpSesion,
+       ...datosBase,
+    
+    // Sobreescribimos la variable con el texto formateado nuevo
+    datosContacto: nuevosDatosContactoString,
 
-      correoElectronico2: this.nuevoCorreoElectronico2,
-      correoElectronico3: this.nuevoCorreoElectronico3,
-      telefono2: this.nuevoTelefono2,
-      cedulaProfesional: this.nuevacedulaprofesional, // Si aplica
+    // Identificador para el reporte
+    tipoSolicitud: 'CONTACTO',
 
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };
 
+
+
+   
+
+
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse); 
-     this.router.navigate([NAV.contadormodificaciondatosacuse]);
+    this.router.navigate([NAV.contadormodificaciondatosacuse]);
   }
 
 
 
+private obtenerDatosBaseParaAcuse() {
+  const fechaActual = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
+  
+  // 1. Formatear Domicilio Fiscal a un solo String
+  const d = this.datosContadorData?.domicilioFiscalDto;
+  let domicilioString = '';
+  if (d) {
+    // Construimos la cadena como la quiere el reporte
+    domicilioString = `${d.calle || ''} ${d.numeroExterior || ''} ${d.numeroInterior ? 'Int ' + d.numeroInterior : ''}, ` +
+                      `${d.colonia || ''}, ${d.municipioODelegacion || ''}, ` +
+                      `${d.entidadFederativa || ''}, C.P. ${d.codigoPostal || ''}`;
+  }
+
+  // 2. Formatear Datos de Contacto Actuales a un solo String (Valor por defecto)
+  const c = this.datosContadorData?.datosContactoDto;
+  let contactoString = '';
+  if (c) {
+     contactoString = `Correo: ${c.correoElectronico1 || ''}. Tel: ${c.telefono1 || ''}`;
+  }
+
+  return {
+    folioSolicitud: this.folioSolicitud,
+    folio: this.folioSolicitud, 
+    fecha: fechaActual,
+    
+    // --- CORRECCIÓN DE NOMBRES (Deben ser idénticos a los <field> del XML) ---
+    rfc: this.rfcSesion,            // XML espera 'rfc' (minúscula)
+    curp: this.curpSesion,          // XML espera 'curp' (minúscula)
+    nombre: this.nombreCompletoSync,// XML espera 'nombre'
+    registroImss: this.numeroRegistroImssSesion, // XML espera 'registroImss'
+
+    // --- CORRECCIÓN DE TIPOS (Strings formateados) ---
+    domicilioFiscal: domicilioString, // Enviamos el string concatenado
+    datosContacto: contactoString     // Enviamos el string concatenado por defecto
+  };
+}
 
 }

@@ -8,19 +8,14 @@ import { BaseComponent } from '../../../../shared/base/base.component';
 import { AcuseParameters } from '../../model/AcuseParameters';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { LoaderService } from '../../../../shared/services/loader.service';
-import { ModalService } from '../../../../shared/services/modal.service';
 import { ModificacionDatosDataService } from '../../services/ModificacionDatosDataService';
 import { ContadorPublicoAutorizadoService } from '../../services/contador-publico-autorizado.service';
-import { AcreditacionMembresiaService } from '../../services/acreditacion-membresia.service';
 import { SharedService } from '../../../../shared/services/shared.service';
+import { NAV } from '../../../../global/navigation';
 import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { FirmaRequestFrontendDto } from '../../model/FirmaRequestFrontendDto';
 import { FirmaRequestBackendResponse } from '../../model/FirmaRequestBackendResponse';
 import { environment } from '../../../../../environments/environment';
-
- 
-
-// Servicios específicos
  
 
 export interface DatosAcuseExito {
@@ -44,21 +39,18 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
   acusePdfUrl: SafeResourceUrl | null = null;
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
-  acuseFinalError: string | null = null;
-  folioSolicitud: string = '';
   
-  // Configuración del Acuse
+  // Variables para la firma y éxito
+  folioSolicitud: string = '';
   acuseParameters: AcuseParameters | null = null;
   
-  // Firma Electrónica
   isFirmaModalVisible: boolean = false;
   firmaWidgetUrl: SafeResourceUrl | null = null;
   private windowMessageListener: ((event: MessageEvent) => void) | undefined;
   
-  // Datos de Firma capturados
+  // Datos devueltos por la firma
   cadenaOriginalFirmada: string = '';
   fechaAcuse: string = '';
-  fechaFirma: string = '';
   firmaDigital: string = '';
   folioFirma: string = '';
   curpFirma: string = '';
@@ -82,12 +74,8 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     private sanitizer: DomSanitizer,
     private alertService: AlertService,
     private loaderService: LoaderService,
-    private modalService: ModalService,
     private modificacionDatosDataService: ModificacionDatosDataService,
     private contadorService: ContadorPublicoAutorizadoService,
-    // Usamos AcreditacionService si ahí están los métodos genéricos de firma, 
-    
-    private acreditacionService: AcreditacionMembresiaService, 
     sharedService: SharedService
   ) {
     super(sharedService);
@@ -97,24 +85,22 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     super.ngOnInit();
     this.recargaParametros();
 
-    // 1. Obtener datos
+    // 1. Recuperar datos del servicio
     this.datosFormularioPrevio = this.modificacionDatosDataService.getDatosFormularioPrevio();
     
-    // Validación: Si no hay datos, regresar al inicio
+    // Si no hay datos (recarga de página), regresar
     if (!this.datosFormularioPrevio || Object.keys(this.datosFormularioPrevio).length === 0) {
-      this.router.navigate(['/home']);
+      this.router.navigate([NAV.contadormodificaciondatos]);
       return;
     }
 
     this.folioSolicitud = this.datosFormularioPrevio.folioSolicitud;
 
-    // 2. Cargar configuración y preview
-    // Nota: Usamos el tipoTramite que definimos en el componente anterior (ej: 'MODIFICACION_CONTACTO')
-    // Asegúrate de que este string exista en tu BD de plantillas o usa uno genérico 'MODIFICACION_DATOS'
-    const tipoAcuse = this.datosFormularioPrevio.tipoTramite || 'MODIFICACION_DATOS';
+    // 2. Cargar configuración y Previsualizar
+    const tipoAcuse = this.datosFormularioPrevio.tipoTramite;
     this.obtenerConfiguracionYDescargarAcusePreview(tipoAcuse);
 
-    // 3. Registrar listener para firma
+    // 3. Registrar Listener para firma (iframe)
     this.windowMessageListener = this.respuestaCHFECyN.bind(this);
     window.addEventListener('message', this.windowMessageListener);
   }
@@ -126,57 +112,68 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     super.ngOnDestroy();
   }
 
-  // --- LÓGICA DE PREVISUALIZACIÓN ---
+  // --- LÓGICA DE VISTA PREVIA ---
 
   obtenerConfiguracionYDescargarAcusePreview(tipoAcuse: string): void {
     this.loaderService.show();
-    // Usamos el servicio del contador (o el que tenga getAcuseConfig)
     this.contadorService.getAcuseConfig(tipoAcuse).pipe(take(1)).subscribe({
       next: (params: AcuseParameters) => {
         this.acuseParameters = params;
-        this.descargarAcusePreview();
+        this.descargarAcusePreview(); // Una vez tenemos la config, descargamos el PDF
         this.loaderService.hide();
       },
       error: (err) => {
         this.loaderService.hide();
         console.error('Error config acuse', err);
-        this.acusePreviewError = 'Error al cargar configuración del acuse.';
+        this.acusePreviewError = 'Error al cargar configuración del documento.';
         this.alertService.error(this.acusePreviewError);
       }
     });
   }
+
+
+
+ 
+
 
   descargarAcusePreview(): void {
     if (!this.acuseParameters) return;
 
     this.loadingAcusePreview = true;
     this.acusePreviewError = null;
+    
+    // Flag para backend indicando que es preview
     this.datosFormularioPrevio.vistaPrevia = "SI";
 
+    // Unir datos del formulario + parámetros de configuración
     const datosCompletos = {
       ...this.datosFormularioPrevio,
-      ...this.acuseParameters
+      ...this.acuseParameters,
+      rfc:this.rfcSesion
     };
+
+     const datosJson = JSON.stringify(datosCompletos);
 
     const plantillaDatoDto: PlantillaDatoDto = {
       nomDocumento: this.acuseParameters['nomDocumento'],
       desVersion: this.acuseParameters['desVersion'],
       cveIdPlantillaDatos: null,
-      datosJson: JSON.stringify(datosCompletos),
-      tipoAcuse: this.datosFormularioPrevio.tipoTramite // O el que corresponda
+      datosJson: datosJson,
+      tipoAcuse: this.datosFormularioPrevio.tipoTramite
     };
 
     this.contadorService.descargarAcusePreview(plantillaDatoDto).subscribe({
       next: (response: HttpResponse<Blob>) => {
         this.loadingAcusePreview = false;
         if (response.body) {
-          const url = window.URL.createObjectURL(new Blob([response.body], { type: 'application/pdf' }));
+          const blob = new Blob([response.body], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
         }
       },
       error: (err) => {
         this.loadingAcusePreview = false;
-        this.acusePreviewError = 'Error al generar la previsualización.';
+        this.acusePreviewError = 'No se pudo generar la vista previa.';
         this.alertService.error(this.acusePreviewError);
       }
     });
@@ -190,18 +187,18 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
     const requestDto: FirmaRequestFrontendDto = {
       rfcUsuario: this.rfcSesion,
-      desFolio: this.folioSolicitud, // Usamos folio de solicitud o generar uno nuevo de firma
+      desFolio: this.folioSolicitud, 
       desCurp: this.curpSesion,
       nombreCompleto: this.nombreCompletoSync
     };
 
-    // Usamos el servicio que tenga generarRequestJsonFirma
     this.contadorService.generarRequestJsonFirma(requestDto).subscribe({
       next: (response: FirmaRequestBackendResponse) => {
         this.loaderService.hide();
         if (!response.error) {
           this.cadenaOriginalFirmada = response.cad_original;
           this.fechaAcuse = response.fechaParaAcuse;
+          // Mostrar Modal con Iframe
           this.displayFirmaModalAndSubmitForm(response.peticionJSON);
         } else {
           this.alertService.error(response.mensaje || 'Error al generar petición de firma.');
@@ -221,8 +218,10 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     this.isFirmaModalVisible = true;
     this.firmaWidgetUrl = this.sanitizer.bypassSecurityTrustResourceUrl(widgetActionUrl);
 
+    // Pequeño delay para asegurar que el iframe existe en el DOM (si está en un *ngIf)
     setTimeout(() => {
-      const iframeName = 'formFirmaDigitalMod'; // Nombre único
+      const iframeName = 'formFirmaDigitalMod'; 
+      // Crear form dinámico para hacer POST al iframe
       const form = this.renderer.createElement('form');
       this.renderer.setAttribute(form, 'method', 'post');
       this.renderer.setAttribute(form, 'target', iframeName);
@@ -247,7 +246,9 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     try {
       const resultadoJSON = JSON.parse(event.data);
       if (resultadoJSON.resultado === 0) {
-        this.alertService.success('Firma exitosa.', { autoClose: true });
+        this.alertService.success('Firma capturada correctamente.', { autoClose: true });
+        
+        // Guardar datos de firma
         this.firmaDigital = resultadoJSON.firma;
         this.folioFirma = resultadoJSON.folio;
         this.curpFirma = resultadoJSON.curp;
@@ -255,6 +256,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
         this.acuse = resultadoJSON.acuse;
         
         this.isFirmaModalVisible = false;
+        // PROCEDER A GUARDAR EN BD
         this.enviarSolicitudFinalConFirma();
       } else {
         this.isFirmaModalVisible = false;
@@ -267,10 +269,10 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
   closeFirmaModal(): void {
     this.isFirmaModalVisible = false;
-    this.alertService.info('Firma cancelada.');
+    this.alertService.info('Proceso de firma cancelado.');
   }
 
-  // --- ENVÍO FINAL ---
+  // --- ENVÍO FINAL (GUARDADO EN BD) ---
 
   enviarSolicitudFinalConFirma(): void {
     if (!this.acuseParameters) return;
@@ -297,17 +299,15 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       tipoAcuse: this.datosFormularioPrevio.tipoTramite
     };
 
-    this.alertService.info('Enviando solicitud de modificación...', { autoClose: true });
+    this.alertService.info('Enviando solicitud final...', { autoClose: true });
 
-    // AQUÍ LLAMAS AL ENDPOINT REAL DE GUARDAR MODIFICACIÓN
-    // Nota: Estoy asumiendo que existe 'guardarModificacion' en ContadorService,
-    // similar a 'acreditacionmembresia' o 'solicitudBaja'.
-    this.contadorService.solicitudBaja(plantillaDato).subscribe({ 
-      // ^^^ OJO: CAMBIA 'solicitudBaja' por el método real para guardar modificaciones, ej: guardarModificacionDatos(plantillaDato)
+    // LLAMADA AL SERVICIO PARA GUARDAR
+    this.contadorService.guardarModificacionDatos(plantillaDato).subscribe({ 
       next: (response) => {
         if (response.codigo === 0) {
           this.alertService.success('Modificación realizada exitosamente.');
           this.firmaExitosa = true;
+          
           this.datosExitoAcuse = {
             folio: this.folioSolicitud,
             urlDocumento: response.urlDocumento,
@@ -315,10 +315,11 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
             rfc: this.rfcSesion,
             nombre: this.nombreCompletoSync
           };
+          
           this.modificacionDatosDataService.clearDatosFormularioPrevio();
           
           if (response.urlDocumento) {
-            this.obtenerYMostrarAcuse(response.urlDocumento);
+            this.obtenerYMostrarAcuseFinal(response.urlDocumento);
           }
         } else {
           this.alertService.error(response.mensaje || 'Error al guardar modificación.');
@@ -331,31 +332,29 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     });
   }
 
-  obtenerYMostrarAcuse(urlDocumento: string): void {
+  obtenerYMostrarAcuseFinal(urlDocumento: string): void {
     this.loaderService.show();
-    this.acusePdfUrl = null; // Limpiar preview
+    this.acusePdfUrl = null; 
     
     this.contadorService.getAcuseParaVisualizar(urlDocumento).subscribe({
       next: (response: HttpResponse<Blob>) => {
         this.loaderService.hide();
         if (response.body) {
-          const url = window.URL.createObjectURL(new Blob([response.body], { type: 'application/pdf' }));
+          const blob = new Blob([response.body], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
           this.mostrarAcuse = true;
         }
       },
       error: (err) => {
         this.loaderService.hide();
-        this.acuseFinalError = 'No se pudo cargar el acuse final.';
-        this.alertService.error(this.acuseFinalError);
+        this.alertService.error('No se pudo cargar el documento final.');
       }
     });
   }
 
   regresar(): void {
-    // Regresar a la pantalla anterior
-    // Opcional: Si quieres mantener datos editados, el DataService ya los tiene.
-    this.router.navigate(['/contador/modificacion-datos']); // <--- AJUSTA TU RUTA
+    this.router.navigate([NAV.contadormodificaciondatos]);
   }
   
   salir(): void {

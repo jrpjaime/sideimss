@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.5.final using JasperReports Library version 6.21.5-74d586df47b25dbd05bd0957999819196e59934a  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reportePrueba" pageWidth="612" pageHeight="840" whenNoDataType="AllSectionsNoDetail" columnWidth="552" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="a5200942-5e87-4b08-9a67-1042cf8b9d7a">
 	<property name="ireport.scriptlethandling" value="0"/>
 	<property name="ireport.encoding" value="UTF-8"/>
@@ -50,6 +51,7 @@
 	<parameter name="vistaPrevia" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
+	<parameter name="registroImss" class="java.lang.String"/>
 	<field name="acuerdo1" class="java.lang.String"/>
 	<field name="dia1" class="java.lang.String"/>
 	<field name="mes1" class="java.lang.String"/>
@@ -197,7 +199,7 @@
 					<pen lineColor="#ADACAC"/>
 				</graphicElement>
 			</rectangle>
-			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" pattern="" isBlankWhenNull="true">
 				<reportElement x="343" y="19" width="209" height="12" uuid="5ac41248-2448-48cc-bcdf-c1870ab58864">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -205,18 +207,18 @@
 				<textElement verticalAlignment="Bottom">
 					<font fontName="Arial" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{fecha}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{fecha}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="343" y="31" width="209" height="12" uuid="dfb4c561-01a4-4e2e-815d-60b80091cef3">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement verticalAlignment="Bottom">
 					<font fontName="Arial" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{folio}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{folio}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="0" y="247" width="552" height="32" isRemoveLineWhenBlank="true" uuid="f1a9172f-2a32-489c-984c-70274a884e40">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -227,7 +229,7 @@
 					<font fontName="Arial" size="8" isPdfEmbedded="false"/>
 					<paragraph leftIndent="5" rightIndent="5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{datosContacto}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{datosContacto}]]></textFieldExpression>
 			</textField>
 			<image>
 				<reportElement x="10" y="474" width="90" height="90" isRemoveLineWhenBlank="true" uuid="c529cb4e-74e8-431b-9495-1c503985aba6">
@@ -242,7 +244,7 @@
 				</reportElement>
 				<imageExpression><![CDATA[$P{qrcode}]]></imageExpression>
 			</image>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="115" y="503" width="437" height="44" isRemoveLineWhenBlank="true" uuid="ab5e669c-28ce-48c6-b4d0-e888bfac0a46">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -251,7 +253,7 @@
 				<textElement>
 					<font fontName="Arial" size="6"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{selloDigital}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{selloDigital}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement mode="Transparent" x="115" y="493" width="437" height="10" isRemoveLineWhenBlank="true" forecolor="#000000" backcolor="#FFFFFF" uuid="56315ac1-0c1b-4d6f-b1c8-5070d7cb91fc">
@@ -260,7 +262,7 @@
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[!$F{selloDigital}.trim().isEmpty() && $F{selloDigital} != null]]></printWhenExpression>
+					<printWhenExpression><![CDATA[!$P{selloDigital}.trim().isEmpty() && $P{selloDigital} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
@@ -284,7 +286,7 @@
 				</textElement>
 				<text><![CDATA[C.P.A.]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="30" y="43" width="522" height="12" uuid="8ef6c35e-7b6f-4fd7-a78f-2684c6efeeaf">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -294,7 +296,7 @@
 				<textElement>
 					<font fontName="Arial" size="8" isItalic="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{nombre}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{nombre}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="0" y="55" width="552" height="14" uuid="ef1d0fbe-a596-4128-a8c0-2eaeefa37921">
@@ -324,7 +326,7 @@
 					<font fontName="Arial" size="8"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{rfc}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{rfc}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="184" y="225" width="184" height="12" uuid="0b67b984-a585-476f-8831-c9e5fe3f8459">
@@ -341,7 +343,7 @@
 					<font fontName="Arial" size="8"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{curp}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{curp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="368" y="225" width="184" height="12" uuid="7568b748-5645-47c2-9c73-abf8ebd0c205">
@@ -358,7 +360,7 @@
 					<font fontName="Arial" size="8"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{registroImss}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{registroImss}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="353" y="350" width="97" height="13" forecolor="#000000" backcolor="#FFFFFF" uuid="4651ee16-fca4-464d-b618-9285c3a17d7c">
@@ -419,7 +421,7 @@
 				</textElement>
 				<text><![CDATA[Si]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="0" y="378" width="552" height="79" forecolor="#000000" backcolor="#FFFFFF" uuid="5bfab19f-16c6-4cdc-8410-ca12dd4fcb79">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -431,9 +433,9 @@
 					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
-				<textFieldExpression><![CDATA["El C.P.A. ".concat($F{nombre}!=null ? $F{nombre} :"").concat(" manifiesta bajo protesta de decir verdad que los datos proporcionados en el presente trámite son ciertos, que reúne los requisitos establecidos en los artículos 153 y 154, fracción I del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización, y que conoce el contenido y alcance de la Ley del Seguro Social, sus reglamentos, así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables.")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["El C.P.A. ".concat($P{nombre}!=null ? $P{nombre} :"").concat(" manifiesta bajo protesta de decir verdad que los datos proporcionados en el presente trámite son ciertos, que reúne los requisitos establecidos en los artículos 153 y 154, fracción I del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización, y que conoce el contenido y alcance de la Ley del Seguro Social, sus reglamentos, así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables.")]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="0" y="69" width="552" height="109" forecolor="#000000" backcolor="#FFFFFF" uuid="0672d758-b991-4b04-b20e-0824ba368833">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -488,7 +490,7 @@
 					<font fontName="Arial" size="8"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{nombre}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{nombre}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement mode="Transparent" x="0" y="237" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="79921028-c188-4db8-b03d-0de5da640cf2">
@@ -589,7 +591,7 @@
 				<reportElement mode="Transparent" x="115" y="547" width="437" height="10" isRemoveLineWhenBlank="true" forecolor="#000000" backcolor="#FFFFFF" uuid="30583e91-6c3f-4090-8ea1-86d5726a4cae">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[!$F{cadenaOriginal}.trim().isEmpty() && $F{cadenaOriginal} != null]]></printWhenExpression>
+					<printWhenExpression><![CDATA[!$P{cadenaOriginal}.trim().isEmpty() && $P{cadenaOriginal} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
@@ -597,7 +599,7 @@
 				</textElement>
 				<text><![CDATA[Cadena Original del Acuse:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" pattern="" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="115" y="557" width="437" height="33" isRemoveLineWhenBlank="true" forecolor="#000000" backcolor="#FFFFFF" uuid="d09a0052-ed15-4aec-a860-0cda9e3da050">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -607,7 +609,7 @@
 					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{cadenaOriginal}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{cadenaOriginal}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="0" y="594" width="552" height="19" isRemoveLineWhenBlank="true" uuid="84932ff3-3c88-4c38-8ea0-5668110121e0">
@@ -636,7 +638,7 @@
 				</textElement>
 				<text><![CDATA[Firma electrónica avanzada del Contador Público Autorizado:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="115" y="468" width="437" height="25" isRemoveLineWhenBlank="true" uuid="f29ab874-da70-4a94-b1d0-223270ebaf19">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -732,7 +734,7 @@
 				</textElement>
 				<text><![CDATA[Domicilio fiscal:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="0" y="289" width="552" height="33" isRemoveLineWhenBlank="true" uuid="d91f6810-e368-46a1-a215-45b6d7b83b0b">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>

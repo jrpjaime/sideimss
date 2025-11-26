@@ -113,4 +113,14 @@ export class ContadorPublicoAutorizadoService {
       const requestBody: RfcRequestDto = { rfcContador: rfcContador };
       return this.httpClient.post<ColegioContadorDto>(url, requestBody);
     }
+
+
+  /**
+   * Guarda la modificación de datos una vez firmada.
+   * @param submitDto Datos de la plantilla con la firma y cadena original.
+   */
+    guardarModificacionDatos(submitDto: PlantillaDatoDto): Observable<any> { 
+       const url = `${environment.contadoresApiUrl}${EPs.contadores.guardarModificacionDatos}`;
+      return this.httpClient.post<any>(url, submitDto);
+    }
 }

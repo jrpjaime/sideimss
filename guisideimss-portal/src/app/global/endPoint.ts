@@ -29,6 +29,8 @@ export const EPs = {
     consultaDatosContador: "/v1/consultaDatosContador",
     solicitudBaja: '/v1/solicitudBaja',
     colegioContador: '/v1/colegioContador',
+    guardarModificacionDatos: '/v1/guardarModificacionDatos',
+    
 
   },
 
