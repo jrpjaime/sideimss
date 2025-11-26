@@ -16,7 +16,7 @@ import { PlantillaDatoDto } from '../../model/PlantillaDatoDto';
 import { FirmaRequestFrontendDto } from '../../model/FirmaRequestFrontendDto';
 import { FirmaRequestBackendResponse } from '../../model/FirmaRequestBackendResponse';
 import { environment } from '../../../../../environments/environment';
- 
+
 
 export interface DatosAcuseExito {
   folio: string;
@@ -39,15 +39,15 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
   acusePdfUrl: SafeResourceUrl | null = null;
   loadingAcusePreview: boolean = false;
   acusePreviewError: string | null = null;
-  
+
   // Variables para la firma y éxito
   folioSolicitud: string = '';
   acuseParameters: AcuseParameters | null = null;
-  
+
   isFirmaModalVisible: boolean = false;
   firmaWidgetUrl: SafeResourceUrl | null = null;
   private windowMessageListener: ((event: MessageEvent) => void) | undefined;
-  
+
   // Datos devueltos por la firma
   cadenaOriginalFirmada: string = '';
   fechaAcuse: string = '';
@@ -87,7 +87,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
     // 1. Recuperar datos del servicio
     this.datosFormularioPrevio = this.modificacionDatosDataService.getDatosFormularioPrevio();
-    
+
     // Si no hay datos (recarga de página), regresar
     if (!this.datosFormularioPrevio || Object.keys(this.datosFormularioPrevio).length === 0) {
       this.router.navigate([NAV.contadormodificaciondatos]);
@@ -133,7 +133,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
 
 
- 
+
 
 
   descargarAcusePreview(): void {
@@ -141,7 +141,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
     this.loadingAcusePreview = true;
     this.acusePreviewError = null;
-    
+
     // Flag para backend indicando que es preview
     this.datosFormularioPrevio.vistaPrevia = "SI";
 
@@ -187,7 +187,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
     const requestDto: FirmaRequestFrontendDto = {
       rfcUsuario: this.rfcSesion,
-      desFolio: this.folioSolicitud, 
+      desFolio: this.folioSolicitud,
       desCurp: this.curpSesion,
       nombreCompleto: this.nombreCompletoSync
     };
@@ -214,13 +214,13 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
   displayFirmaModalAndSubmitForm(params: string): void {
     const URL_FIRMA_DIGITAL = `${environment.firmaDigitalUrl}`;
     const widgetActionUrl = `${URL_FIRMA_DIGITAL}/firmaElectronicaWeb/widget/chfecyn`;
-    
+
     this.isFirmaModalVisible = true;
     this.firmaWidgetUrl = this.sanitizer.bypassSecurityTrustResourceUrl(widgetActionUrl);
 
     // Pequeño delay para asegurar que el iframe existe en el DOM (si está en un *ngIf)
     setTimeout(() => {
-      const iframeName = 'formFirmaDigitalMod'; 
+      const iframeName = 'formFirmaDigitalMod';
       // Crear form dinámico para hacer POST al iframe
       const form = this.renderer.createElement('form');
       this.renderer.setAttribute(form, 'method', 'post');
@@ -231,7 +231,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       this.renderer.setAttribute(input, 'type', 'hidden');
       this.renderer.setAttribute(input, 'name', 'params');
       this.renderer.setAttribute(input, 'value', params);
-      
+
       this.renderer.appendChild(form, input);
       this.renderer.appendChild(document.body, form);
       (form as HTMLFormElement).submit();
@@ -247,14 +247,14 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       const resultadoJSON = JSON.parse(event.data);
       if (resultadoJSON.resultado === 0) {
         this.alertService.success('Firma capturada correctamente.', { autoClose: true });
-        
+
         // Guardar datos de firma
         this.firmaDigital = resultadoJSON.firma;
         this.folioFirma = resultadoJSON.folio;
         this.curpFirma = resultadoJSON.curp;
         this.certificado = resultadoJSON.certificado;
         this.acuse = resultadoJSON.acuse;
-        
+
         this.isFirmaModalVisible = false;
         // PROCEDER A GUARDAR EN BD
         this.enviarSolicitudFinalConFirma();
@@ -276,9 +276,9 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
   enviarSolicitudFinalConFirma(): void {
     if (!this.acuseParameters) return;
-    
+
     this.datosFormularioPrevio.vistaPrevia = "NO";
-    
+
     const datosParaEnviar = {
       ...this.datosFormularioPrevio,
       cadenaOriginal: this.cadenaOriginalFirmada,
@@ -302,12 +302,12 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
     this.alertService.info('Enviando solicitud final...', { autoClose: true });
 
     // LLAMADA AL SERVICIO PARA GUARDAR
-    this.contadorService.guardarModificacionDatos(plantillaDato).subscribe({ 
+    this.contadorService.guardarModificacionDatos(plantillaDato).subscribe({
       next: (response) => {
         if (response.codigo === 0) {
           this.alertService.success('Modificación realizada exitosamente.');
           this.firmaExitosa = true;
-          
+
           this.datosExitoAcuse = {
             folio: this.folioSolicitud,
             urlDocumento: response.urlDocumento,
@@ -315,9 +315,9 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
             rfc: this.rfcSesion,
             nombre: this.nombreCompletoSync
           };
-          
+
           this.modificacionDatosDataService.clearDatosFormularioPrevio();
-          
+
           if (response.urlDocumento) {
             this.obtenerYMostrarAcuseFinal(response.urlDocumento);
           }
@@ -334,8 +334,8 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
 
   obtenerYMostrarAcuseFinal(urlDocumento: string): void {
     this.loaderService.show();
-    this.acusePdfUrl = null; 
-    
+    this.acusePdfUrl = null;
+
     this.contadorService.getAcuseParaVisualizar(urlDocumento).subscribe({
       next: (response: HttpResponse<Blob>) => {
         this.loaderService.hide();
@@ -356,8 +356,8 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
   regresar(): void {
     this.router.navigate([NAV.contadormodificaciondatos]);
   }
-  
-  salir(): void {
+
+  salirDelTramite(): void {
      this.modificacionDatosDataService.clearDatosFormularioPrevio();
      this.router.navigate(['/home']);
   }

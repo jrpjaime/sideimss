@@ -250,87 +250,9 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     }
 
 
+/*
 
-
-    // Implementación del método para el envío de correo
-    @Override
-    public Mono<String> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) { // Cambia el retorno a Mono<String> para el mensaje
-        logger.info("Preparando para enviar correo por acreditación/membresía para RFC: {}.", rfc);
-
-        return obtenerCorreoDeMediosContacto(rfc, jwtToken)
-            .flatMap(correoDestino -> {
-                if (correoDestino == null || correoDestino.isEmpty()) {
-                    logger.warn("No se pudo obtener un correo destino para el RFC: {}. Continuando sin enviar correo.", rfc);
-                    return Mono.just("No se encontró un correo electrónico para el RFC proporcionado. El guardado de la plantilla continuará."); // Mensaje para el controlador
-                }
-
-                logger.info("Correo destino obtenido para RFC {}: {}", rfc, correoDestino);
-
-                CorreoDto correoDto = new CorreoDto();
-                correoDto.setRemitente("tramites.cpa@imss.gob.mx");
-                correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); // Para: (mantienes tu override para testing)
-                correoDto.setAsunto("ES UNA PRUEBA NO RESPONDER Constancia de acreditación/membresía");
-
-                String cuerpoCorreoHtml = String.format(
-                        "<!DOCTYPE html>" +
-                        "<html>" +
-                        "<head><meta charset=\"UTF-8\"></head>" +
-                        "<body>" +
-                        "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
-                        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                        "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " +
-                        "Ley del Seguro Social y sus reglamentos y su constancia de ser integrante o miembro de un colegio o " +
-                        "asociación de profesionales de la contaduría pública, han sido recibidas." +
-                        "</p>" +
-                        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                        "<strong>Por lo anterior, se anexa al presente el respectivo acuse de recibo.</strong>" +
-                        "</p>" +
-                        "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                        "Asimismo, podrá dar seguimiento a su trámite en la siguiente liga: " +
-                        "<a href=\"http://agqa.imss.gob.mx/escritorio/web/publico\">" +
-                        "http://agqa.imss.gob.mx/escritorio/web/publico" +
-                        "</a>" +
-                        "</p>" +
-                        "<br>" +
-                        "<p style='font-size: 12px; color: #777;'>" +
-                        "Este es un correo automático. Por favor, no responda a esta dirección." +
-                        "</p>" +
-                        "</body>" +
-                        "</html>",
-                        nombreCompleto, rfc
-                    );
-                correoDto.setCuerpoCorreo(cuerpoCorreoHtml);
-
-                return webClient.post()
-                    .uri(urlSendCorreoElectronico)
-                    .bodyValue(correoDto)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, response -> {
-                        logger.error("Error HTTP {} al intentar enviar correo a {}.", response.statusCode(), correoDestino);
-                        return response.bodyToMono(String.class)
-                            .flatMap(errorBody -> Mono.error(new RuntimeException(
-                                "Fallo al enviar el correo: " + response.statusCode().value() + " - " + errorBody
-                            )));
-                    })
-                    .toBodilessEntity()
-                    .thenReturn("Correo enviado exitosamente.") // Si el envío es exitoso, devuelve este mensaje
-                    .onErrorResume(e -> {
-                        if (e instanceof WebClientResponseException) {
-                            WebClientResponseException we = (WebClientResponseException) e;
-                            logger.error("Fallo WebClient al enviar correo a {}: {} - {}. Continuando con el guardado de la plantilla.", correoDestino, we.getStatusCode(), we.getMessage());
-                        } else {
-                            logger.error("Fallo genérico al enviar correo a {}: {}. Continuando con el guardado de la plantilla.", correoDestino, e.getMessage());
-                        }
-                        return Mono.just("Error en el servicio de envío de correo. El guardado de la plantilla continuará."); // Mensaje para el controlador
-                    });
-            })
-            .onErrorResume(e -> { // Manejo de errores de obtenerCorreoDeMediosContacto
-                logger.warn("No se pudo obtener el correo para RFC {}: {}. Continuando sin enviar correo.", rfc, e.getMessage());
-                return Mono.just("No se pudo obtener un correo electrónico. El guardado de la plantilla continuará."); // Mensaje para el controlador
-            });
-    }
-
-    private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
+        private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
         logger.info("Llamando a mssideimss-catalogos para obtener medios de contacto para RFC: {}", rfc);
         String url = catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc;
         logger.info("conectando a : {}", url);
@@ -364,4 +286,145 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                 return Mono.just(""); // Devuelve un string vacío para indicar que no hay correo, pero no detiene la ejecución.
             });
     }
+ 
+*/
+
+
+    /**
+     * Método PRIVADO GENÉRICO que maneja toda la lógica de envío.
+     * Recibe el asunto y el fragmento de HTML específico.
+     */
+    private Mono<String> procesarEnvioCorreo(String rfc, String nombreCompleto, String jwtToken, String asunto, String contenidoHtmlEspecifico) {
+        logger.info("Iniciando proceso genérico de envío de correo para RFC: {}. Asunto: {}", rfc, asunto);
+
+        return obtenerCorreoDeMediosContacto(rfc, jwtToken)
+            .flatMap(correoDestino -> {
+                if (correoDestino == null || correoDestino.isEmpty()) {
+                    logger.warn("No se encontró correo para RFC: {}. Continuando.", rfc);
+                    return Mono.just("No se encontró un correo electrónico. El proceso continuará.");
+                }
+
+                logger.info("Enviando correo a: {}", correoDestino);
+
+                CorreoDto correoDto = new CorreoDto();
+                correoDto.setRemitente("tramites.cpa@imss.gob.mx");
+                // Para pruebas mantienes override, para prod usarías correoDestino
+                correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); 
+                correoDto.setAsunto(asunto);
+
+                // Construcción del HTML completo usando el fragmento específico
+                String cuerpoCorreoHtml = construirHtmlBase(nombreCompleto, rfc, contenidoHtmlEspecifico);
+                correoDto.setCuerpoCorreo(cuerpoCorreoHtml);
+
+                return webClient.post()
+                    .uri(urlSendCorreoElectronico)
+                    .bodyValue(correoDto)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, response -> {
+                        logger.error("Error HTTP {} al enviar correo a {}.", response.statusCode(), correoDestino);
+                        return response.bodyToMono(String.class)
+                            .flatMap(errorBody -> Mono.error(new RuntimeException(
+                                "Fallo envío correo: " + response.statusCode().value() + " - " + errorBody)));
+                    })
+                    .toBodilessEntity()
+                    .thenReturn("Correo enviado exitosamente.")
+                    .onErrorResume(e -> {
+                        String errorMsg = (e instanceof WebClientResponseException) 
+                            ? "Fallo WebClient: " + ((WebClientResponseException) e).getStatusCode()
+                            : "Fallo genérico: " + e.getMessage();
+                        logger.error("Error enviando correo a {}: {}. Continuando.", correoDestino, errorMsg);
+                        return Mono.just("Error en servicio de correo. El proceso continuará.");
+                    });
+            })
+            .onErrorResume(e -> {
+                logger.warn("Error al obtener medios de contacto para RFC {}: {}", rfc, e.getMessage());
+                return Mono.just("No se pudo obtener correo electrónico. El proceso continuará.");
+            });
+    }
+
+    /**
+     * Construye la estructura HTML común para todos los correos.
+     */
+    private String construirHtmlBase(String nombre, String rfc, String contenidoEspecifico) {
+        return String.format(
+            "<!DOCTYPE html>" +
+            "<html><head><meta charset=\"UTF-8\"></head><body>" +
+            "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
+            "%s" + // Aquí se inyecta el contenido variable
+            "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+            "<strong>Por lo anterior, se anexa al presente el respectivo acuse de recibo.</strong>" +
+            "</p>" +
+            "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+            "Asimismo, podrá dar seguimiento a su trámite en la siguiente liga: " +
+            "<a href=\"http://agqa.imss.gob.mx/escritorio/web/publico\">http://agqa.imss.gob.mx/escritorio/web/publico</a>" +
+            "</p><br>" +
+            "<p style='font-size: 12px; color: #777;'>" +
+            "Este es un correo automático. Por favor, no responda a esta dirección.</p>" +
+            "</body></html>",
+            nombre, rfc, contenidoEspecifico
+        );
+    }
+
+    // --- MÉTODOS PÚBLICOS REFRACTORIZADOS (Ahora son de una sola línea lógica) ---
+
+    @Override
+    public Mono<String> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) {
+        String contenido = "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+                "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " +
+                "Ley del Seguro Social y sus reglamentos y su constancia de ser integrante o miembro de un colegio o " +
+                "asociación de profesionales de la contaduría pública, han sido recibidas.</p>";
+        
+        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken, "Constancia de acreditación/membresía", contenido);
+    }
+
+    @Override
+    public Mono<String> enviarCorreoSolicitudBaja(String rfc, String nombreCompleto, String jwtToken) {
+        // Nota: Usé el texto estándar de baja, ajusta si el texto original era intencional
+        String contenido = "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
+                "Se le informa que su solicitud de baja en el registro de contadores públicos autorizados ha sido recibida.</p>";
+                
+        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "SOLICITUD DE BAJA", contenido);
+    }
+
+    @Override
+    public Mono<String> enviarCorreoModificacionDatosContacto(String rfc, String nombreCompleto, String jwtToken) {
+        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
+                           "<p><span class=\"label\">Datos modificados:</span> Datos personales.</p>";
+                           
+        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
+    }
+
+    @Override
+    public Mono<String> enviarCorreoModificacionDatosDespacho(String rfc, String nombreCompleto, String jwtToken) {
+        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
+                           "<p><span class=\"label\">Datos modificados:</span> Despacho.</p>";
+                           
+        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
+    }
+
+    @Override
+    public Mono<String> enviarCorreoModificacionDatosColegio(String rfc, String nombreCompleto, String jwtToken) {
+        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
+                           "<p><span class=\"label\">Datos modificados:</span> Colegio o asociación.</p>";
+                           
+        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken, "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
+    }
+
+    // Helper: Obtener Correo 
+    private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
+        String url = catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc;
+        return webClient.get().uri(url).header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken).retrieve()
+            .bodyToMono(MediosContactoContadoresResponseDto.class)
+            .map(response -> {
+                if (response != null && response.getMedios() != null) {
+                    for (MedioContactoContadoresDto medio : response.getMedios()) {
+                        if ("1".equalsIgnoreCase(medio.getTipoContacto())) return medio.getDesFormaContacto();
+                    }
+                }
+                return null;
+            })
+            .onErrorResume(e -> Mono.just(""));
+    }
 }
+ 
+

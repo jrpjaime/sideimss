@@ -254,7 +254,7 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
 
         if (rfcContador != null && rfcContador.startsWith("MOG")) {
             logger.info("Se encontró un colegio dummy para RFC: {}", rfcContador);
-            return new ColegioContadorDto("RFCCOLEGIO123", "Colegio Nacional de Contadores Públicos AC");
+            return new ColegioContadorDto("RME1210096M2", "ROKI MEXICO SA DE CV");
      
         } else {
             logger.warn("No se encontró un colegio simulado para RFC: {}", rfcContador);

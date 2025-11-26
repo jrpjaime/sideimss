@@ -18,7 +18,7 @@ public class SatServiceImpl implements SatService {
         // **MOCK DE DATOS**
         RfcColegioResponseDto response = new RfcColegioResponseDto();
         response.setRfc(rfcColegioRequestDto.getRfc());
-        response.setNombreRazonSocial("MOCK S.A. DE C.V.");
+        response.setNombreRazonSocial("ROKI MEXICO SA DE CV");
 
       
         logger.info("Respuesta MOCK para RFC {}: {}", rfcColegioRequestDto.getRfc(), response.getNombreRazonSocial());

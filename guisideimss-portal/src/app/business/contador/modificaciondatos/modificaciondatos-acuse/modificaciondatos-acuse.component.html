@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col-12">
             <h4 class="mb-3">Previsualización del documento</h4>
-            
+
             @if (loadingAcusePreview) {
                 <div class="alert alert-info d-flex align-items-center">
                     <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -34,20 +34,22 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-3">
-        <button class="btn btn-secondary" (click)="regresar()">Regresar</button>
-        <button class="btn btn-primary" (click)="iniciarProcesoFirma()" [disabled]="!acusePdfUrl || loadingAcusePreview">
-            Firmar y Enviar
-        </button>
+
+
+    <div class="pull-right">
+        <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" (click)="regresar()">Regresar</button>
+          <!-- El botón de enviar ahora inicia el proceso de firma -->
+          <button type="button" class="btn btn-primary" (click)="iniciarProcesoFirma()" [disabled]="!acusePdfUrl || loadingAcusePreview">
+            Enviar Solicitud
+          </button>
+        </div>
     </div>
 }
 
 <!-- PANTALLA DE ÉXITO (DESPUÉS DE FIRMAR) -->
 @if (firmaExitosa) {
-    <div class="alert alert-success mt-4">
-        <h5 class="alert-heading">La modificación de datos ha sido exitosa.</h5>
-        <p>El acuse ha sido enviado a su correo electrónico.</p>
-    </div>
+
 
     <!-- Muestra el PDF final firmado -->
     @if (mostrarAcuse && acusePdfUrl) {
@@ -57,6 +59,10 @@
         </div>
     }
 
+    <div class="alert alert-success mt-4">
+        <h5 class="alert-heading">La modificación de datos ha sido exitosa.</h5>
+        <p>El acuse ha sido enviado a su correo electrónico.</p>
+    </div>
     <div class="card mt-3">
         <div class="card-body">
             <div class="table-responsive">
@@ -82,8 +88,8 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-end mt-3">
-        <button class="btn btn-primary" (click)="salir()">Salir del Trámite</button>
+    <div class="pull-right mt-3">
+        <button type="button" class="btn btn-primary" (click)="salirDelTramite()">Salir del Trámite</button>
     </div>
 }
 

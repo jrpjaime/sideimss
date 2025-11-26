@@ -255,6 +255,7 @@ public class ContadoresRestController {
      * Incluye lógica para obtener el JWT, extraer RFC/nombre, generar sello digital y guardar la plantilla.
      * URL: POST /mssideimss-contadores/v1/solicitudBaja
      */
+    /*
     @PostMapping("/solicitudBaja")
     public ResponseEntity<AcreditacionMenbresiaResponseDto> solicitudBaja(@RequestBody PlantillaDatoDto plantillaDatoDto) {
         logger.info("Recibiendo datos para Solicitud de Baja:");
@@ -341,7 +342,7 @@ public class ContadoresRestController {
         logger.info("Operación de Solicitud de Baja realizada exitosamente.");
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
-
+*/
 
     /**
      * endpoint para consultar los datos del colegio de un contador.
@@ -375,6 +376,259 @@ public class ContadoresRestController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+
+
+    /**
+     * Endpoint para procesar la modificación de datos del contador.
+     * Genera el sello digital y guarda la plantilla con los nuevos datos.
+     * URL: POST /mssideimss-contadores/v1/guardarModificacionDatos
+     */
+    @PostMapping("/guardarModificacionDatos")
+    public ResponseEntity<AcreditacionMenbresiaResponseDto> guardarModificacionDatos(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Recibiendo solicitud para Guardar Modificación de Datos:");
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+ 
+        LocalDateTime fechaActual = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String fechaActualFormateada = fechaActual.format(formatter);
+
+        // Obtención del JWT Token y manejo de errores
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String jwtToken = null;
+        String rfc = null;
+        String nombreCompleto = null;
+        String tipoSolicitud = null;
+
+        if (authentication != null && authentication.getDetails() instanceof Map) {
+            Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+            jwtToken = (String) details.get("jwt");
+        }
+
+        if (jwtToken == null) {
+            logger.warn("No se pudo obtener el token JWT del SecurityContext.");
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("No se pudo obtener el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        try {
+            Claims claims = jwtUtilService.extractAllClaims(jwtToken);
+            rfc = (String) claims.get("rfc");
+            String nombre = (String) claims.get("nombre");
+            String primerApellido = (String) claims.get("primerApellido");   
+            String segundoApellido = (String) claims.get("segundoApellido");
+             tipoSolicitud = (String) claims.get("tipoSolicitud");
+            nombreCompleto = String.format("%s %s %s", nombre, primerApellido, segundoApellido != null ? segundoApellido : "").trim();
+            logger.info("RFC extraído del token JWT: {}", rfc);
+        } catch (Exception e) {
+            logger.error("Error al extraer datos (RFC/Nombre) del token JWT: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("Error al procesar el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+
+
+
+
+ 
+
+        
+
+        // Crear instancia de NdtPlantillaDato
+        NdtPlantillaDato ndtPlantillaDato = new NdtPlantillaDato();
+        ndtPlantillaDato.setDesRfc(rfc);
+        ndtPlantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+        ndtPlantillaDato.setDesPathVersion(plantillaDatoDto.getDesVersion());
+        ndtPlantillaDato.setDesDatos(plantillaDatoDto.getDatosJson());
+        ndtPlantillaDato.setDesTipoAcuse(plantillaDatoDto.getTipoAcuse().name());
+        ndtPlantillaDato.setFecRegistro(fechaActual);
+       
+        String urlDocumentoBase64 = null;
+        String urlDocumento = null;
+        String mensajeCorreo = "No se intentó enviar el correo."; // Mensaje por defecto
+
+        try {
+            // **1. INTENTO DE ENVÍO DE CORREO (no es bloqueante para el guardado):**
+            logger.info("Iniciando el intento de envío del correo de notificación: {}", tipoSolicitud);
+            // Utilizamos .block() aquí para esperar el resultado del Mono<String>
+            // El error si el correo no se envía no se propaga como una excepción aquí.
+
+            if (tipoSolicitud != null) {
+                switch (tipoSolicitud.trim()) {
+                    case "COLEGIO":
+                        mensajeCorreo = acreditacionMembresiaService.enviarCorreoModificacionDatosColegio(rfc, nombreCompleto, jwtToken).block();
+                        break;
+                    case "DESPACHO":
+                        mensajeCorreo = acreditacionMembresiaService.enviarCorreoModificacionDatosDespacho(rfc, nombreCompleto, jwtToken).block();
+                        break;
+                    case "CONTACTO":
+                        mensajeCorreo = acreditacionMembresiaService.enviarCorreoModificacionDatosContacto(rfc, nombreCompleto, jwtToken).block();
+                        break;
+                    default:
+                        logger.warn("Tipo de solicitud desconocido para envío de correo: {}", tipoSolicitud);
+                        break;
+                }
+            }
+            
+            logger.info("Resultado del intento de envío de correo: {}", mensajeCorreo);
+
+
+            // **2. GUARDADO DE INFORMACIÓN (Este sí debe ser exitoso):**
+           logger.info("Iniciando el proceso para obtener sello digital y guardar la plantilla.");
+            // Llama al nuevo método que se encarga de obtener el sello y luego guardar
+            NdtPlantillaDato plantillaGuardadaConSello = acreditacionMembresiaService.obtenerSelloYGuardarPlantilla(ndtPlantillaDato, jwtToken).block();
+            urlDocumento = rfc + "|" + plantillaGuardadaConSello.getCveIdPlantillaDato().toString();
+            urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
+            logger.info("Plantilla de datos guardada exitosamente con ID y sello: {}", plantillaGuardadaConSello.getCveIdPlantillaDato());
+
+        } catch (Exception e) {
+            // Si el guardado falla, entonces sí devolvemos un error 500
+            logger.error("Fallo durante el guardado de datos: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorDto.setMensaje("Error al guardar la plantilla de datos. Por favor, intente más tarde.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
+        responseDto.setFechaActual(fechaActualFormateada);
+        responseDto.setCodigo(0);
+        // Puedes combinar el mensaje del correo con el de éxito de la operación principal
+        responseDto.setMensaje("Operación realizada exitosamente. " + mensajeCorreo);
+        responseDto.setUrlDocumento(urlDocumentoBase64);
+        logger.info("Operación realizada exitosamente.");
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
+
+
+
+
+
+
+    /**
+     * Endpoint para procesar la solicitud de baja de un contador público.
+     * Incluye lógica para obtener el JWT, extraer RFC/nombre, generar sello digital y guardar la plantilla.
+     * URL: POST /mssideimss-contadores/v1/solicitudBaja
+     */
+    @PostMapping("/solicitudBaja")
+    public ResponseEntity<AcreditacionMenbresiaResponseDto> solicitudBaja(@RequestBody PlantillaDatoDto plantillaDatoDto) {
+        logger.info("Recibiendo solicitud para Guardar Modificación de Datos:");
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        logger.info("plantillaDatoDto.getDatosJson():" + plantillaDatoDto.getDatosJson());
+        logger.info(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+ 
+        LocalDateTime fechaActual = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        String fechaActualFormateada = fechaActual.format(formatter);
+
+        // Obtención del JWT Token y manejo de errores
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String jwtToken = null;
+        String rfc = null;
+        String nombreCompleto = null;
+
+        if (authentication != null && authentication.getDetails() instanceof Map) {
+            Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
+            jwtToken = (String) details.get("jwt");
+        }
+
+        if (jwtToken == null) {
+            logger.warn("No se pudo obtener el token JWT del SecurityContext.");
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("No se pudo obtener el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        try {
+            Claims claims = jwtUtilService.extractAllClaims(jwtToken);
+            rfc = (String) claims.get("rfc");
+            String nombre = (String) claims.get("nombre");
+            String primerApellido = (String) claims.get("primerApellido");   
+            String segundoApellido = (String) claims.get("segundoApellido");
+            nombreCompleto = String.format("%s %s %s", nombre, primerApellido, segundoApellido != null ? segundoApellido : "").trim();
+            logger.info("RFC extraído del token JWT: {}", rfc);
+        } catch (Exception e) {
+            logger.error("Error al extraer datos (RFC/Nombre) del token JWT: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(500);
+            errorDto.setMensaje("Error al procesar el token de seguridad.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+
+
+
+
+ 
+
+        
+
+        // Crear instancia de NdtPlantillaDato
+        NdtPlantillaDato ndtPlantillaDato = new NdtPlantillaDato();
+        ndtPlantillaDato.setDesRfc(rfc);
+        ndtPlantillaDato.setNomDocumento(plantillaDatoDto.getNomDocumento());
+        ndtPlantillaDato.setDesPathVersion(plantillaDatoDto.getDesVersion());
+        ndtPlantillaDato.setDesDatos(plantillaDatoDto.getDatosJson());
+        ndtPlantillaDato.setDesTipoAcuse(plantillaDatoDto.getTipoAcuse().name());
+        ndtPlantillaDato.setFecRegistro(fechaActual);
+       
+        String urlDocumentoBase64 = null;
+        String urlDocumento = null;
+        String mensajeCorreo = "No se intentó enviar el correo."; // Mensaje por defecto
+
+        try {
+            // **1. INTENTO DE ENVÍO DE CORREO (no es bloqueante para el guardado):**
+            logger.info("Iniciando el intento de envío del correo de notificación.");
+            // Utilizamos .block() aquí para esperar el resultado del Mono<String>
+            // El error si el correo no se envía no se propaga como una excepción aquí.
+            mensajeCorreo = acreditacionMembresiaService.enviarCorreoSolicitudBaja(rfc, nombreCompleto, jwtToken).block();
+            logger.info("Resultado del intento de envío de correo: {}", mensajeCorreo);
+
+            // **2. GUARDADO DE INFORMACIÓN (Este sí debe ser exitoso):**
+           logger.info("Iniciando el proceso para obtener sello digital y guardar la plantilla.");
+            // Llama al nuevo método que se encarga de obtener el sello y luego guardar
+            NdtPlantillaDato plantillaGuardadaConSello = acreditacionMembresiaService.obtenerSelloYGuardarPlantilla(ndtPlantillaDato, jwtToken).block();
+            urlDocumento = rfc + "|" + plantillaGuardadaConSello.getCveIdPlantillaDato().toString();
+            urlDocumentoBase64 = Base64.getEncoder().encodeToString(urlDocumento.getBytes("UTF-8"));
+            logger.info("Plantilla de datos guardada exitosamente con ID y sello: {}", plantillaGuardadaConSello.getCveIdPlantillaDato());
+
+        } catch (Exception e) {
+            // Si el guardado falla, entonces sí devolvemos un error 500
+            logger.error("Fallo durante el guardado de datos: {}", e.getMessage(), e);
+            AcreditacionMenbresiaResponseDto errorDto = new AcreditacionMenbresiaResponseDto();
+            errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorDto.setMensaje("Error al guardar la plantilla de datos. Por favor, intente más tarde.");
+            errorDto.setFechaActual(fechaActualFormateada);
+            return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        AcreditacionMenbresiaResponseDto responseDto = new AcreditacionMenbresiaResponseDto();
+        responseDto.setFechaActual(fechaActualFormateada);
+        responseDto.setCodigo(0);
+        // Puedes combinar el mensaje del correo con el de éxito de la operación principal
+        responseDto.setMensaje("Operación realizada exitosamente. " + mensajeCorreo);
+        responseDto.setUrlDocumento(urlDocumentoBase64);
+        logger.info("Operación realizada exitosamente.");
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+
+
+
+
 
 
 }

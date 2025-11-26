@@ -321,8 +321,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
     // Esperar a que el iframe se cargue y esté disponible en el DOM
     // Esto es crucial si el iframe se añade dinámicamente o si el modal tarda en renderizarse.
     setTimeout(() => {
-        // Asegúrate de que el iframe ya exista en el DOM.
-        // Podrías tener un iframe en tu HTML con name="formFirmaDigital"
+
+
         const iframeElement = document.querySelector(`iframe[name="${iframeName}"]`) as HTMLIFrameElement;
         if (!iframeElement) {
             console.error('El iframe con nombre "formFirmaDigital" no se encontró en el DOM.');
@@ -439,9 +439,9 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       const plantillaDato: PlantillaDatoDto = {
         nomDocumento: this.acuseParameters['nomDocumento'],
         desVersion: this.acuseParameters['desVersion'],
-        cveIdPlantillaDatos: null, // O el valor que corresponda si lo tienes
+        cveIdPlantillaDatos: null,
         datosJson: datosJsonString, // Asignar la cadena JSON aquí
-        tipoAcuse: 'ACREDITACION_MEMBRESIA' // Asegúrate de usar el valor correcto para TipoAcuse
+        tipoAcuse: 'ACREDITACION_MEMBRESIA'
       };
 
       this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });

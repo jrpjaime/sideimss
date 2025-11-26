@@ -39,21 +39,26 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
       // Expresión regular para validar formato de correo estándar
   private emailPattern: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+  docMemSi: string | null = null;
+  docMemNo: string | null = null;
 
   tiposDatosContador: TipoDatoContadorDto[] = [];
   selectedTipoDato: string = '';
   folioSolicitud: string | null = null;
   loadingFolio: boolean = false;
 
-   
+
   colegioContador: ColegioContadorDto | null = null;
   loadingColegio: boolean = false;
-  mostrarSeccionColegio: boolean = false;  
+  mostrarSeccionColegio: boolean = false;
 
   habilitarEdicionRfcColegio: boolean = false;
-  nuevoRfcColegio: string = ''; 
+  nuevoRfcColegio: string = '';
   rfcColegioValido: boolean = true;
 
+  rfcColegioOriginal: string | null = null;
+  razonSocialOriginal: string | null = null;
+  busquedaColegioRealizada: boolean = false;
 
   selectedFileConstancia: File | null = null;
   fileConstanciaUploadSuccess: boolean = false;
@@ -65,7 +70,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
 
 
 
-  
+
   // --- PROPIEDADES para la sección de DESPACHO ---
   mostrarSeccionDespacho: boolean = false; // Controla la visibilidad de toda la sección del despacho
   deseaActualizarDespacho: boolean | null = null; // null: no ha respondido, true/false: sí/no desea actualizar
@@ -108,15 +113,23 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   nuevacedulaprofesional: string = '';
 
 
+
+  originalTipoSociedad: string | null = null;
+  originalRfcDespacho: string | null = null;
+  originalCargoDesempena: string | null = null;
+  originalTelefonoFijo: string | null = null;
+  originalNombreDespacho: string | null = null;
+
+
   constructor(
     private catalogosContadorService: CatalogosContadorService,
     private alertService: AlertService,
     private contadorPublicoAutorizadoService: ContadorPublicoAutorizadoService,
-    private router: Router, 
-    private modalService: ModalService, 
+    private router: Router,
+    private modalService: ModalService,
     private acreditacionMembresiaService: AcreditacionMembresiaService,
     private loaderService: LoaderService,
-    private modificacionDatosDataService: ModificacionDatosDataService,  
+    private modificacionDatosDataService: ModificacionDatosDataService,
     private datePipe: DatePipe,
     sharedService: SharedService
   )  {
@@ -138,9 +151,9 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
 
 
 
-  cargarTiposDatosContador(): void { 
+  cargarTiposDatosContador(): void {
     this.catalogosContadorService.getTiposDatosContador().subscribe({
-      next: (data: TipoDatoContadorDto[]) => {  
+      next: (data: TipoDatoContadorDto[]) => {
         this.tiposDatosContador = data;
         console.log('Tipos de datos de contador cargados:', this.tiposDatosContador);
       },
@@ -179,7 +192,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
       this.consultarDatosColegio();
     } else if (this.selectedTipoDato === '2') { // Datos del Despacho
       this.mostrarSeccionDespacho = true;
-      this.consultarDatosDespacho();  
+      this.consultarDatosDespacho();
     }
   }
 
@@ -219,6 +232,10 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
       .subscribe({
         next: (data: ColegioContadorDto) => {
           this.colegioContador = data;
+
+          // GUARDAMOS LA REFERENCIA ORIGINAL ---
+          this.rfcColegioOriginal = data.rfcColegio;
+          this.razonSocialOriginal = data.razonSocial;
           console.log('Datos del colegio obtenidos:', this.colegioContador);
         },
         error: (error: HttpErrorResponse) => {
@@ -238,7 +255,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   cancelarEdicionColegio(): void {
     // 1. Verificamos si hay un archivo cargado en el servidor (tiene path HDFS)
     if (this.fileConstanciaHdfsPath) {
-      
+
       // Opcional: Avisar al usuario que se está limpiando
       // this.alertService.info('Eliminando archivo adjunto y cancelando...', { autoClose: true });
 
@@ -249,7 +266,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
         },
         error: (error) => {
           console.error('Error al eliminar el archivo al cancelar:', error);
-          // Aunque falle la eliminación (ej. error de red), 
+          // Aunque falle la eliminación (ej. error de red),
           // permitimos al usuario salir para no bloquear la navegación.
           this.resetearVariablesYSalir();
         }
@@ -266,7 +283,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   private resetearVariablesYSalir(): void {
     this.habilitarEdicionRfcColegio = false;
     this.limpiarNuevoRfcColegio();
-    
+
     // Limpiar variables del archivo
     this.fileConstanciaUploadSuccess = false;
     this.fileConstanciaHdfsPath = null;
@@ -283,17 +300,24 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.router.navigate(['/home']);
   }
 
- 
 
 
 
-  
-  
+
+
+
   respuestaActualizarColegio(respuesta: boolean): void {
     if (respuesta) {
       this.habilitarEdicionRfcColegio = true;
       // Precarga el RFC actual del colegio en el campo de edición
       this.nuevoRfcColegio = this.colegioContador?.rfcColegio || '';
+
+      // 2. AL INICIAR EDICIÓN, RESETEAMOS LA BANDERA
+      // Si el RFC precargado ya es válido, podríamos ponerlo en true,
+      // pero como la regla es "clic en Buscar", lo dejamos en false para obligar la búsqueda.
+      this.busquedaColegioRealizada = false;
+
+
     } else {
       this.habilitarEdicionRfcColegio = false;
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
@@ -318,6 +342,7 @@ buscarNuevoColegio(): void {
     console.log('Buscando colegio con nuevo RFC:', this.nuevoRfcColegio);
 
     this.loadingColegio = true;
+    this.busquedaColegioRealizada = false;
     const request: RfcColegioRequestDto = { rfcColegio: this.nuevoRfcColegio };
 
     this.catalogosContadorService.getDatoRfcColegio(request)
@@ -330,7 +355,7 @@ buscarNuevoColegio(): void {
             // Otros campos de ColegioContadorDto se pueden inicializar aquí si es necesario
           };
           this.alertService.success('Datos del nuevo colegio cargados exitosamente.');
-          console.log('Datos del nuevo colegio obtenidos:', this.colegioContador);
+          this.busquedaColegioRealizada = true;
         },
         error: (error: HttpErrorResponse) => {
           console.error('Error al obtener los datos del nuevo colegio:', error);
@@ -340,13 +365,15 @@ buscarNuevoColegio(): void {
             this.alertService.error('Error al consultar los datos del nuevo colegio. Inténtalo de nuevo más tarde.');
           }
           this.colegioContador = null;
+          this.busquedaColegioRealizada = false;
         }
       });
   }
 
   limpiarNuevoRfcColegio(): void {
     this.nuevoRfcColegio = '';
-    this.rfcColegioValido = true;  
+    this.rfcColegioValido = true;
+     this.busquedaColegioRealizada = false;
     if (this.colegioContador) {
       this.colegioContador.razonSocial = '';
       this.colegioContador.rfcColegio = '';
@@ -722,6 +749,14 @@ buscarNuevoColegio(): void {
         this.selectedCargoDesempena = this.despachoContador.cveIdCargoContador;
         this.telefonoFijoDespacho = this.despachoContador.telefonoFijo;
 
+
+        // GUARDAMOS LOS ORIGINALES ---
+        this.originalTipoSociedad = this.despachoContador.cveIdTipoSociedad;
+        this.originalRfcDespacho = this.despachoContador.rfcDespacho;
+        this.originalCargoDesempena = this.despachoContador.cveIdCargoContador;
+        this.originalTelefonoFijo = this.despachoContador.telefonoFijo;
+        this.originalNombreDespacho = this.despachoContador.nombreRazonSocial;
+
       } else {
         this.despachoContador = null; // No se encontraron datos
         this.alertService.info('No se encontraron datos de despacho asociados a su RFC.', { autoClose: false });
@@ -732,6 +767,15 @@ buscarNuevoColegio(): void {
           cveIdCargoContador: '', desCargoContador: '',
           telefonoFijo: ''
         };
+
+
+        this.originalTipoSociedad = '';
+        this.originalRfcDespacho = '';
+        this.originalCargoDesempena = '';
+        this.originalTelefonoFijo = '';
+        this.originalNombreDespacho = '';
+
+
         // Y precargamos con "Profesional Independiente" como valor por defecto si no hay despacho
         this.selectedTipoSociedad = '2'; // ID para Profesional Independiente
         const tipoIndependiente = this.tiposSociedad.find(t => t.cveIdTipoSociedad === '2');
@@ -842,9 +886,9 @@ buscarNuevoColegio(): void {
 
 
   cargarDatosContador(): void {
-    // Si llegamos aquí, folioSolicitud ya debería estar inicializado por generarFolioSolicitud()
+
     if (!this.folioSolicitud) {
-      // Esto solo debería pasar si hubo un error en generarFolioSolicitud, pero es una buena salvaguarda
+      // Esto solo debería pasar si hubo un error en generarFolioSolicitud
       this.error = 'No se pudo obtener un folio de solicitud. Intente de nuevo.';
       this.loading = false;
       this.loaderService.hide();
@@ -856,9 +900,7 @@ buscarNuevoColegio(): void {
     this.error = null;
     this.contadorPublicoAutorizadoService.getDatosContador().subscribe({
       next: (data) => {
-        // Asegúrate de que `data` no sobrescriba el folio si ya lo tiene.
-        // Pero idealmente, la API debería devolver los datos del contador sin el folio
-        // y nosotros lo adjuntamos.
+
         this.datosContadorData = { ...data, folioSolicitud: this.folioSolicitud!  }; // Aquí usamos el operador !
         this.loading = false;
         this.loaderService.hide();
@@ -877,7 +919,7 @@ buscarNuevoColegio(): void {
 
 
 
-  
+
 
   // --- MÉTODOS para la sección de CONTACTO ---
 
@@ -907,10 +949,10 @@ buscarNuevoColegio(): void {
     }
 
     if (respuesta) { // Si el usuario dice "Si" (abre la actualización)
-      this.precargarDatosContacto(); 
-      
+      this.precargarDatosContacto();
+
     } else {
-      // Si el usuario confirma que los datos no son correctos, 
+      // Si el usuario confirma que los datos no son correctos,
       // Limpiamos los campos del formulario de edición en caso de que hubieran sido editados y luego el usuario cambió de opinión.
       this.limpiarCamposEdicionContacto();
       //this.alertService.success('Datos de contacto confirmados como correctos.', { autoClose: true });
@@ -961,7 +1003,7 @@ buscarNuevoColegio(): void {
       this.confirmarCorreoElectronico3 = this.datosContadorData.datosContactoDto.correoElectronico3 || ''; // Revertir confirmación también
       this.nuevoTelefono2 = this.datosContadorData.datosContactoDto.telefono2 || '';
       this.nuevacedulaprofesional = this.datosContadorData.datosContactoDto.cedulaprofesional || '';
-      
+
     }
   }
 
@@ -1015,12 +1057,13 @@ buscarNuevoColegio(): void {
 
 
 
- /**
+/**
    * 1. GUARDAR DATOS COLEGIO
    */
   guardarDatosColegio(): void {
     this.formSubmitted = true;
 
+    // 1. Validaciones previas
     if (!this.habilitarEdicionRfcColegio) return;
 
     if (!this.nuevoRfcColegio || !this.rfcColegioValido) {
@@ -1033,33 +1076,66 @@ buscarNuevoColegio(): void {
       return;
     }
 
-     const datosBase = this.obtenerDatosBaseParaAcuse();
+    // 2. Construcción de la cadena de modificaciones
+    let cambios: string[] = [];
 
-    // Preparar datos para el Acuse
+    // Función auxiliar para limpiar espacios y comparar sin importar mayúsculas/minúsculas
+    const normalizar = (val: string | null | undefined) => (val || '').trim().toUpperCase();
+
+    // --- LÓGICA DE COMPARACIÓN (Solo agrega si son diferentes al original) ---
+
+    // Comparamos el RFC escrito (nuevo) vs el original guardado al inicio
+    if (normalizar(this.nuevoRfcColegio) !== normalizar(this.rfcColegioOriginal)) {
+        cambios.push(`RFC del colegio: ${this.nuevoRfcColegio}`);
+    }
+
+    // Comparamos la Razón Social del objeto actual (que pudo cambiar con "Buscar") vs la original
+    if (this.colegioContador && normalizar(this.colegioContador.razonSocial) !== normalizar(this.razonSocialOriginal)) {
+        cambios.push(`Razón social del colegio: ${this.colegioContador.razonSocial}`);
+    }
+
+    // El archivo siempre se cuenta como cambio si se subió uno nuevo (ya validado arriba)
+   if (this.selectedFileConstancia?.name) {
+        //cambios.push(`Constancia adjunta: ${this.selectedFileConstancia.name}`);
+        cambios.push(` `);
+    }
+
+    // 3. Validación de "Sin modificaciones"
+    if (cambios.length === 0) {
+        this.alertService.info("Sin modificaciones realizadas.");
+        return;
+    }
+
+    // 4. Preparación de datos para el Acuse
+    const nuevosDatosContactoString = cambios.join("\n");
+    const datosBase = this.obtenerDatosBaseParaAcuse();
+
+    this.docMemSi = "X";
+
     const datosParaAcuse = {
       ...datosBase,
-    
-       
-      
-      // Datos específicos del cambio
-      tipoSolicitud: 'COLEGIO', // Identificador interno para saber qué se cambió
+      docMemSi: this.docMemSi,
+
+      datosContacto: nuevosDatosContactoString,
+      domicilioFiscal: "",
+
+      tipoSolicitud: 'COLEGIO',
+
+      // Enviamos el nuevo RFC y la Razón Social actual (sea nueva o vieja, es la vigente para el trámite)
       rfcColegioNuevo: this.nuevoRfcColegio,
       razonSocialColegio: this.colegioContador?.razonSocial,
-      
-      // Datos del archivo
+
       desPathHdfsConstancia: this.fileConstanciaHdfsPath,
       nomArchivoConstancia: this.selectedFileConstancia?.name,
-      
-      // Identificador de la plantilla en BD (Debe coincidir con lo que espera el backend)
-      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO' 
+
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };
 
-    // Guardar en el servicio y navegar
+    // 5. Guardar y Navegar
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
-    console.log("la siguiente linea es: this.router.navigate([NAV.contadormodificaciondatosacuse]);  ");
-    this.router.navigate([NAV.contadormodificaciondatosacuse]); 
-    
+    this.router.navigate([NAV.contadormodificaciondatosacuse]);
   }
+
 
   /**
    * 2. GUARDAR DATOS DESPACHO
@@ -1067,32 +1143,70 @@ buscarNuevoColegio(): void {
   guardarDatosDespacho(): void {
     this.formSubmitted = true;
 
+    // 1. Validaciones
     if (!this.selectedTipoSociedad || !this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
        this.alertService.error('Verifique los campos obligatorios del despacho.');
        return;
     }
 
+    // 2. Detección de Cambios
+    let cambios: string[] = [];
+    const normalizar = (val: string | null | undefined) => (val || '').trim().toUpperCase();
 
-      const datosBase = this.obtenerDatosBaseParaAcuse();
+    // -- Comparar Tipo de Sociedad
+    if (normalizar(this.selectedTipoSociedad) !== normalizar(this.originalTipoSociedad)) {
+        const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
+        cambios.push(`Tipo de sociedad: ${nombreSociedad}`);
+    }
 
-  // Construir string de despacho
-  // El XML tiene: <field name="datosDespacho" class="java.lang.String"/>
-  const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
-  const nombreCargo = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
+    // -- Comparar RFC (y Razón Social si cambia el RFC)
+    if (normalizar(this.nuevoRfcDespacho) !== normalizar(this.originalRfcDespacho)) {
+        cambios.push(`RFC Despacho: ${this.nuevoRfcDespacho}`);
 
-  const datosDespachoString = `Despacho: ${this.despachoContador?.nombreRazonSocial || ''} (${this.nuevoRfcDespacho}). Tipo: ${nombreSociedad}. Cargo: ${nombreCargo}. Tel: ${this.telefonoFijoDespacho}`;
+        // Si cambió el RFC, seguramente cambió la razón social tras buscar
+        if (this.despachoContador?.nombreRazonSocial) {
+             cambios.push(`Despacho: ${this.despachoContador.nombreRazonSocial}`);
+        }
+    }
+    // Caso borde: El RFC es el mismo pero cambió la razón social (raro, pero posible si el servicio actualiza datos)
+    else if (normalizar(this.despachoContador?.nombreRazonSocial) !== normalizar(this.originalNombreDespacho)) {
+         cambios.push(`Despacho: ${this.despachoContador?.nombreRazonSocial}`);
+    }
+
+    // -- Comparar Cargo
+    if (normalizar(this.selectedCargoDesempena) !== normalizar(this.originalCargoDesempena)) {
+        const nombreCargo = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
+        cambios.push(`Cargo: ${nombreCargo}`);
+    }
+
+    // -- Comparar Teléfono
+    if (normalizar(this.telefonoFijoDespacho) !== normalizar(this.originalTelefonoFijo)) {
+        cambios.push(`Teléfono despacho: ${this.telefonoFijoDespacho}`);
+    }
+
+    // 3. Verificar si hubo modificaciones
+    if (cambios.length === 0) {
+        this.alertService.info("Sin modificaciones realizadas.");
+        return;
+    }
+
+    // 4. Preparar datos para el Acuse
+    const datosDespachoString = cambios.join("\n");
+    const datosBase = this.obtenerDatosBaseParaAcuse();
+
+    this.docMemNo = "X";
 
     const datosParaAcuse = {
-          ...datosBase,
-    
-    // Enviamos el string formateado
-    datosDespacho: datosDespachoString,
-    
-    // Enviamos datos sueltos por si acaso la lógica cambia
-    razonSocialDespacho: this.despachoContador?.nombreRazonSocial, 
+      ...datosBase,
+      docMemNo: this.docMemNo,
 
-    tipoSolicitud: 'DESPACHO',
+      // Enviamos solo la lista de cambios formateada
+      datosContacto: datosDespachoString,
+      domicilioFiscal: "",
 
+      // Datos sueltos por si el backend los requiere individualmente
+      razonSocialDespacho: this.despachoContador?.nombreRazonSocial,
+      tipoSolicitud: 'DESPACHO',
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };
 
@@ -1106,45 +1220,83 @@ buscarNuevoColegio(): void {
   guardarDatosContacto(): void {
     this.formSubmitted = true;
 
-    // ... (Tus validaciones existentes de correo y teléfono) ...
+    // 1. Validaciones de campos obligatorios
     if (!this.nuevoCorreoElectronico2 || !this.nuevoTelefono2) {
-       // Validaciones visuales ya manejan el error, aquí solo retornamos
        return;
     }
 
-      const datosBase = this.obtenerDatosBaseParaAcuse();
+    // 2. Validaciones de formato (si no se hicieron en el HTML)
+    if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2) ||
+        (this.nuevoCorreoElectronico3 && !this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) ||
+        !this.validarFormatoTelefono(this.nuevoTelefono2)) {
+        return;
+    }
 
-  // CONSTRUIR EL STRING DE DATOS DE CONTACTO NUEVOS
-  // El reporte imprimirá lo que venga en la variable 'datosContacto'
-  const nuevosDatosContactoString = `Correo: ${this.nuevoCorreoElectronico2} / ${this.nuevoCorreoElectronico3}. Tel: ${this.nuevoTelefono2}. Cédula: ${this.nuevacedulaprofesional}`;
+    // Obtenemos los datos originales para comparar
+    const original = this.datosContadorData?.datosContactoDto;
+    let cambios: string[] = [];
 
+    // Función auxiliar para normalizar cadenas (evita falsos positivos por espacios o nulos)
+    const normalizar = (valor: string | null | undefined) => (valor || '').trim();
+
+    // --- LÓGICA DE COMPARACIÓN ---
+
+    // 1. Correo 2
+    if (normalizar(this.nuevoCorreoElectronico2) !== normalizar(original?.correoElectronico2)) {
+        cambios.push(`Correo electrónico 2: ${this.nuevoCorreoElectronico2}`);
+    }
+
+    // 2. Correo 3
+    if (normalizar(this.nuevoCorreoElectronico3) !== normalizar(original?.correoElectronico3)) {
+         // Si se dejó vacío a propósito o se cambió
+         const valorMostrar = this.nuevoCorreoElectronico3 ? this.nuevoCorreoElectronico3 : '(Eliminado)';
+         cambios.push(`Correo electrónico 3: ${valorMostrar}`);
+    }
+
+    // 3. Teléfono
+    if (normalizar(this.nuevoTelefono2) !== normalizar(original?.telefono2)) {
+        cambios.push(`Teléfono de contacto: ${this.nuevoTelefono2}`);
+    }
+
+    // 4. Cédula
+    if (normalizar(this.nuevacedulaprofesional) !== normalizar(original?.cedulaprofesional)) {
+        cambios.push(`Cédula profesional: ${this.nuevacedulaprofesional}`);
+    }
+
+
+    // --- VALIDACIÓN DE CAMBIOS ---
+
+    // Si NO hay cambios, mostramos mensaje y detenemos el proceso
+    if (cambios.length === 0) {
+        this.alertService.info("Sin modificaciones realizadas.");
+        return; // <--- ESTO DETIENE LA EJECUCIÓN Y MANTIENE AL USUARIO EN LA PANTALLA
+    }
+
+
+    // --- CONTINUAR SOLO SI HUBO CAMBIOS ---
+
+    const nuevosDatosContactoString =   cambios.join("\n");
+    const datosBase = this.obtenerDatosBaseParaAcuse();
+
+    this.docMemNo = "X";
 
     const datosParaAcuse = {
-       ...datosBase,
-    
-    // Sobreescribimos la variable con el texto formateado nuevo
-    datosContacto: nuevosDatosContactoString,
-
-    // Identificador para el reporte
-    tipoSolicitud: 'CONTACTO',
-
+      ...datosBase,
+      docMemNo: this.docMemNo,
+      domicilioFiscal:"",
+      datosContacto: nuevosDatosContactoString, // Enviamos solo lo modificado
+      tipoSolicitud: 'CONTACTO',
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };
 
-
-
-   
-
-
-    this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse); 
+    this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
     this.router.navigate([NAV.contadormodificaciondatosacuse]);
   }
 
 
-
 private obtenerDatosBaseParaAcuse() {
   const fechaActual = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
-  
+
   // 1. Formatear Domicilio Fiscal a un solo String
   const d = this.datosContadorData?.domicilioFiscalDto;
   let domicilioString = '';
@@ -1164,9 +1316,9 @@ private obtenerDatosBaseParaAcuse() {
 
   return {
     folioSolicitud: this.folioSolicitud,
-    folio: this.folioSolicitud, 
+    folio: this.folioSolicitud,
     fecha: fechaActual,
-    
+
     // --- CORRECCIÓN DE NOMBRES (Deben ser idénticos a los <field> del XML) ---
     rfc: this.rfcSesion,            // XML espera 'rfc' (minúscula)
     curp: this.curpSesion,          // XML espera 'curp' (minúscula)
