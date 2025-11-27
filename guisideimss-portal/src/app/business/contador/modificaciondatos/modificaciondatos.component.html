@@ -219,6 +219,8 @@
                 <!-- CONTENIDO DEL DESPACHO: Etiquetas (si no está en modo edición) o Campos Editables (si habilitarCamposDespacho es true) -->
                 @if (deseaActualizarDespacho === true) {
                     <!-- SECCIÓN DE EDICIÓN: CAMPOS HABILITADOS -->
+
+
                     <div class="card p-3 mb-3">
                         <div class="mb-3">
                             <label for="tipoSociedad" class="form-label">* ¿Forma parte de un despacho o es profesional independiente?</label>
@@ -235,65 +237,111 @@
                             }
                         </div>
 
-                        <div class="mb-3">
-                            <label for="rfcDespacho" class="form-label">* RFC:</label>
-                            <input type="text" id="rfcDespacho" class="form-control"
-                                [class.is-invalid]="!rfcDespachoValido && nuevoRfcDespacho"
-                                [(ngModel)]="nuevoRfcDespacho"
-                                [disabled]="!habilitarCamposDespacho"
-                                placeholder="Ingrese el RFC del despacho"
-                                maxlength="13">
-                            @if (!rfcDespachoValido && nuevoRfcDespacho) {
-                                <div class="invalid-feedback">
-                                    El formato del RFC no es válido.
+
+
+                        <!-- ===== OPCIÓN 1: PROFESIONAL INDEPENDIENTE (ID '2') ===== -->
+                        @if (selectedTipoSociedad === '2') {
+                            <div class="mb-3">
+                                <label for="tieneTrabajadores" class="form-label">* ¿Cuenta con trabajadores a su cargo?</label>
+                                <select id="tieneTrabajadores" class="form-control" 
+                                        [(ngModel)]="tieneTrabajadores"
+                                        [disabled]="!habilitarCamposDespacho">
+                                    <option value="">Elija Opción</option>
+                                    <option value="Si">Si</option>
+                                    <option value="No">No</option>
+                                </select>
+                                @if (formSubmitted && !tieneTrabajadores) {
+                                    <small class="text-danger">Debe indicar si tiene trabajadores.</small>
+                                }
+                            </div>
+
+                            @if (tieneTrabajadores === 'Si') {
+                                <div class="mb-3">
+                                    <label for="numeroTrabajadores" class="form-label">* Número de trabajadores:</label>
+                                    <input type="text" id="numeroTrabajadores" class="form-control"
+                                        [(ngModel)]="numeroTrabajadores"
+                                        (keypress)="permitirSoloNumeros($event)"
+                                        [disabled]="!habilitarCamposDespacho"
+                                        placeholder="Ingrese cantidad"
+                                        maxlength="5">
+                                    @if (formSubmitted && (!numeroTrabajadores || numeroTrabajadores == '0')) {
+                                        <small class="text-danger">Debe ingresar un número de trabajadores válido.</small>
+                                    }
                                 </div>
                             }
-                             @if (formSubmitted && (!nuevoRfcDespacho || !rfcDespachoValido)) {
-                                <small class="text-danger">El RFC es obligatorio y debe tener un formato válido.</small>
-                            }
-                        </div>
+                        }
 
-                        <div class="mb-3">
-                            <label class="form-label">Nombre, denominación o razón social:</label>
-                            <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
-                        </div>
 
-                        <div >
-                            <button type="button" class="btn btn-primary me-2"
-                                (click)="buscarDatosDespacho()"
-                                [disabled]="!habilitarCamposDespacho || !nuevoRfcDespacho || !rfcDespachoValido">Buscar</button>
-                            <button type="button" class="btn btn-secondary"
-                                (click)="limpiarDatosDespacho()"
-                                [disabled]="!habilitarCamposDespacho">Limpiar</button>
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="cargoDesempena" class="form-label">* Cargo que desempeña:</label>
-                            <select id="cargoDesempena" class="form-control"
-                                [(ngModel)]="selectedCargoDesempena"
-                                [disabled]="!habilitarCamposDespacho">
-                                <option value="">Seleccione</option>
-                                @for (cargo of cargosContador; track cargo.cveIdCargoContador) {
-                                    <option [value]="cargo.cveIdCargoContador">{{ cargo.desCargoContador }}</option>
-                                }
-                            </select>
-                            @if (formSubmitted && !selectedCargoDesempena) {
-                                <small class="text-danger">Este campo es obligatorio.</small>
-                            }
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
-                            <input type="text" id="telefonoFijo" class="form-control"
-                                [(ngModel)]="telefonoFijoDespacho"
-                                [disabled]="!habilitarCamposDespacho"
-                                placeholder="Ej. 5512345678"
-                                maxlength="10">
-                            @if (formSubmitted && (!telefonoFijoDespacho || telefonoFijoDespacho.length < 8)) {
-                                <small class="text-danger">El teléfono fijo es obligatorio y debe tener al menos 8 dígitos.</small>
-                            }
-                        </div>
+                        <!-- ===== OPCIÓN 2: DESPACHO (Cualquier otro ID, ej: '1') ===== -->
+                        @if (selectedTipoSociedad && selectedTipoSociedad !== '2') {
+                            
+                          <div class="mb-3">
+                              <label for="rfcDespacho" class="form-label">* RFC:</label>
+                              <input type="text" id="rfcDespacho" class="form-control"
+                                  [class.is-invalid]="!rfcDespachoValido && nuevoRfcDespacho"
+                                  [(ngModel)]="nuevoRfcDespacho"
+                                  [disabled]="!habilitarCamposDespacho"
+                                  placeholder="Ingrese el RFC del despacho"
+                                  maxlength="13">
+                              @if (!rfcDespachoValido && nuevoRfcDespacho) {
+                                  <div class="invalid-feedback">
+                                      El formato del RFC no es válido.
+                                  </div>
+                              }
+                              @if (formSubmitted && (!nuevoRfcDespacho || !rfcDespachoValido)) {
+                                  <small class="text-danger">El RFC es obligatorio y debe tener un formato válido.</small>
+                              }
+                          </div>
+
+                          <div class="mb-3">
+                              <label class="form-label">Nombre, denominación o razón social:</label>
+                              <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
+                          </div>
+
+                          <div >
+                              <button type="button" class="btn btn-primary me-2"
+                                  (click)="buscarDatosDespacho()"
+                                  [disabled]="!habilitarCamposDespacho || !nuevoRfcDespacho || !rfcDespachoValido">Buscar</button>
+                              <button type="button" class="btn btn-secondary"
+                                  (click)="limpiarDatosDespacho()"
+                                  [disabled]="!habilitarCamposDespacho">Limpiar</button>
+                          </div>
+
+                          <div class="mb-3">
+                              <label for="cargoDesempena" class="form-label">* Cargo que desempeña:</label>
+                              <select id="cargoDesempena" class="form-control"
+                                  [(ngModel)]="selectedCargoDesempena"
+                                  [disabled]="!habilitarCamposDespacho">
+                                  <option value="">Seleccione</option>
+                                  @for (cargo of cargosContador; track cargo.cveIdCargoContador) {
+                                      <option [value]="cargo.cveIdCargoContador">{{ cargo.desCargoContador }}</option>
+                                  }
+                              </select>
+                              @if (formSubmitted && !selectedCargoDesempena) {
+                                  <small class="text-danger">Este campo es obligatorio.</small>
+                              }
+                          </div>
+
+                          <div class="mb-3">
+                              <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
+                              <input type="text" id="telefonoFijo" class="form-control"
+                                  [(ngModel)]="telefonoFijoDespacho"
+                                  [disabled]="!habilitarCamposDespacho"
+                                  placeholder="Ej. 5512345678"
+                                  maxlength="10">
+                              @if (formSubmitted && (!telefonoFijoDespacho || telefonoFijoDespacho.length < 8)) {
+                                  <small class="text-danger">El teléfono fijo es obligatorio y debe tener al menos 8 dígitos.</small>
+                              }
+                          </div>
+                        }
+
                     </div>
+
+
+
+
 
                     <!-- Botones Guardar y Cancelar para la sección de Despacho (en modo edición) -->
                 <div class="pull-right">
@@ -310,26 +358,48 @@
                 } @else {
                     <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
                     <div class="card p-3 mb-3">
+                        
+                        <!-- 1. CAMPO COMÚN: TIPO DE SOCIEDAD -->
                         <div class="mb-3">
                             <label class="form-label">¿Forma parte de un despacho o es profesional independiente?</label>
                             <p><strong>{{ despachoContador.desTipoSociedad || 'N/A' }}</strong></p>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">RFC:</label>
-                            <p><strong>{{ despachoContador.rfcDespacho || 'N/A' }}</strong></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Nombre, denominación o razón social:</label>
-                            <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Cargo que desempeña:</label>
-                            <p><strong>{{ despachoContador.desCargoContador || 'N/A' }}</strong></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Teléfono fijo:</label>
-                            <p><strong>{{ despachoContador.telefonoFijo || 'N/A' }}</strong></p>
-                        </div>
+
+                        <!-- 2. SI ES INDEPENDIENTE (ID '2') -->
+                        @if (despachoContador.cveIdTipoSociedad === '2') {
+                            <div class="mb-3">
+                                <label class="form-label">¿Cuenta con trabajadores a su cargo?</label>
+                                <!-- Nota: Asegúrate de que tu DTO 'DespachoContadorDto' tenga la propiedad tieneTrabajadores -->
+                                <p><strong>{{ despachoContador.tieneTrabajadores || 'N/A' }}</strong></p>
+                            </div>
+
+                            @if (despachoContador.tieneTrabajadores === 'Si') {
+                                <div class="mb-3">
+                                    <label class="form-label">Número de trabajadores:</label>
+                                    <p><strong>{{ despachoContador.numeroTrabajadores || 'N/A' }}</strong></p>
+                                </div>
+                            }
+                        } 
+                        
+                        <!-- 3. SI ES DESPACHO (Cualquier otro ID) -->
+                        @else {
+                            <div class="mb-3">
+                                <label class="form-label">RFC:</label>
+                                <p><strong>{{ despachoContador.rfcDespacho || 'N/A' }}</strong></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre, denominación o razón social:</label>
+                                <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Cargo que desempeña:</label>
+                                <p><strong>{{ despachoContador.desCargoContador || 'N/A' }}</strong></p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Teléfono fijo:</label>
+                                <p><strong>{{ despachoContador.telefonoFijo || 'N/A' }}</strong></p>
+                            </div>
+                        }
                     </div>
                 }
             } @else if (despachoContador === null && !loadingDespacho && selectedTipoDato === '2') {

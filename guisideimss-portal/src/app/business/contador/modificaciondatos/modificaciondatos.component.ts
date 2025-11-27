@@ -120,6 +120,14 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   originalTelefonoFijo: string | null = null;
   originalNombreDespacho: string | null = null;
 
+  tieneTrabajadores: string = ''; // '' | 'Si' | 'No'
+  numeroTrabajadores: string = '';
+
+  // Originales para comparación
+  originalTieneTrabajadores: string | null = null;
+  originalNumeroTrabajadores: string | null = null;
+
+
 
   constructor(
     private catalogosContadorService: CatalogosContadorService,
@@ -734,20 +742,28 @@ buscarNuevoColegio(): void {
         this.despachoContador = {
           rfcDespacho: 'MOSB650818PB4',
           nombreRazonSocial: 'BEATRIZ MORENO SALINAS',
-          cveIdTipoSociedad: '1', // Despacho
-          desTipoSociedad: 'Despacho',
+
+          //cveIdTipoSociedad: '1', // Despacho 
+          //desTipoSociedad: 'Despacho',
+          cveIdTipoSociedad: '2', // Independiente 
+          desTipoSociedad: 'Independiente',
           cveIdCargoContador: '2', // Director
           desCargoContador: 'Director',
-          telefonoFijo: '5857564355'
+          telefonoFijo: '5857564355',
+          tieneTrabajadores: "No",
+          numeroTrabajadores:"100"
         };
         //this.alertService.success('Datos del despacho cargados exitosamente.', { autoClose: true });
 
         // IMPORTANTE: Inicializamos los campos de edición con los datos actuales
         // para que, si el usuario decide "Sí" actualizar, los campos ya estén pre-cargados.
-        this.selectedTipoSociedad = this.despachoContador.cveIdTipoSociedad;
+        this.selectedTipoSociedad = this.despachoContador.cveIdTipoSociedad; 
         this.nuevoRfcDespacho = this.despachoContador.rfcDespacho;
         this.selectedCargoDesempena = this.despachoContador.cveIdCargoContador;
         this.telefonoFijoDespacho = this.despachoContador.telefonoFijo;
+
+        this.tieneTrabajadores = '';
+        this.numeroTrabajadores = '';
 
 
         // GUARDAMOS LOS ORIGINALES ---
@@ -756,6 +772,9 @@ buscarNuevoColegio(): void {
         this.originalCargoDesempena = this.despachoContador.cveIdCargoContador;
         this.originalTelefonoFijo = this.despachoContador.telefonoFijo;
         this.originalNombreDespacho = this.despachoContador.nombreRazonSocial;
+
+        this.originalTieneTrabajadores = null; 
+        this.originalNumeroTrabajadores = null;
 
       } else {
         this.despachoContador = null; // No se encontraron datos
@@ -778,6 +797,13 @@ buscarNuevoColegio(): void {
 
         // Y precargamos con "Profesional Independiente" como valor por defecto si no hay despacho
         this.selectedTipoSociedad = '2'; // ID para Profesional Independiente
+        this.tieneTrabajadores = '';
+        this.numeroTrabajadores = '';
+
+        this.originalTipoSociedad = '';
+        this.originalTieneTrabajadores = '';
+        this.originalNumeroTrabajadores = '';
+
         const tipoIndependiente = this.tiposSociedad.find(t => t.cveIdTipoSociedad === '2');
         if (tipoIndependiente && this.despachoContador) {
             this.despachoContador.cveIdTipoSociedad = tipoIndependiente.cveIdTipoSociedad;
@@ -1143,6 +1169,7 @@ buscarNuevoColegio(): void {
   guardarDatosDespacho(): void {
     this.formSubmitted = true;
 
+    /*
     // 1. Validaciones
     if (!this.selectedTipoSociedad || !this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
        this.alertService.error('Verifique los campos obligatorios del despacho.');
@@ -1158,6 +1185,10 @@ buscarNuevoColegio(): void {
         const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
         cambios.push(`Tipo de sociedad: ${nombreSociedad}`);
     }
+
+
+
+
 
     // -- Comparar RFC (y Razón Social si cambia el RFC)
     if (normalizar(this.nuevoRfcDespacho) !== normalizar(this.originalRfcDespacho)) {
@@ -1184,6 +1215,91 @@ buscarNuevoColegio(): void {
         cambios.push(`Teléfono despacho: ${this.telefonoFijoDespacho}`);
     }
 
+*/
+
+    const isIndependiente = this.selectedTipoSociedad === '2'; // ID 2 = Independiente
+
+    // 1. Validaciones (Separadas por tipo)
+    if (!this.selectedTipoSociedad) {
+       this.alertService.error('Debe seleccionar si forma parte de un despacho o es independiente.');
+       return;
+    }
+
+    if (isIndependiente) {
+        // Validaciones para Independiente
+        if (!this.tieneTrabajadores) {
+             // Validar el primer select
+             return; 
+        }
+        if (this.tieneTrabajadores === 'Si' && (!this.numeroTrabajadores || parseInt(this.numeroTrabajadores) <= 0)) {
+             // Validar número si dijo que sí
+             return;
+        }
+    } else {
+        // Validaciones para Despacho (Tu lógica original)
+        if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
+           this.alertService.error('Verifique los campos obligatorios del despacho.');
+           return;
+        }
+    }
+
+    // 2. Detección de Cambios
+    let cambios: string[] = [];
+    const normalizar = (val: string | null | undefined) => (val || '').trim().toUpperCase();
+
+    // -- A. Comparar Tipo de Sociedad (Común)
+    if (normalizar(this.selectedTipoSociedad) !== normalizar(this.originalTipoSociedad)) {
+        const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
+        cambios.push(`Contador ${nombreSociedad}`);
+    }
+
+    // -- B. Ramificación de comparación según lo que seleccionó el usuario
+    if (isIndependiente) {
+        // --- LÓGICA INDEPENDIENTE ---
+        
+        // Comparar "Tiene Trabajadores"
+        // Nota: Si antes era Despacho, originalTieneTrabajadores será null, así que detectará cambio.
+       // if (normalizar(this.tieneTrabajadores) !== normalizar(this.originalTieneTrabajadores)) {
+       //     cambios.push(`Cuenta con trabajadores: ${this.tieneTrabajadores}`);
+      //  }
+
+        // Comparar "Número de Trabajadores" (Solo si tiene trabajadores)
+        if (this.tieneTrabajadores === 'Si') {
+             if (normalizar(this.numeroTrabajadores) !== normalizar(this.originalNumeroTrabajadores)) {
+                cambios.push(`Cuenta con ${this.numeroTrabajadores} trabajadores`);
+            }
+        } else {
+             // Si cambió de "Si" a "No", y antes tenía número, implícitamente ya cambió "Cuenta con trabajadores".
+             // No necesitamos enviar "Número de trabajadores: 0" a menos que sea requisito.
+        }
+
+    } else {
+        // --- LÓGICA DESPACHO (Tu lógica original) ---
+
+        // RFC
+        if (normalizar(this.nuevoRfcDespacho) !== normalizar(this.originalRfcDespacho)) {
+            cambios.push(`RFC Despacho: ${this.nuevoRfcDespacho}`);
+            if (this.despachoContador?.nombreRazonSocial) {
+                 cambios.push(`Despacho: ${this.despachoContador.nombreRazonSocial}`);
+            }
+        }
+        else if (normalizar(this.despachoContador?.nombreRazonSocial) !== normalizar(this.originalNombreDespacho)) {
+             cambios.push(`Despacho: ${this.despachoContador?.nombreRazonSocial}`);
+        }
+
+        // Cargo
+        if (normalizar(this.selectedCargoDesempena) !== normalizar(this.originalCargoDesempena)) {
+            const nombreCargo = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
+            cambios.push(`Cargo: ${nombreCargo}`);
+        }
+
+        // Teléfono
+        if (normalizar(this.telefonoFijoDespacho) !== normalizar(this.originalTelefonoFijo)) {
+            cambios.push(`Teléfono despacho: ${this.telefonoFijoDespacho}`);
+        }
+    }
+
+
     // 3. Verificar si hubo modificaciones
     if (cambios.length === 0) {
         this.alertService.info("Sin modificaciones realizadas.");
@@ -1205,7 +1321,11 @@ buscarNuevoColegio(): void {
       domicilioFiscal: "",
 
       // Datos sueltos por si el backend los requiere individualmente
-      razonSocialDespacho: this.despachoContador?.nombreRazonSocial,
+      razonSocialDespacho: isIndependiente ? '' : this.despachoContador?.nombreRazonSocial,
+      tieneTrabajadores: this.tieneTrabajadores,
+      numTrabajadores: this.numeroTrabajadores,
+
+
       tipoSolicitud: 'DESPACHO',
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
     };

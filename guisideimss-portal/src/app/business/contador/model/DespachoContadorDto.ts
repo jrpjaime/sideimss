@@ -6,5 +6,6 @@ export interface DespachoContadorDto {
   cveIdCargoContador: string;
   desCargoContador: string;
   telefonoFijo: string;
-   
+  tieneTrabajadores?: string;
+  numeroTrabajadores?: string; 
 }

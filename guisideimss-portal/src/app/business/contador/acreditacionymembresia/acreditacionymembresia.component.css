@@ -25,7 +25,7 @@
 }
 
 .icon-link i {
-  /* MODIFICACIÓN AQUÍ: Aumentar el tamaño de la fuente */
+  /* Aumentar el tamaño de la fuente */
   font-size: 1.5rem;  
   margin-right: 5px; /* Espacio entre el ícono y el texto (cuando visible) */
   pointer-events: none; /* Permite que el hover se aplique al enlace completo */

@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
@@ -423,7 +426,7 @@ public class ContadoresRestController {
             String nombre = (String) claims.get("nombre");
             String primerApellido = (String) claims.get("primerApellido");   
             String segundoApellido = (String) claims.get("segundoApellido");
-             tipoSolicitud = (String) claims.get("tipoSolicitud");
+              
             nombreCompleto = String.format("%s %s %s", nombre, primerApellido, segundoApellido != null ? segundoApellido : "").trim();
             logger.info("RFC extraído del token JWT: {}", rfc);
         } catch (Exception e) {
@@ -437,9 +440,23 @@ public class ContadoresRestController {
 
 
 
+        try {
+            if (plantillaDatoDto.getDatosJson() != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode rootNode = mapper.readTree(plantillaDatoDto.getDatosJson());
+                
+                if (rootNode.has("tipoSolicitud")) {
+                    tipoSolicitud = rootNode.get("tipoSolicitud").asText();
+                    logger.info("Tipo de Solicitud extraído del JSON: {}", tipoSolicitud);
+                } else {
+                    logger.warn("El JSON recibido no contiene el campo 'tipoSolicitud'");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error al parsear el JSON para obtener tipoSolicitud: {}", e.getMessage());
+        }
 
-
- 
+    
 
         
 
