@@ -69,7 +69,7 @@ public class AcuseServiceImpl implements AcuseService {
             //String decodedUrl = new String(Base64.getUrlDecoder().decode(urlDocumento), "UTF-8");
             //logger.info("URL decodificada: {}", decodedUrl);
 
-            // Desencriptar la cadena (si aplica, según tu UtileriasService)
+            // Desencriptar la cadena 
             String filename = utileriasService.desencriptar(urlDocumento); // Aquí se usa la URL decodificada, no la base64
             logger.info("Filename después de desencriptar: {}", filename);
 

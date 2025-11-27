@@ -96,7 +96,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
      error: (err: HttpErrorResponse) => {
         console.error('Objeto de Error Recibido:', err.error);
 
-        // Verificamos si la propiedad 'error' contiene el string de tu backend
+        // Verificamos si la propiedad 'error' contiene el string de   backend
         if (err.error && typeof err.error === 'string') {
           //  Asignamos el contenido del cuerpo del error.
           this.errorMessage = err.error;
@@ -190,9 +190,9 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
                   console.error('Objeto de Error Recibido:', err);
 
-                  // Verificamos si la propiedad 'error' contiene el string de tu backend
+                  // Verificamos si la propiedad 'error' contiene el string de  backend
                   if (err.error && typeof err.error === 'string') {
-                    // ¡Aquí está tu mensaje! Asignamos el contenido del cuerpo del error.
+                    // Asignamos el contenido del cuerpo del error.
                     this.errorMessage = err.error; // <-- Asignará "Error Authetication"
                     this.alertService.error( this.errorMessage);
                   } else if (err.status === 0) {

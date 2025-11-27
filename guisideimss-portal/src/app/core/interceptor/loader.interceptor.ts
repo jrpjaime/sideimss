@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { finalize } from 'rxjs';
-import { LoaderService } from '../../shared/services/loader.service'; // Ajusta la ruta a tu LoaderService
+import { LoaderService } from '../../shared/services/loader.service';
 
 export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
   const loaderService = inject(LoaderService);

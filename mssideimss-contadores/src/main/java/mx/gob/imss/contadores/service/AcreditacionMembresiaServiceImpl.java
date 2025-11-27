@@ -250,44 +250,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     }
 
 
-/*
-
-        private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
-        logger.info("Llamando a mssideimss-catalogos para obtener medios de contacto para RFC: {}", rfc);
-        String url = catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc;
-        logger.info("conectando a : {}", url);
-
-        return webClient.get()
-            .uri(url)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, response -> {
-                logger.error("Error HTTP {} al obtener medios de contacto de mssideimss-catalogos para RFC {}.", response.statusCode(), rfc);
-                return response.bodyToMono(String.class)
-                    .flatMap(errorBody -> Mono.error(new RuntimeException(
-                        "Fallo al obtener correo de catalogos (" + response.statusCode().value() + "): " + errorBody
-                    )));
-            })
-            .bodyToMono(MediosContactoContadoresResponseDto.class)
-            .map(response -> {
-                if (response != null && response.getMedios() != null && !response.getMedios().isEmpty()) {
-                    for (MedioContactoContadoresDto medio : response.getMedios()) {
-                        if ("1".equalsIgnoreCase(medio.getTipoContacto())) {
-                            logger.info("Correo electrónico obtenido de mssideimss-catalogos para RFC {}: {}", rfc, medio.getDesFormaContacto());
-                            return medio.getDesFormaContacto();
-                        }
-                    }
-                }
-                logger.warn("No se encontró un correo electrónico en la respuesta de mssideimss-catalogos para RFC {}.", rfc);
-                return null; // Devuelve null si no se encuentra un correo
-            })
-            .onErrorResume(e -> {
-                logger.error("Fallo completo al obtener correo de mssideimss-catalogos para RFC {}: {}. Se asume que no hay correo.", rfc, e.getMessage(), e);
-                return Mono.just(""); // Devuelve un string vacío para indicar que no hay correo, pero no detiene la ejecución.
-            });
-    }
  
-*/
 
 
     /**
@@ -349,7 +312,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         return String.format(
             "<!DOCTYPE html>" +
             "<html><head><meta charset=\"UTF-8\"></head><body>" +
-            "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
+          //  "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
             "%s" + // Aquí se inyecta el contenido variable
             "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
             "<strong>Por lo anterior, se anexa al presente el respectivo acuse de recibo.</strong>" +
@@ -361,7 +324,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             "<p style='font-size: 12px; color: #777;'>" +
             "Este es un correo automático. Por favor, no responda a esta dirección.</p>" +
             "</body></html>",
-            nombre, rfc, contenidoEspecifico
+           contenidoEspecifico
         );
     }
 

@@ -7,7 +7,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req); // No modificar la petición
   }
 
-  const token = sessionStorage.getItem(Constants.tokenKey); // Donde almacenas tu token
+  const token = sessionStorage.getItem(Constants.tokenKey);
   console.log("tokenInterceptor " + token);
   if (token) {
     req = req.clone({

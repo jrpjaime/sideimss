@@ -19,6 +19,8 @@ export const EPs = {
     datoRfc: '/v1/datoRfc',
     tiposSociedadFormaParte: '/v1/tiposSociedadFormaParte',
     cargosContador: '/v1/cargosContador',
+    consultarDatosDespacho: '/v1/consultarDatosDespacho',
+
   },
 
   // ********** CONTADORES /mssideimss-contadores**********
@@ -30,7 +32,7 @@ export const EPs = {
     solicitudBaja: '/v1/solicitudBaja',
     colegioContador: '/v1/colegioContador',
     guardarModificacionDatos: '/v1/guardarModificacionDatos',
-    
+
 
   },
 

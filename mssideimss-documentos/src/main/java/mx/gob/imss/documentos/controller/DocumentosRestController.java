@@ -40,7 +40,7 @@ import org.springframework.http.HttpHeaders;
 public class DocumentosRestController {
 	private final static Logger logger = LoggerFactory.getLogger(DocumentosRestController.class);
  
-	@Autowired // Inyecta tu servicio aquí
+	@Autowired 
 	private CargaDocumentoService cargaDocumentoService;
 
 

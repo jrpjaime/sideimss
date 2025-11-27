@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import mx.gob.imss.catalogos.dto.CargoContadorDto;
+import mx.gob.imss.catalogos.dto.DespachoRequestDto;
+import mx.gob.imss.catalogos.dto.DespachoResponseDto;
 import mx.gob.imss.catalogos.dto.MediosContactoResponseDto;
 import mx.gob.imss.catalogos.dto.RfcColegioRequestDto;
 import mx.gob.imss.catalogos.dto.RfcColegioResponseDto;
@@ -28,6 +30,7 @@ import mx.gob.imss.catalogos.dto.SdcSubdelegacionFiltroDto;
 import mx.gob.imss.catalogos.dto.TipoDatoContadorDto;
 import mx.gob.imss.catalogos.dto.TipoSociedadFormaParteDto;
 import mx.gob.imss.catalogos.service.CargoContadorService;
+import mx.gob.imss.catalogos.service.DespachoService;
 import mx.gob.imss.catalogos.service.FolioService;
 import mx.gob.imss.catalogos.service.MediosContactoService;
 import mx.gob.imss.catalogos.service.SatService;
@@ -46,6 +49,8 @@ public class CatalogosRestController {
 	private final static Logger logger = LoggerFactory.getLogger(CatalogosRestController.class);
   
  
+    @Autowired
+    private DespachoService despachoService;
 
 	@Autowired
 	private SdcDelegacionService sdcDelegacionService;
@@ -219,6 +224,28 @@ public class CatalogosRestController {
         logger.info("Recibiendo solicitud para obtener cargos de contador.");
         List<CargoContadorDto> cargos = cargoContadorService.getCargosContador();
         return new ResponseEntity<>(cargos, HttpStatus.OK);
+    }
+
+
+
+    /**
+     * Método para consultar los datos del despacho  
+     * @param despachoRequestDto DTO con el RFC.
+     * @return ResponseEntity con los datos del despacho o NotFound.
+     */
+    @PostMapping("/consultarDatosDespacho")
+    public ResponseEntity<DespachoResponseDto> consultarDatosDespacho(@RequestBody DespachoRequestDto despachoRequestDto) {
+        logger.info("Recibiendo solicitud para /consultarDatosDespacho con RFC: {}", despachoRequestDto.getRfc());
+        
+        DespachoResponseDto response = despachoService.consultarDatosDespacho(despachoRequestDto);
+
+        if (response != null) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            logger.info("No se encontraron datos de despacho para el RFC proporcionado.");
+           
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
 }

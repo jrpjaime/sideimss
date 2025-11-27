@@ -8,6 +8,8 @@ import { RfcColegioRequestDto } from '../model/RfcColegioRequestDto';
 import { RfcColegioResponseDto } from '../model/RfcColegioResponseDto';
 import { TipoSociedadFormaParteDto } from '../model/TipoSociedadFormaParteDto';
 import { CargoContadorDto } from '../model/CargoContadorDto';
+import { DespachoRequestDto } from '../model/DespachoRequestDto';
+import { DespachoResponseDto } from '../model/DespachoResponseDto';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +38,7 @@ export class CatalogosContadorService {
   getDatoRfcColegio(rfcRequest: RfcColegioRequestDto): Observable<RfcColegioResponseDto> {
     const url = `${environment.catalogosApiUrl}${EPs.catalogo.datoRfc}`; // Usar el endpoint 'datoRfc'
     return this.httpClient.post<RfcColegioResponseDto>(url, rfcRequest);
-  }  
+  }
 
 
 
@@ -57,6 +59,18 @@ export class CatalogosContadorService {
     const url = `${environment.catalogosApiUrl}${EPs.catalogo.cargosContador}`;
     return this.httpClient.get<CargoContadorDto[]>(url);
   }
-  
-  
+
+
+    /**
+   * Consulta los datos del despacho asociado a un RFC.
+   * @param request DTO con el RFC del contador.
+   * @returns Observable con los datos del despacho.
+   */
+  consultarDatosDespacho(request: DespachoRequestDto): Observable<DespachoResponseDto> {
+    const url = `${environment.catalogosApiUrl}${EPs.catalogo.consultarDatosDespacho}`;
+    return this.httpClient.post<DespachoResponseDto>(url, request);
+  }
+
+
+
 }

@@ -148,7 +148,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
     const plantillaDatoDto: PlantillaDatoDto = {
       nomDocumento: this.acuseParameters['nomDocumento'],
       desVersion: this.acuseParameters['desVersion'],
-      cveIdPlantillaDatos: null, // Si tu backend genera el ID, déjalo en null
+      cveIdPlantillaDatos: null,
       datosJson: datosJson,
       tipoAcuse: this.TIPO_ACUSE
     };
@@ -349,7 +349,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       RFC: this.rfcSesion,
       numeroRegistroImss: this.numeroRegistroImssSesion,
       firmaElectronica: this.firmaDigital,
-      selloDigitalIMSS: "", // Si tu backend lo genera, déjalo vacío o con valor por defecto
+      selloDigitalIMSS: "",
       certificado: this.certificado,
       acuse: this.acuse,
       fecha: this.fechaAcuse, // Fecha proporcionada por el backend en la respuesta de firma

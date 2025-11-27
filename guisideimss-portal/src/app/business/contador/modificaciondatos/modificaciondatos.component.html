@@ -243,7 +243,7 @@
                         @if (selectedTipoSociedad === '2') {
                             <div class="mb-3">
                                 <label for="tieneTrabajadores" class="form-label">* ¿Cuenta con trabajadores a su cargo?</label>
-                                <select id="tieneTrabajadores" class="form-control" 
+                                <select id="tieneTrabajadores" class="form-control"
                                         [(ngModel)]="tieneTrabajadores"
                                         [disabled]="!habilitarCamposDespacho">
                                     <option value="">Elija Opción</option>
@@ -276,7 +276,7 @@
 
                         <!-- ===== OPCIÓN 2: DESPACHO (Cualquier otro ID, ej: '1') ===== -->
                         @if (selectedTipoSociedad && selectedTipoSociedad !== '2') {
-                            
+
                           <div class="mb-3">
                               <label for="rfcDespacho" class="form-label">* RFC:</label>
                               <input type="text" id="rfcDespacho" class="form-control"
@@ -358,7 +358,7 @@
                 } @else {
                     <!-- SECCIÓN DE SÓLO LECTURA: ETIQUETAS -->
                     <div class="card p-3 mb-3">
-                        
+
                         <!-- 1. CAMPO COMÚN: TIPO DE SOCIEDAD -->
                         <div class="mb-3">
                             <label class="form-label">¿Forma parte de un despacho o es profesional independiente?</label>
@@ -369,7 +369,7 @@
                         @if (despachoContador.cveIdTipoSociedad === '2') {
                             <div class="mb-3">
                                 <label class="form-label">¿Cuenta con trabajadores a su cargo?</label>
-                                <!-- Nota: Asegúrate de que tu DTO 'DespachoContadorDto' tenga la propiedad tieneTrabajadores -->
+
                                 <p><strong>{{ despachoContador.tieneTrabajadores || 'N/A' }}</strong></p>
                             </div>
 
@@ -379,8 +379,8 @@
                                     <p><strong>{{ despachoContador.numeroTrabajadores || 'N/A' }}</strong></p>
                                 </div>
                             }
-                        } 
-                        
+                        }
+
                         <!-- 3. SI ES DESPACHO (Cualquier otro ID) -->
                         @else {
                             <div class="mb-3">

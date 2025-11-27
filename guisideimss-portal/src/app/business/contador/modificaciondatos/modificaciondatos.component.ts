@@ -25,6 +25,8 @@ import { DatosContadorData } from '../model/DatosContadorData';
 import { DatePipe } from '@angular/common';
 import { ModificacionDatosDataService } from '../services/ModificacionDatosDataService';
 import { NAV } from '../../../global/navigation';
+import { DespachoRequestDto } from '../model/DespachoRequestDto';
+import { DespachoResponseDto } from '../model/DespachoResponseDto';
 
 @Component({
   selector: 'app-modificaciondatos',
@@ -670,14 +672,14 @@ buscarNuevoColegio(): void {
   guardarModificacionDatos(): void {
     this.formSubmitted = true; // Marca que el formulario ha sido intentado enviar
 
-    // Aquí iría tu lógica de guardado de los demás datos del formulario de modificación,
+    //  Lógica de guardado de los demás datos del formulario de modificación,
     // junto con la validación de que la constancia de membresía haya sido cargada.
     if (this.selectedTipoDato === '3' && !this.fileConstanciaUploadSuccess) {
       this.alertService.error('Debes adjuntar la constancia de membresía para continuar.', { autoClose: true });
       return;
     }
 
-    // Aquí iría el resto de tu lógica para guardar los datos de modificación
+    //Lógica para guardar los datos de modificación
     // Por ejemplo, enviar el objeto colegioContador (posiblemente actualizado)
     // junto con el fileConstanciaHdfsPath al backend.
     this.alertService.success('Datos y constancia de membresía guardados con éxito (simulado).', { autoClose: true });
@@ -728,93 +730,113 @@ buscarNuevoColegio(): void {
   }
 
   /**
-   * Simula la carga de datos del despacho (puedes reemplazar con un servicio real).
-   * Por ahora, genera datos de MOC si no existen.
+   *  carga de datos del despacho
    */
   consultarDatosDespacho(): void {
     console.log('consultarDatosDespacho');
+
+    // Validación de seguridad por si no hay RFC en sesión
+    if (!this.rfcSesion) {
+      this.alertService.error('No se pudo identificar el RFC de la sesión.');
+      return;
+    }
+
     this.loadingDespacho = true;
     this.despachoContador = null; // Limpiar datos previos
 
-    // Simulación de una llamada a un servicio
-    setTimeout(() => {
-      if (this.rfcSesion === 'MOGF5304159BA') { // Ejemplo con un RFC de sesión fijo
-        this.despachoContador = {
-          rfcDespacho: 'MOSB650818PB4',
-          nombreRazonSocial: 'BEATRIZ MORENO SALINAS',
+    // Crear el DTO de entrada
+    const request: DespachoRequestDto = {
+      rfc: this.rfcSesion
+    };
 
-          //cveIdTipoSociedad: '1', // Despacho 
-          //desTipoSociedad: 'Despacho',
-          cveIdTipoSociedad: '2', // Independiente 
-          desTipoSociedad: 'Independiente',
-          cveIdCargoContador: '2', // Director
-          desCargoContador: 'Director',
-          telefonoFijo: '5857564355',
-          tieneTrabajadores: "No",
-          numeroTrabajadores:"100"
-        };
-        //this.alertService.success('Datos del despacho cargados exitosamente.', { autoClose: true });
+    this.catalogosContadorService.consultarDatosDespacho(request)
+      .pipe(finalize(() => this.loadingDespacho = false))
+      .subscribe({
+        next: (response: DespachoResponseDto) => {
+          // Mapear la respuesta del backend al objeto local
+          this.despachoContador = {
+            rfcDespacho: response.rfcDespacho,
+            nombreRazonSocial: response.nombreRazonSocial,
+            cveIdTipoSociedad: response.cveIdTipoSociedad,
+            desTipoSociedad: response.desTipoSociedad,
+            cveIdCargoContador: response.cveIdCargoContador,
+            desCargoContador: response.desCargoContador,
+            telefonoFijo: response.telefonoFijo,
+            tieneTrabajadores: response.tieneTrabajadores,
+            numeroTrabajadores: response.numeroTrabajadores
+          };
 
-        // IMPORTANTE: Inicializamos los campos de edición con los datos actuales
-        // para que, si el usuario decide "Sí" actualizar, los campos ya estén pre-cargados.
-        this.selectedTipoSociedad = this.despachoContador.cveIdTipoSociedad; 
-        this.nuevoRfcDespacho = this.despachoContador.rfcDespacho;
-        this.selectedCargoDesempena = this.despachoContador.cveIdCargoContador;
-        this.telefonoFijoDespacho = this.despachoContador.telefonoFijo;
+          // Inicializar los campos de edición con los datos recibidos
+          this.selectedTipoSociedad = this.despachoContador.cveIdTipoSociedad || '';
+          this.nuevoRfcDespacho = this.despachoContador.rfcDespacho || '';
+          this.selectedCargoDesempena = this.despachoContador.cveIdCargoContador || '';
+          this.telefonoFijoDespacho = this.despachoContador.telefonoFijo || '';
+          this.tieneTrabajadores = this.despachoContador.tieneTrabajadores || '';
+          this.numeroTrabajadores = this.despachoContador.numeroTrabajadores || '';
 
-        this.tieneTrabajadores = '';
-        this.numeroTrabajadores = '';
+          // Guardar valores originales para detectar cambios
+          this.originalTipoSociedad = this.despachoContador.cveIdTipoSociedad;
+          this.originalRfcDespacho = this.despachoContador.rfcDespacho;
+          this.originalCargoDesempena = this.despachoContador.cveIdCargoContador;
+          this.originalTelefonoFijo = this.despachoContador.telefonoFijo;
+          this.originalNombreDespacho = this.despachoContador.nombreRazonSocial;
+          this.originalTieneTrabajadores = this.despachoContador.tieneTrabajadores || null;
+          this.originalNumeroTrabajadores = this.despachoContador.numeroTrabajadores || null;
+        },
+        error: (error: HttpErrorResponse) => {
+          // Si es 404 (Not Found) o si ocurre otro error, inicializamos vacío para permitir captura
+          if (error.status === 404) {
+            this.alertService.info('No se encontraron datos de despacho asociados a su RFC.', { autoClose: false });
+          } else {
+            console.error('Error al consultar datos del despacho:', error);
+            // Opcional: Mostrar error genérico, pero permitimos continuar para capturar datos nuevos
+            // this.alertService.error('Ocurrió un error al consultar el despacho.');
+          }
 
-
-        // GUARDAMOS LOS ORIGINALES ---
-        this.originalTipoSociedad = this.despachoContador.cveIdTipoSociedad;
-        this.originalRfcDespacho = this.despachoContador.rfcDespacho;
-        this.originalCargoDesempena = this.despachoContador.cveIdCargoContador;
-        this.originalTelefonoFijo = this.despachoContador.telefonoFijo;
-        this.originalNombreDespacho = this.despachoContador.nombreRazonSocial;
-
-        this.originalTieneTrabajadores = null; 
-        this.originalNumeroTrabajadores = null;
-
-      } else {
-        this.despachoContador = null; // No se encontraron datos
-        this.alertService.info('No se encontraron datos de despacho asociados a su RFC.', { autoClose: false });
-        // Si no hay datos, inicializamos el despachoContador vacío para que se muestre la pregunta y la opción de captura
-        this.despachoContador = {
-          rfcDespacho: '', nombreRazonSocial: '',
-          cveIdTipoSociedad: '', desTipoSociedad: '',
-          cveIdCargoContador: '', desCargoContador: '',
-          telefonoFijo: ''
-        };
-
-
-        this.originalTipoSociedad = '';
-        this.originalRfcDespacho = '';
-        this.originalCargoDesempena = '';
-        this.originalTelefonoFijo = '';
-        this.originalNombreDespacho = '';
-
-
-        // Y precargamos con "Profesional Independiente" como valor por defecto si no hay despacho
-        this.selectedTipoSociedad = '2'; // ID para Profesional Independiente
-        this.tieneTrabajadores = '';
-        this.numeroTrabajadores = '';
-
-        this.originalTipoSociedad = '';
-        this.originalTieneTrabajadores = '';
-        this.originalNumeroTrabajadores = '';
-
-        const tipoIndependiente = this.tiposSociedad.find(t => t.cveIdTipoSociedad === '2');
-        if (tipoIndependiente && this.despachoContador) {
-            this.despachoContador.cveIdTipoSociedad = tipoIndependiente.cveIdTipoSociedad;
-            this.despachoContador.desTipoSociedad = tipoIndependiente.desTipoSociedad;
+          this.inicializarDespachoVacio();
         }
-
-      }
-      this.loadingDespacho = false;
-    }, 1000);
+      });
   }
 
+  /**
+   * Método auxiliar para inicializar el formulario cuando no hay datos
+   * o cuando ocurre un error (simulando el comportamiento "else" del mock anterior).
+   */
+  private inicializarDespachoVacio(): void {
+    this.despachoContador = {
+      rfcDespacho: '', nombreRazonSocial: '',
+      cveIdTipoSociedad: '', desTipoSociedad: '',
+      cveIdCargoContador: '', desCargoContador: '',
+      telefonoFijo: '',
+      tieneTrabajadores: '',
+      numeroTrabajadores: ''
+    };
+
+    this.originalTipoSociedad = '';
+    this.originalRfcDespacho = '';
+    this.originalCargoDesempena = '';
+    this.originalTelefonoFijo = '';
+    this.originalNombreDespacho = '';
+    this.originalTieneTrabajadores = '';
+    this.originalNumeroTrabajadores = '';
+
+    // Precargar "Profesional Independiente" (ID '2') por defecto
+    this.selectedTipoSociedad = '2';
+
+    // Limpiar otros campos
+    this.nuevoRfcDespacho = '';
+    this.selectedCargoDesempena = '';
+    this.telefonoFijoDespacho = '';
+    this.tieneTrabajadores = '';
+    this.numeroTrabajadores = '';
+
+    // Actualizar el objeto visual si existe el tipo en el catálogo
+    const tipoIndependiente = this.tiposSociedad.find(t => t.cveIdTipoSociedad === '2');
+    if (tipoIndependiente && this.despachoContador) {
+        this.despachoContador.cveIdTipoSociedad = tipoIndependiente.cveIdTipoSociedad;
+        this.despachoContador.desTipoSociedad = tipoIndependiente.desTipoSociedad;
+    }
+  }
 
   /**
    * Maneja la respuesta a la pregunta "¿Desea actualizar los datos de su despacho?".
@@ -1229,14 +1251,14 @@ buscarNuevoColegio(): void {
         // Validaciones para Independiente
         if (!this.tieneTrabajadores) {
              // Validar el primer select
-             return; 
+             return;
         }
         if (this.tieneTrabajadores === 'Si' && (!this.numeroTrabajadores || parseInt(this.numeroTrabajadores) <= 0)) {
              // Validar número si dijo que sí
              return;
         }
     } else {
-        // Validaciones para Despacho (Tu lógica original)
+        // Validaciones para Despacho
         if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
            this.alertService.error('Verifique los campos obligatorios del despacho.');
            return;
@@ -1256,7 +1278,7 @@ buscarNuevoColegio(): void {
     // -- B. Ramificación de comparación según lo que seleccionó el usuario
     if (isIndependiente) {
         // --- LÓGICA INDEPENDIENTE ---
-        
+
         // Comparar "Tiene Trabajadores"
         // Nota: Si antes era Despacho, originalTieneTrabajadores será null, así que detectará cambio.
        // if (normalizar(this.tieneTrabajadores) !== normalizar(this.originalTieneTrabajadores)) {
@@ -1274,7 +1296,7 @@ buscarNuevoColegio(): void {
         }
 
     } else {
-        // --- LÓGICA DESPACHO (Tu lógica original) ---
+        // --- LÓGICA DESPACHO   ---
 
         // RFC
         if (normalizar(this.nuevoRfcDespacho) !== normalizar(this.originalRfcDespacho)) {
