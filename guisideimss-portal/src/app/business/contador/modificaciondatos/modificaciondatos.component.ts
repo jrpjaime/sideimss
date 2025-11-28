@@ -155,10 +155,92 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     this.cargarTiposSociedad();
     this.cargarCargosContador();
     console.log('RFC de sesión en ModificaciondatosComponent:', this.rfcSesion);
+    this.verificarYRestaurarDatosPrevios();
   }
 
 
+  /**
+   * Verifica si hay datos en el servicio (al regresar del Acuse) y restaura el estado.
+   */
+  verificarYRestaurarDatosPrevios(): void {
+    const datosPrevios = this.modificacionDatosDataService.getDatosFormularioPrevio();
 
+    // Si no hay datos o no hay un objeto de estado guardado, no hacemos nada
+    if (!datosPrevios || !datosPrevios.state) {
+      return;
+    }
+
+    const estado = datosPrevios.state;
+    const tipoSolicitud = datosPrevios.tipoSolicitud;
+
+    console.log('Restaurando estado anterior:', tipoSolicitud, estado);
+
+    // 1. Restaurar Estado para COLEGIO
+    if (tipoSolicitud === 'COLEGIO') {
+      this.selectedTipoDato = '3'; // Opción Colegio
+      this.mostrarSeccionColegio = true;
+      this.consultarDatosColegio(); // Carga datos originales
+
+      // Restaurar variables de edición
+      this.habilitarEdicionRfcColegio = true;
+      this.nuevoRfcColegio = estado.nuevoRfcColegio;
+      this.rfcColegioValido = true;
+
+      // Restaurar estado del archivo (Simulamos que ya se subió para que la UI lo muestre)
+      if (estado.fileConstanciaHdfsPath) {
+        this.fileConstanciaHdfsPath = estado.fileConstanciaHdfsPath;
+        this.fileConstanciaUploadSuccess = true;
+        // Creamos un objeto dummy para que se vea el nombre, aunque el objeto File real no persiste
+        this.selectedFileConstancia = { name: estado.nomArchivoConstancia } as File;
+      }
+    }
+
+    // 2. Restaurar Estado para DESPACHO
+    else if (tipoSolicitud === 'DESPACHO') {
+      this.selectedTipoDato = '2'; // Opción Despacho
+      this.mostrarSeccionDespacho = true;
+      this.consultarDatosDespacho(); // Carga datos originales
+
+      // Restaurar banderas de UI
+      this.deseaActualizarDespacho = true;
+      this.habilitarCamposDespacho = true;
+
+      // Restaurar variables del formulario
+      this.selectedTipoSociedad = estado.selectedTipoSociedad;
+      this.tieneTrabajadores = estado.tieneTrabajadores;
+      this.numeroTrabajadores = estado.numeroTrabajadores;
+
+      // Si era despacho (no independiente), restaurar el resto
+      if (estado.selectedTipoSociedad !== '2') {
+        this.nuevoRfcDespacho = estado.nuevoRfcDespacho;
+        this.rfcDespachoValido = true;
+        this.selectedCargoDesempena = estado.selectedCargoDesempena;
+        this.telefonoFijoDespacho = estado.telefonoFijoDespacho;
+        // Si teníamos un nombre de despacho buscado, lo restauramos visualmente
+        if (this.despachoContador && estado.razonSocialDespachoVisual) {
+             this.despachoContador.nombreRazonSocial = estado.razonSocialDespachoVisual;
+        }
+      }
+    }
+
+    // 3. Restaurar Estado para CONTACTO (Datos Personales)
+    else if (tipoSolicitud === 'CONTACTO') {
+      this.selectedTipoDato = '1'; // Opción Datos Personales
+      this.mostrarSeccionPersonales = true;
+      this.cargarDatosContador(); // Carga datos originales
+
+      // Restaurar banderas de UI
+      this.deseaActualizarContacto = true;
+
+      // Restaurar variables
+      this.nuevoCorreoElectronico2 = estado.nuevoCorreoElectronico2;
+      this.confirmarCorreoElectronico2 = estado.nuevoCorreoElectronico2; // Asumimos que coincidían
+      this.nuevoCorreoElectronico3 = estado.nuevoCorreoElectronico3;
+      this.confirmarCorreoElectronico3 = estado.nuevoCorreoElectronico3;
+      this.nuevoTelefono2 = estado.nuevoTelefono2;
+      this.nuevacedulaprofesional = estado.nuevacedulaprofesional;
+    }
+  }
 
 
   cargarTiposDatosContador(): void {
@@ -1176,7 +1258,12 @@ buscarNuevoColegio(): void {
       desPathHdfsConstancia: this.fileConstanciaHdfsPath,
       nomArchivoConstancia: this.selectedFileConstancia?.name,
 
-      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO',
+      state: {
+        nuevoRfcColegio: this.nuevoRfcColegio,
+        fileConstanciaHdfsPath: this.fileConstanciaHdfsPath,
+        nomArchivoConstancia: this.selectedFileConstancia?.name
+      }
     };
 
     // 5. Guardar y Navegar
@@ -1191,53 +1278,7 @@ buscarNuevoColegio(): void {
   guardarDatosDespacho(): void {
     this.formSubmitted = true;
 
-    /*
-    // 1. Validaciones
-    if (!this.selectedTipoSociedad || !this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
-       this.alertService.error('Verifique los campos obligatorios del despacho.');
-       return;
-    }
 
-    // 2. Detección de Cambios
-    let cambios: string[] = [];
-    const normalizar = (val: string | null | undefined) => (val || '').trim().toUpperCase();
-
-    // -- Comparar Tipo de Sociedad
-    if (normalizar(this.selectedTipoSociedad) !== normalizar(this.originalTipoSociedad)) {
-        const nombreSociedad = this.tiposSociedad.find(t => t.cveIdTipoSociedad === this.selectedTipoSociedad)?.desTipoSociedad || '';
-        cambios.push(`Tipo de sociedad: ${nombreSociedad}`);
-    }
-
-
-
-
-
-    // -- Comparar RFC (y Razón Social si cambia el RFC)
-    if (normalizar(this.nuevoRfcDespacho) !== normalizar(this.originalRfcDespacho)) {
-        cambios.push(`RFC Despacho: ${this.nuevoRfcDespacho}`);
-
-        // Si cambió el RFC, seguramente cambió la razón social tras buscar
-        if (this.despachoContador?.nombreRazonSocial) {
-             cambios.push(`Despacho: ${this.despachoContador.nombreRazonSocial}`);
-        }
-    }
-    // Caso borde: El RFC es el mismo pero cambió la razón social (raro, pero posible si el servicio actualiza datos)
-    else if (normalizar(this.despachoContador?.nombreRazonSocial) !== normalizar(this.originalNombreDespacho)) {
-         cambios.push(`Despacho: ${this.despachoContador?.nombreRazonSocial}`);
-    }
-
-    // -- Comparar Cargo
-    if (normalizar(this.selectedCargoDesempena) !== normalizar(this.originalCargoDesempena)) {
-        const nombreCargo = this.cargosContador.find(c => c.cveIdCargoContador === this.selectedCargoDesempena)?.desCargoContador || '';
-        cambios.push(`Cargo: ${nombreCargo}`);
-    }
-
-    // -- Comparar Teléfono
-    if (normalizar(this.telefonoFijoDespacho) !== normalizar(this.originalTelefonoFijo)) {
-        cambios.push(`Teléfono despacho: ${this.telefonoFijoDespacho}`);
-    }
-
-*/
 
     const isIndependiente = this.selectedTipoSociedad === '2'; // ID 2 = Independiente
 
@@ -1277,13 +1318,7 @@ buscarNuevoColegio(): void {
 
     // -- B. Ramificación de comparación según lo que seleccionó el usuario
     if (isIndependiente) {
-        // --- LÓGICA INDEPENDIENTE ---
 
-        // Comparar "Tiene Trabajadores"
-        // Nota: Si antes era Despacho, originalTieneTrabajadores será null, así que detectará cambio.
-       // if (normalizar(this.tieneTrabajadores) !== normalizar(this.originalTieneTrabajadores)) {
-       //     cambios.push(`Cuenta con trabajadores: ${this.tieneTrabajadores}`);
-      //  }
 
         // Comparar "Número de Trabajadores" (Solo si tiene trabajadores)
         if (this.tieneTrabajadores === 'Si') {
@@ -1349,7 +1384,18 @@ buscarNuevoColegio(): void {
 
 
       tipoSolicitud: 'DESPACHO',
-      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO',
+
+      state: {
+          selectedTipoSociedad: this.selectedTipoSociedad,
+          tieneTrabajadores: this.tieneTrabajadores,
+          numeroTrabajadores: this.numeroTrabajadores,
+          nuevoRfcDespacho: this.nuevoRfcDespacho,
+          selectedCargoDesempena: this.selectedCargoDesempena,
+          telefonoFijoDespacho: this.telefonoFijoDespacho,
+          // Guardamos el nombre visual para que no aparezca vacío al regresar
+          razonSocialDespachoVisual: this.despachoContador?.nombreRazonSocial
+      }
     };
 
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
@@ -1428,7 +1474,13 @@ buscarNuevoColegio(): void {
       domicilioFiscal:"",
       datosContacto: nuevosDatosContactoString, // Enviamos solo lo modificado
       tipoSolicitud: 'CONTACTO',
-      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO'
+      tipoTramite: 'ACUSE_SOLICITUD_CAMBIO',
+      state: {
+          nuevoCorreoElectronico2: this.nuevoCorreoElectronico2,
+          nuevoCorreoElectronico3: this.nuevoCorreoElectronico3,
+          nuevoTelefono2: this.nuevoTelefono2,
+          nuevacedulaprofesional: this.nuevacedulaprofesional
+      }
     };
 
     this.modificacionDatosDataService.setDatosFormularioPrevio(datosParaAcuse);
