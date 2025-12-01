@@ -72,7 +72,7 @@
                             <p><strong>{{ colegioContador.rfcColegio }}</strong></p>
                         } @else {
 
-                            <input type="text" class="form-control"
+                            <input type="text" class="form-control" style="max-width: 300px;"
                                 [class.is-invalid]="!rfcColegioValido && nuevoRfcColegio"
                                 [(ngModel)]="nuevoRfcColegio"
                                 (ngModelChange)="busquedaColegioRealizada = false"
@@ -108,13 +108,13 @@
                         <div class="col-md-9">
                             <div class="input-group">
                                 <div class="row w-100 m-0">
-                                    <div class="col-sm-8 p-0">
+                                    <div class="col-sm-6 p-0">
                                         <input type="file" class="form-control" id="constanciaMembresia"
                                                (change)="onFileSelected($event, 'constanciaMembresia')"
                                                accept="application/pdf"
                                                [disabled]="fileConstanciaUploadSuccess || loadingFileConstancia">
                                     </div>
-                                    <div class="col-sm-4 pr-0">
+                                    <div class="col-sm-3 pr-0">
                                         <button type="button" class="btn btn-primary w-100"
                                                 (click)="uploadFile('constanciaMembresia')"
                                                 [disabled]="!selectedFileConstancia || fileConstanciaUploadSuccess || loadingFileConstancia || !busquedaColegioRealizada">
@@ -224,7 +224,7 @@
                     <div class="card p-3 mb-3">
                         <div class="mb-3">
                             <label for="tipoSociedad" class="form-label">* ¿Forma parte de un despacho o es profesional independiente?</label>
-                            <select id="tipoSociedad" class="form-control"
+                            <select id="tipoSociedad" class="form-control" style="max-width: 300px;"
                                 [(ngModel)]="selectedTipoSociedad"
                                 [disabled]="!habilitarCamposDespacho">
                                 <option value="">Seleccione</option>
@@ -243,7 +243,7 @@
                         @if (selectedTipoSociedad === '2') {
                             <div class="mb-3">
                                 <label for="tieneTrabajadores" class="form-label">* ¿Cuenta con trabajadores a su cargo?</label>
-                                <select id="tieneTrabajadores" class="form-control"
+                                <select id="tieneTrabajadores" class="form-control" style="max-width: 300px;"
                                         [(ngModel)]="tieneTrabajadores"
                                         [disabled]="!habilitarCamposDespacho">
                                     <option value="">Elija Opción</option>
@@ -258,7 +258,7 @@
                             @if (tieneTrabajadores === 'Si') {
                                 <div class="mb-3">
                                     <label for="numeroTrabajadores" class="form-label">* Número de trabajadores:</label>
-                                    <input type="text" id="numeroTrabajadores" class="form-control"
+                                    <input type="text" id="numeroTrabajadores" class="form-control" style="max-width: 200px;"
                                         [(ngModel)]="numeroTrabajadores"
                                         (keypress)="permitirSoloNumeros($event)"
                                         [disabled]="!habilitarCamposDespacho"
@@ -279,7 +279,7 @@
 
                           <div class="mb-3">
                               <label for="rfcDespacho" class="form-label">* RFC:</label>
-                              <input type="text" id="rfcDespacho" class="form-control"
+                              <input type="text" id="rfcDespacho" class="form-control" style="max-width: 300px;"
                                   [class.is-invalid]="!rfcDespachoValido && nuevoRfcDespacho"
                                   [(ngModel)]="nuevoRfcDespacho"
                                   [disabled]="!habilitarCamposDespacho"
@@ -311,7 +311,7 @@
 
                           <div class="mb-3">
                               <label for="cargoDesempena" class="form-label">* Cargo que desempeña:</label>
-                              <select id="cargoDesempena" class="form-control"
+                              <select id="cargoDesempena" class="form-control" style="max-width: 300px;"
                                   [(ngModel)]="selectedCargoDesempena"
                                   [disabled]="!habilitarCamposDespacho">
                                   <option value="">Seleccione</option>
@@ -326,7 +326,7 @@
 
                           <div class="mb-3">
                               <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
-                              <input type="text" id="telefonoFijo" class="form-control"
+                              <input type="text" id="telefonoFijo" class="form-control" style="max-width: 300px;"
                                   [(ngModel)]="telefonoFijoDespacho"
                                   [disabled]="!habilitarCamposDespacho"
                                   placeholder="Ej. 5512345678"
