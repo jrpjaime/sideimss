@@ -167,7 +167,7 @@
 				</graphicElement>
 			</rectangle>
 			<rectangle>
-				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="178" width="552" height="144" isRemoveLineWhenBlank="true" uuid="2e260d4d-1364-4507-94b8-26542349bbd4">
+				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="0" y="168" width="552" height="153" isRemoveLineWhenBlank="true" uuid="2e260d4d-1364-4507-94b8-26542349bbd4">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -219,7 +219,7 @@
 				<textFieldExpression><![CDATA[$P{folio}]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToTallestObject" x="0" y="247" width="552" height="32" isRemoveLineWhenBlank="true" uuid="f1a9172f-2a32-489c-984c-70274a884e40">
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="239" width="552" height="40" isRemoveLineWhenBlank="true" uuid="f1a9172f-2a32-489c-984c-70274a884e40">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -312,7 +312,7 @@
 				<text><![CDATA[P r e s e n t e,]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="225" width="184" height="12" uuid="16cfeaf1-3b7b-4ffe-b1dc-27b352608b24">
+				<reportElement x="0" y="217" width="184" height="12" uuid="16cfeaf1-3b7b-4ffe-b1dc-27b352608b24">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -329,7 +329,7 @@
 				<textFieldExpression><![CDATA[$P{rfc}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="184" y="225" width="184" height="12" uuid="0b67b984-a585-476f-8831-c9e5fe3f8459">
+				<reportElement x="184" y="217" width="184" height="12" uuid="0b67b984-a585-476f-8831-c9e5fe3f8459">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -346,7 +346,7 @@
 				<textFieldExpression><![CDATA[$P{curp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="368" y="225" width="184" height="12" uuid="7568b748-5645-47c2-9c73-abf8ebd0c205">
+				<reportElement x="368" y="217" width="184" height="12" uuid="7568b748-5645-47c2-9c73-abf8ebd0c205">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -436,7 +436,7 @@
 				<textFieldExpression><![CDATA["El C.P.A. ".concat($P{nombre}!=null ? $P{nombre} :"").concat(" manifiesta bajo protesta de decir verdad que los datos proporcionados en el presente trámite son ciertos, que reúne los requisitos establecidos en los artículos 153 y 154, fracción I del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización, y que conoce el contenido y alcance de la Ley del Seguro Social, sus reglamentos, así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables.")]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="0" y="69" width="552" height="109" forecolor="#000000" backcolor="#FFFFFF" uuid="0672d758-b991-4b04-b20e-0824ba368833">
+				<reportElement mode="Transparent" x="0" y="69" width="552" height="101" forecolor="#000000" backcolor="#FFFFFF" uuid="0672d758-b991-4b04-b20e-0824ba368833">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -476,7 +476,7 @@
 				<text><![CDATA[Folio: ]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="203" width="552" height="12" uuid="37dec14d-3511-4469-b809-6903f5cc212c">
+				<reportElement x="0" y="195" width="552" height="12" uuid="37dec14d-3511-4469-b809-6903f5cc212c">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -493,7 +493,7 @@
 				<textFieldExpression><![CDATA[$P{nombre}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="237" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="79921028-c188-4db8-b03d-0de5da640cf2">
+				<reportElement mode="Transparent" x="0" y="229" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="79921028-c188-4db8-b03d-0de5da640cf2">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -506,7 +506,7 @@
 				<text><![CDATA[Datos modificados:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="215" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="7df28ea8-e350-4d94-a521-4ceeac233bbc">
+				<reportElement mode="Transparent" x="0" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="7df28ea8-e350-4d94-a521-4ceeac233bbc">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -522,7 +522,7 @@
 				<text><![CDATA[RFC:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="193" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="77ff3222-469b-41cd-88ee-5863b49de543">
+				<reportElement mode="Transparent" x="0" y="185" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="77ff3222-469b-41cd-88ee-5863b49de543">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -541,7 +541,7 @@
 				<text><![CDATA[Nombre:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="368" y="215" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="3c5c6cc6-9fb5-4637-92cd-4701f9fea3e5">
+				<reportElement mode="Transparent" x="368" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="3c5c6cc6-9fb5-4637-92cd-4701f9fea3e5">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -557,7 +557,7 @@
 				<text><![CDATA[Registro IMSS:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="184" y="215" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="d6c2b894-e038-45af-ab9d-603c2bded2ef">
+				<reportElement mode="Transparent" x="184" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="d6c2b894-e038-45af-ab9d-603c2bded2ef">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -668,7 +668,7 @@
 				<text><![CDATA[Contenido del acuse]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="178" width="552" height="15" forecolor="#000000" backcolor="#EDEBEB" uuid="1f3c69bf-e2dc-4963-a0e5-704f4e22948b">
+				<reportElement mode="Opaque" x="0" y="169" width="552" height="15" forecolor="#000000" backcolor="#EDEBEB" uuid="1f3c69bf-e2dc-4963-a0e5-704f4e22948b">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
