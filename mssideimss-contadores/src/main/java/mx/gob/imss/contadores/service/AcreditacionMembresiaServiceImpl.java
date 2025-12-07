@@ -272,7 +272,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                 CorreoDto correoDto = new CorreoDto();
                 correoDto.setRemitente("tramites.cpa@imss.gob.mx");
                 // Para pruebas mantienes override, para prod usarías correoDestino
-                correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); 
+                //correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); 
+                correoDto.setCorreoPara(Collections.singletonList(correoDestino)); 
                 correoDto.setAsunto(asunto);
 
                 // Construcción del HTML completo usando el fragmento específico
