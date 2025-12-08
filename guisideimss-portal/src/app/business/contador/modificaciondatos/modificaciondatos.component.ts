@@ -425,8 +425,10 @@ buscarNuevoColegio(): void {
 
     // Validar formato de RFC de persona moral antes de la búsqueda
     if (!this.validarRfcPersonaMoral(this.nuevoRfcColegio)) {
-      this.alertService.error('El formato del RFC ingresado no es valido. Por favor, verifícalo.');
-      this.rfcColegioValido = false; // Marcar el RFC como inválido
+      // El mensaje se muestra en el HTML, aquí solo marcamos la bandera
+      this.rfcColegioValido = false; 
+   
+      //this.alertService.error('El RFC ingresado no cumple con el formato de 12 caracteres para Persona Moral.');
       return;
     }
 
@@ -537,7 +539,7 @@ buscarNuevoColegio(): void {
         return;
       }
       if (file.type !== 'application/pdf') {
-        this.alertService.error('Solo se permiten archivos en formato PDF.', { autoClose: true });
+        this.alertService.error('Favor de seleccionar un archivo de tipo .PDF', { autoClose: true });
         event.target.value = null; // Limpiar el input file
         return;
       }
@@ -946,18 +948,19 @@ buscarNuevoColegio(): void {
       return;
     }
 
-    if (!this.validarRfc(this.nuevoRfcDespacho)) {
-      this.alertService.error('El formato del RFC del despacho no es válido. Por favor, verifícalo.');
+    if (!this.validarRfcPersonaMoral(this.nuevoRfcDespacho)) {
+      this.alertService.error('El formato del RFC del despacho no es válido. Debe tener 12 caracteres.');
       this.rfcDespachoValido = false;
       return;
     }
+
 
     this.rfcDespachoValido = true;
     this.loadingDespacho = true; // Activar spinner
 
     const request: RfcColegioRequestDto = { rfcColegio: this.nuevoRfcDespacho }; // Se usa el mismo DTO para RFC de persona moral
 
-    this.catalogosContadorService.getDatoRfcColegio(request) // Usamos el mismo servicio SAT para RFCs de persona moral
+    this.catalogosContadorService.getDatoRfcColegio(request)
       .pipe(finalize(() => this.loadingDespacho = false))
       .subscribe({
         next: (data: RfcColegioResponseDto) => {
@@ -966,23 +969,23 @@ buscarNuevoColegio(): void {
               rfcDespacho: '', nombreRazonSocial: '',
               cveIdTipoSociedad: '', desTipoSociedad: '',
               cveIdCargoContador: '', desCargoContador: '',
-              telefonoFijo: ''
+              telefonoFijo: '',
+              tieneTrabajadores: '',  
+              numeroTrabajadores: ''
             };
           }
           this.despachoContador.rfcDespacho = data.rfc;
           this.despachoContador.nombreRazonSocial = data.nombreRazonSocial;
           this.alertService.success('Datos del despacho encontrados.');
-          console.log('Datos del despacho obtenidos:', this.despachoContador);
         },
         error: (error: HttpErrorResponse) => {
           console.error('Error al buscar el RFC del despacho:', error);
           if (error.status === 404) {
-            this.alertService.error('No se encontró información para el RFC del despacho proporcionado. Por favor, verifica el RFC.');
+             // Limpiamos la razón social si no se encuentra, pero dejamos el RFC para que el usuario lo corrija o lo use
+            if (this.despachoContador) this.despachoContador.nombreRazonSocial = '';
+            this.alertService.error('No se encontró información para el RFC proporcionado.');
           } else {
-            this.alertService.error('Error al consultar el RFC del despacho. Inténtalo de nuevo más tarde.');
-          }
-          if (this.despachoContador) {
-            this.despachoContador.nombreRazonSocial = ''; // Limpiar si no se encuentra
+            this.alertService.error('Error al consultar el RFC del despacho.');
           }
         }
       });
@@ -1072,6 +1075,8 @@ buscarNuevoColegio(): void {
         () => {
           // Acción al pulsar "Aceptar"
           this.deseaActualizarContacto = false; // Aseguramos que se cierre la sección de edición si estaba abierta
+          this.limpiarCamposEdicionContacto();
+          this.router.navigate([NAV.home]);
         },
         'Aceptar' // Texto del botón principal
       );
@@ -1081,13 +1086,7 @@ buscarNuevoColegio(): void {
     if (respuesta) { // Si el usuario dice "Si" (abre la actualización)
       this.precargarDatosContacto();
 
-    } else {
-      // Si el usuario confirma que los datos no son correctos,
-      // Limpiamos los campos del formulario de edición en caso de que hubieran sido editados y luego el usuario cambió de opinión.
-      this.limpiarCamposEdicionContacto();
-      //this.alertService.success('Datos de contacto confirmados como correctos.', { autoClose: true });
-      // this.router.navigate(['/home']); // O redirigir a donde sea apropiado
-    }
+    }  
   }
 
   /**
@@ -1166,7 +1165,7 @@ buscarNuevoColegio(): void {
    * Valida si el teléfono tiene exactamente 10 dígitos numéricos
    */
   validarFormatoTelefono(telefono: string): boolean {
-    const phonePattern = /^[0-9]{10}$/;
+    const phonePattern = /^[0-9]{10,12}$/;
     return phonePattern.test(telefono);
   }
 
@@ -1253,14 +1252,14 @@ buscarNuevoColegio(): void {
 
       // Enviamos el nuevo RFC y la Razón Social actual (sea nueva o vieja, es la vigente para el trámite)
       rfcColegioNuevo: this.nuevoRfcColegio,
-      razonSocialColegio: this.colegioContador?.razonSocial,
+      razonSocialColegio: this.colegioContador?.razonSocial || '', 
 
       desPathHdfsConstancia: this.fileConstanciaHdfsPath,
       nomArchivoConstancia: this.selectedFileConstancia?.name,
 
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO',
       state: {
-        nuevoRfcColegio: this.nuevoRfcColegio,
+        nuevoRfcColegio: this.nuevoRfcColegio, 
         fileConstanciaHdfsPath: this.fileConstanciaHdfsPath,
         nomArchivoConstancia: this.selectedFileConstancia?.name
       }
@@ -1299,8 +1298,8 @@ buscarNuevoColegio(): void {
              return;
         }
     } else {
-        // Validaciones para Despacho
-        if (!this.nuevoRfcDespacho || !this.validarRfc(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
+        // Validaciones para Despacho 
+        if (!this.nuevoRfcDespacho || !this.validarRfcPersonaMoral(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
            this.alertService.error('Verifique los campos obligatorios del despacho.');
            return;
         }
@@ -1417,6 +1416,15 @@ buscarNuevoColegio(): void {
     if (!this.validarFormatoCorreo(this.nuevoCorreoElectronico2) ||
         (this.nuevoCorreoElectronico3 && !this.validarFormatoCorreo(this.nuevoCorreoElectronico3)) ||
         !this.validarFormatoTelefono(this.nuevoTelefono2)) {
+        return;
+    }
+
+
+    if (this.nuevoCorreoElectronico2 !== this.confirmarCorreoElectronico2) {
+        return; // Al hacer return, se queda en la página y se muestra la alerta del HTML
+    }
+
+    if (this.nuevoCorreoElectronico3 && (this.nuevoCorreoElectronico3 !== this.confirmarCorreoElectronico3)) {
         return;
     }
 

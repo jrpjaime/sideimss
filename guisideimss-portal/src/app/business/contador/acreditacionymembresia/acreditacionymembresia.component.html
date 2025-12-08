@@ -24,7 +24,7 @@
           <div class="col-sm-3">
             <label for="fechaExpedicionAcreditacion" class="form-label">* Fecha de expedición de la creditación: </label>
             <div class="form-group datepicker-group">
-              <input class="form-control"  id="fechaExpedicionAcreditacion" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionAcreditacion" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              <input class="form-control"  id="fechaExpedicionAcreditacion" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionAcreditacion" type="date" [max]="maxDate" onkeydown="return false" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.invalid && formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.touched) {
                 <small class="text-danger">Proporcione la información requerida.</small>
               }
@@ -40,7 +40,7 @@
           <div class="col-sm-3">
             <label for="fechaExpedicionMembresia" class="form-label">* Fecha expedición de la membresía: </label>
             <div class="form-group datepicker-group">
-              <input class="form-control"  id="fechaExpedicionMembresia" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionMembresia" type="date" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              <input class="form-control"  id="fechaExpedicionMembresia" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionMembresia" type="date" [max]="maxDate" onkeydown="return false" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionMembresia')?.invalid && formAcreditacionMembresia.get('fechaExpedicionMembresia')?.touched) {
                 <small class="text-danger">Proporcione la información requerida.</small>
               }

@@ -46,6 +46,8 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
   responseDto: DocumentoIndividualResponseDto | null = null; // Para la respuesta final del submit, si aplica
   folioSolicitud: string | null = null;
 
+  maxDate: string = '';
+
   constructor (
     private fb: FormBuilder,
     private router : Router,
@@ -59,6 +61,8 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
     sharedService: SharedService
   ) {
     super(sharedService);
+    // Obtenemos la fecha de hoy y la formateamos a Año-Mes-Dia
+    this.maxDate = new Date().toISOString().split('T')[0];
     this.recargaParametros();
     this.formAcreditacionMembresia = this.fb.group({
       fechaExpedicionAcreditacion: ['', [Validators.required]],
@@ -184,7 +188,7 @@ export class AcreditacionymembresiaComponent extends BaseComponent implements On
         return;
       }
       if (file.type !== 'application/pdf') {
-        this.alertService.error('Solo se permiten archivos en formato PDF.', { autoClose: true });
+        this.alertService.error('Favor de seleccionar un archivo de tipo .PDF', { autoClose: true });
         this.formAcreditacionMembresia.get(controlName)?.setErrors({ 'invalidType': true });
         event.target.value = null; // Limpiar el input file
         this.formAcreditacionMembresia.updateValueAndValidity(); // Re-validar por si acaso

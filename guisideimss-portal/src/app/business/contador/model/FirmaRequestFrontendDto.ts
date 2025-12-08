@@ -3,4 +3,5 @@ export interface FirmaRequestFrontendDto {
   desFolio: string;
   desCurp: string;
   nombreCompleto: string;
+  acto: string;
 }

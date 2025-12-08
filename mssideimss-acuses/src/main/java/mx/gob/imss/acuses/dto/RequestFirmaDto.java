@@ -11,5 +11,6 @@ public class RequestFirmaDto {
     private String desFolio;
 	private String desCurp;
     private String nombreCompleto;
+    private String acto;
 
 }

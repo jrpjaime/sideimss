@@ -275,7 +275,7 @@ public class AcusesRestController {
                     "|RFC|" + rfcUsuario +
                     "|CURP|" + requestFirmaDto.getDesCurp() +
                     "|HASH|" + desFolio +
-                    "|ACTO|Acreditación o Membresía||";
+                    "|ACTO|"+requestFirmaDto.getActo() + "||";
             logger.info("cadenaOriginal: {}", cadenaOriginal);
 
             // Lógica para armar el JSON del widget de firma

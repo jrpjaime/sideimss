@@ -263,7 +263,8 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
       rfcUsuario: rfcUsuario,
       desFolio: desFolio,
       desCurp: desCurp,
-      nombreCompleto: nombreCompleto
+      nombreCompleto: nombreCompleto,
+      acto: "Acreditación o Membresía"
     };
 
 

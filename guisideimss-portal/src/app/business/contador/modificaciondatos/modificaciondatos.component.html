@@ -69,17 +69,22 @@
                     <div class="mb-3">
                         <label class="form-label">RFC del Colegio:</label>
                         @if (!habilitarEdicionRfcColegio) {
+                            <!-- Modo Lectura -->
                             <p><strong>{{ colegioContador.rfcColegio }}</strong></p>
                         } @else {
-
+                            <!-- Modo Edición -->
                             <input type="text" class="form-control" style="max-width: 300px;"
-                                [class.is-invalid]="!rfcColegioValido && nuevoRfcColegio"
+                                [class.is-invalid]="(nuevoRfcColegio && !validarRfcPersonaMoral(nuevoRfcColegio))"
                                 [(ngModel)]="nuevoRfcColegio"
-                                (ngModelChange)="busquedaColegioRealizada = false"
-                                [placeholder]="'Ingrese nuevo RFC'" maxlength="12">
-                            @if (!rfcColegioValido && nuevoRfcColegio) {
-                                <div class="invalid-feedback">
-                                    El formato del RFC no es válido.
+                                (ngModelChange)="busquedaColegioRealizada = false; rfcColegioValido = true;"
+                                placeholder="Ingrese nuevo RFC" 
+                                maxlength="12">
+                            
+                            <!-- Mensaje de Error (Estilo Alerta Roja) -->
+                            @if (nuevoRfcColegio && !validarRfcPersonaMoral(nuevoRfcColegio)) {
+                                <div class="alert alert-danger mt-1 p-2 d-flex align-items-center" style="max-width: 300px;" role="alert">
+                                    <i   style="font-size: 1.2rem;"></i>
+                                    <div>El RFC no cuenta con un formato válido, favor de verificar.</div>
                                 </div>
                             }
                         }
@@ -280,18 +285,18 @@
                           <div class="mb-3">
                               <label for="rfcDespacho" class="form-label">* RFC:</label>
                               <input type="text" id="rfcDespacho" class="form-control" style="max-width: 300px;"
-                                  [class.is-invalid]="!rfcDespachoValido && nuevoRfcDespacho"
+                                  [class.is-invalid]="formSubmitted && (!nuevoRfcDespacho || !validarRfcPersonaMoral(nuevoRfcDespacho))"
                                   [(ngModel)]="nuevoRfcDespacho"
                                   [disabled]="!habilitarCamposDespacho"
                                   placeholder="Ingrese el RFC del despacho"
-                                  maxlength="13">
-                              @if (!rfcDespachoValido && nuevoRfcDespacho) {
-                                  <div class="invalid-feedback">
-                                      El formato del RFC no es válido.
+                                  maxlength="12">
+                              
+                              <!-- Alerta de Error: Formato incorrecto -->
+                              @if (formSubmitted && !validarRfcPersonaMoral(nuevoRfcDespacho)) {
+                                  <div class="alert alert-danger mt-1 p-2 d-flex align-items-center" role="alert">
+                                      <i class="bi bi-x-square-fill me-2" style="font-size: 1.2rem;"></i>
+                                      <div>El RFC no cuenta con un formato válido, favor de verificar.</div>
                                   </div>
-                              }
-                              @if (formSubmitted && (!nuevoRfcDespacho || !rfcDespachoValido)) {
-                                  <small class="text-danger">El RFC es obligatorio y debe tener un formato válido.</small>
                               }
                           </div>
 
@@ -597,7 +602,9 @@
                       <hr class="red">
                     </div>
 
-                    <!-- CORREO 2 -->
+                    <!-- ========================================== -->
+                    <!-- CORREO ELECTRÓNICO 2 -->
+                    <!-- ========================================== -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
                             <label for="correoElectronico2" class="form-label">* Correo electrónico 2:</label>
@@ -612,26 +619,38 @@
                             }
                             <!-- Validación: Formato -->
                             @else if (formSubmitted && nuevoCorreoElectronico2 && !validarFormatoCorreo(nuevoCorreoElectronico2)) {
-                                <!-- CORRECCIÓN AQUÍ: Se cambió @ por &#64; -->
                                 <small class="text-danger">El formato del correo no es válido (ej: usuario&#64;dominio.com).</small>
                             }
                         </div>
 
-                        <!-- Resto del código de confirmación... -->
+                        <!-- CONFIRMACIÓN CORREO 2 -->
                         <div class="col-sm-6">
                             <label for="confirmarCorreoElectronico2" class="form-label">* Confirmar correo electrónico 2:</label>
                             <input type="email" id="confirmarCorreoElectronico2" class="form-control"
                                    [(ngModel)]="confirmarCorreoElectronico2"
                                    placeholder="Confirme correo electrónico 2"
-                                   [class.is-invalid]="formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2">
+                                   [class.is-invalid]="formSubmitted && (confirmarCorreoElectronico2 !== nuevoCorreoElectronico2 || !validarFormatoCorreo(confirmarCorreoElectronico2))">
 
-                            @if (formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 !== nuevoCorreoElectronico2) {
-                                <small class="text-danger">Los correos electrónicos no coinciden.</small>
+                            <!-- Validación: Formato Confirmación (Mensaje Imagen 1) -->
+                            @if (formSubmitted && confirmarCorreoElectronico2 && !validarFormatoCorreo(confirmarCorreoElectronico2)) {
+                                <div class="alert alert-danger mt-2 d-flex align-items-center" role="alert">
+                                    <i   style="font-size: 1.5rem;"></i>
+                                    <div>Favor de ingresar una dirección electrónica válida para el campo: Confirmar correo electrónico 2.</div>
+                                </div>
+                            }
+                            <!-- Validación: Coincidencia (Mensaje Imagen 2) -->
+                            @else if (formSubmitted && nuevoCorreoElectronico2 && confirmarCorreoElectronico2 && nuevoCorreoElectronico2 !== confirmarCorreoElectronico2) {
+                                <div class="alert alert-danger mt-2 d-flex align-items-center" role="alert">
+                                    <i  style="font-size: 1.5rem;"></i>
+                                    <div>Los datos capturados en el campo: Correo electrónico 2, no son iguales. Favor de capturar nuevamente.</div>
+                                </div>
                             }
                         </div>
                     </div>
 
-                    <!-- CORREO 3 -->
+                    <!-- ========================================== -->
+                    <!-- CORREO ELECTRÓNICO 3 -->
+                    <!-- ========================================== -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
                             <label for="correoElectronico3" class="form-label">* Correo electrónico 3:</label>
@@ -649,45 +668,64 @@
                                 <small class="text-danger">El formato del correo no es válido.</small>
                             }
                         </div>
+
+                        <!-- CONFIRMACIÓN CORREO 3 -->
                         <div class="col-sm-6">
                             <label for="confirmarCorreoElectronico3" class="form-label">* Confirmar correo electrónico 3:</label>
                             <input type="email" id="confirmarCorreoElectronico3" class="form-control"
                                    [(ngModel)]="confirmarCorreoElectronico3"
                                    placeholder="Confirme correo electrónico 3"
-                                   [class.is-invalid]="formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3">
+                                   [class.is-invalid]="formSubmitted && (confirmarCorreoElectronico3 !== nuevoCorreoElectronico3 || !validarFormatoCorreo(confirmarCorreoElectronico3))">
 
-                            @if (formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 !== nuevoCorreoElectronico3) {
-                                <small class="text-danger">Los correos electrónicos no coinciden.</small>
+                            <!-- Validación: Formato Confirmación -->
+                            @if (formSubmitted && confirmarCorreoElectronico3 && !validarFormatoCorreo(confirmarCorreoElectronico3)) {
+                                <div class="alert alert-danger mt-2 d-flex align-items-center" role="alert">
+                                    <i   style="font-size: 1.5rem;"></i>
+                                    <div>Favor de ingresar una dirección electrónica válida para el campo: Confirmar correo electrónico 3.</div>
+                                </div>
+                            }
+                            <!-- Validación: Coincidencia -->
+                            @else if (formSubmitted && nuevoCorreoElectronico3 && confirmarCorreoElectronico3 && nuevoCorreoElectronico3 !== confirmarCorreoElectronico3) {
+                                <div class="alert alert-danger mt-2 d-flex align-items-center" role="alert">
+                                    <i  style="font-size: 1.5rem;"></i>
+                                    <div>Los datos capturados en el campo: Correo electrónico 3, no son iguales. Favor de capturar nuevamente.</div>
+                                </div>
                             }
                         </div>
                     </div>
 
+                    <!-- ========================================== -->
                     <!-- TELÉFONO 2 -->
+                    <!-- ========================================== -->
                     <div class="row mb-3">
                         <div class="col-sm-6">
                             <label for="telefono2" class="form-label">* Teléfono 2:</label>
-                            <!-- Se agrega (keypress) para bloquear letras y se ajusta la validación visual -->
+                            <!-- Input: Maxlength actualizado a 12 -->
                             <input type="text" id="telefono2" class="form-control"
                                    [(ngModel)]="nuevoTelefono2"
                                    (keypress)="permitirSoloNumeros($event)"
                                    placeholder="Ej. 5512345678"
-                                   maxlength="10"
+                                   maxlength="12"
                                    [class.is-invalid]="formSubmitted && (!nuevoTelefono2 || !validarFormatoTelefono(nuevoTelefono2))">
 
-                            <!-- Mensajes de error -->
+                            <!-- Validación: Requerido -->
                             @if (formSubmitted && !nuevoTelefono2) {
                                 <small class="text-danger d-block">El Teléfono 2 es obligatorio.</small>
                             }
+                            <!-- Validación: Longitud y formato (Mensaje Imagen 3) -->
                             @else if (formSubmitted && !validarFormatoTelefono(nuevoTelefono2)) {
-                                <small class="text-danger d-block">El teléfono debe tener exactamente 10 dígitos.</small>
+                                <div class="alert alert-danger mt-2 d-flex align-items-center" role="alert">
+                                    <i   style="font-size: 1.2rem;"></i>
+                                    <div>El campo Teléfono debe de ser de 10 ó 12 dígitos.</div>
+                                </div>
                             }
                         </div>
                     </div>
-                </div>
+                </div> <!-- Fin del card -->
 
-              <div class="col-12">
-                <h3 class="mb-0">Información profesional</h3>
-                <hr class="red">
+                <div class="col-12">
+                    <h3 class="mb-0">Información profesional</h3>
+                    <hr class="red">
                 </div>
 
                 <div class="row mb-3">
@@ -707,7 +745,6 @@
                         <button type="button" class="btn btn-primary" (click)="guardarDatosContacto()"  >Siguiente</button>
                   </div>
                 </div>
-
 
               }
 

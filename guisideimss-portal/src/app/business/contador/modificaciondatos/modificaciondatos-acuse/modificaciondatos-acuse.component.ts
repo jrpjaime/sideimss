@@ -189,7 +189,8 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       rfcUsuario: this.rfcSesion,
       desFolio: this.folioSolicitud,
       desCurp: this.curpSesion,
-      nombreCompleto: this.nombreCompletoSync
+      nombreCompleto: this.nombreCompletoSync,
+      acto: "Modificación datos"
     };
 
     this.contadorService.generarRequestJsonFirma(requestDto).subscribe({

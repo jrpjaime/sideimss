@@ -221,7 +221,8 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       rfcUsuario: rfcUsuario,
       desFolio: desFolio,
       desCurp: desCurp,
-      nombreCompleto: nombreCompleto
+      nombreCompleto: nombreCompleto,
+      acto: "Solicitud de Baja"
     };
 
     this.contadorPublicoAutorizadoService.generarRequestJsonFirma(firmaRequestDto).subscribe({
@@ -347,6 +348,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       folioFirma: this.folioFirma, // Folio del proceso de firma
       CURP: this.curpFirma,
       RFC: this.rfcSesion,
+      nombreCompleto: nombreCompletoSesion,
       numeroRegistroImss: this.numeroRegistroImssSesion,
       firmaElectronica: this.firmaDigital,
       selloDigitalIMSS: "",
