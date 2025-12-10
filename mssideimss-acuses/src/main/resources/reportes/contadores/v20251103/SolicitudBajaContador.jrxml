@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.5.final using JasperReports Library version 6.21.5-74d586df47b25dbd05bd0957999819196e59934a  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="reportePrueba" pageWidth="612" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="552" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="c49a4e7a-415f-4be3-8b1c-610bf178a532">
 	<property name="ireport.scriptlethandling" value="0"/>
 	<property name="ireport.encoding" value="UTF-8"/>
@@ -187,7 +188,7 @@
 				</textElement>
 				<text><![CDATA[Contenido del acuse]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="368" y="219" width="184" height="11" uuid="9f7c6f76-f54f-4ecc-8a8b-7fda37677a6d">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
@@ -201,7 +202,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{numeroRegistroImss}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="0" y="195" width="552" height="12" uuid="a160b95f-360d-4e2c-b538-5df1765154e2">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -215,7 +216,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{nombreCompleto}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="184" y="219" width="184" height="11" uuid="6612de74-6136-440b-b693-2d286071a9c7">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
@@ -229,7 +230,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{CURP}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="0" y="242" width="552" height="167" isRemoveLineWhenBlank="true" uuid="9f7a461c-d39b-4b55-9645-4f617b97de74">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
@@ -242,7 +243,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{motivoBaja}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="0" y="219" width="184" height="11" uuid="c0db1226-0b5a-406c-a35d-07d1ec159e1f">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -277,12 +278,12 @@
 					<printWhenExpression><![CDATA[!$P{selloDigitalIMSS}.trim().isEmpty() && $P{selloDigitalIMSS} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Sello Digital del Acuse:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="110" y="527" width="442" height="44" uuid="5c43200b-9306-41d9-837e-3e66372e1504">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -301,17 +302,17 @@
 					<printWhenExpression><![CDATA[!$P{cadenaOriginal}.trim().isEmpty() && $P{cadenaOriginal} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Cadena Original del Acuse:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" pattern="" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="110" y="583" width="442" height="33" forecolor="#000000" backcolor="#FFFFFF" uuid="00b31992-ba9b-4e10-ab09-ffa7fbc3d845">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="5" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="5" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" leftIndent="5"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{cadenaOriginal}]]></textFieldExpression>
@@ -321,7 +322,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Bottom" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 				</textElement>
 				<text><![CDATA[Folio:]]></text>
 			</staticText>
@@ -369,7 +370,7 @@
 				</textElement>
 				<text><![CDATA[C.P.A.]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="43" y="45" width="290" height="14" uuid="b2057d9a-5d68-45a0-bf69-ba7aa6c7a1ab">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -389,19 +390,19 @@
 				</textElement>
 				<text><![CDATA[P r e s e n t e,]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="0" y="74" width="552" height="94" forecolor="#000000" backcolor="#FFFFFF" uuid="512b6de4-5765-4263-b9b5-e7f59669586b">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 				</reportElement>
 				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
 				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA["De conformidad con lo establecido en los artículos 9, segundo párrafo, 16, 251, fracción XXIX, 286 L, 286 M y 286 N, de la Ley del Seguro Social; 17-D, 17-E, 17-I, 19, último párrafo y 19-A del Código Fiscal de la Federación, de aplicación supletoria a la Ley del Seguro Social, así como el numeral 6.2 de las “Reglas de Carácter General para el uso de la Firma Electrónica Avanzada, cuyo certificado digital sea emitido por el Servicio de Administración Tributaria, en los actos que se realicen ante el Instituto Mexicano del Seguro Social”, aprobadas por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número SA2.HCT.280813/234.P.DIR, publicado en el Diario Oficial de la Federación el día 14 de noviembre de 2013, vigente a partir del 15 del mismo mes y año; se hace constar que en esta fecha se recibió su SOLICITUD DE BAJA DEL REGISTRO DE CONTADORES PÚBLICOS PARA DICTAMINAR, a que se refiere la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017, correspondiente a:"]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement mode="Transparent" x="0" y="424" width="552" height="52" forecolor="#000000" backcolor="#FFFFFF" uuid="bde6500e-d189-4134-8117-788bb543e11b">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -410,7 +411,7 @@
 				</reportElement>
 				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
 				<textElement textAlignment="Justified" verticalAlignment="Middle" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA["El C.P.A. ".concat($P{nombreCompleto}!=null ? $P{nombreCompleto} : "").concat(", de conformidad con la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables, manifiesta bajo protesta decir verdad que la información proporcionada en esta solicitud es cierta.")]]></textFieldExpression>
@@ -510,12 +511,12 @@
 					<printWhenExpression><![CDATA[!$P{firmaElectronica}.trim().isEmpty() && $P{firmaElectronica} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Firma electrónica avanzada del Contador Público Autorizado:]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" x="110" y="490" width="442" height="25" isRemoveLineWhenBlank="true" uuid="d383bb69-862c-4830-9b6f-31af0a7a8c17">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -583,7 +584,7 @@ C.P. 06600 Ciudad de México.
 Tel. 800 623 23 23
 www.imss.gob.mx/contacto]]></text>
 			</staticText>
-			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" pattern="" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToTallestObject" mode="Transparent" x="119" y="537" width="433" height="-512" forecolor="#000000" backcolor="#FFFFFF" uuid="0a3004f3-b001-4f9d-8c2e-a5c8c25056b7">
 					<property name="com.jaspersoft.studio.unit.x" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -592,7 +593,7 @@ www.imss.gob.mx/contacto]]></text>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" leftIndent="5"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{cadenaOriginal}]]></textFieldExpression>

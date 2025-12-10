@@ -132,6 +132,25 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
     this.acusePreviewError = null;
     this.alertService.clear();
 
+    // --- 1. GENERAR FECHA ACTUAL EN ESPAÑOL ---
+    const now = new Date();
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    const dia = now.getDate();
+    const mes = meses[now.getMonth()];
+    const anio = now.getFullYear();
+    // Formatear hora a dos dígitos
+    const horas = now.getHours().toString().padStart(2, '0');
+    const minutos = now.getMinutes().toString().padStart(2, '0');
+    const segundos = now.getSeconds().toString().padStart(2, '0');
+
+    // Resultado: "10 de diciembre de 2025, 16:50:00"
+    const fechaActual = `${dia} de ${mes} de ${anio}, ${horas}:${minutos}:${segundos}`;
+    // ------------------------------------------    
+
     const datosParaPlantilla = {
       vistaPrevia: "SI",
       ...this.datosSolicitudBaja, // Datos específicos de la solicitud de baja
@@ -140,6 +159,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       RFC: this.rfcSesion,
       CURP: this.curpSesion,
       numeroRegistroImss: this.numeroRegistroImssSesion,
+      fecha: fechaActual
 
     };
 
@@ -369,7 +389,7 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
       tipoAcuse: this.TIPO_ACUSE
     };
 
-    this.alertService.info('Enviando solicitud de baja final con firma...', { autoClose: true });
+    this.alertService.info('Enviando solicitud de baja con firma...', { autoClose: true });
     this.loaderService.show();
 
     this.contadorPublicoAutorizadoService.solicitudBaja(plantillaDato).subscribe({
@@ -399,14 +419,14 @@ export class SolicitudbajaAcuseComponent extends BaseComponent implements OnInit
           }
 
         } else {
-          this.alertService.error(response.mensaje || 'Error al enviar la solicitud de baja final con firma.', { autoClose: true });
+          this.alertService.error(response.mensaje || 'Error al enviar la solicitud de baja con firma.', { autoClose: true });
           this.resetFirmaData();
         }
       },
       error: (err) => {
         this.loaderService.hide();
-        console.error('Error al enviar solicitud de baja final con firma:', err);
-        this.alertService.error('Ocurrió un error al enviar la solicitud de baja final con firma. Por favor, inténtalo de nuevo.', { autoClose: true });
+        console.error('Error al enviar solicitud de baja con firma:', err);
+        this.alertService.error('Ocurrió un error al enviar la solicitud de baja con firma. Por favor, inténtalo de nuevo.', { autoClose: true });
         this.resetFirmaData();
       }
     });

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CatalogosContadorService } from '../services/catalogos-contador.service';
 import { AlertService } from '../../../shared/services/alert.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ContadorPublicoAutorizadoService } from '../services/contador-publico-autorizado.service';
 import { BaseComponent } from '../../../shared/base/base.component';
@@ -36,7 +36,7 @@ import { DespachoResponseDto } from '../model/DespachoResponseDto';
   templateUrl: './modificaciondatos.component.html',
   styleUrl: './modificaciondatos.component.css'
 })
-export class ModificaciondatosComponent extends BaseComponent implements OnInit {
+export class ModificaciondatosComponent extends BaseComponent implements OnInit, OnDestroy {
 
       // Expresión regular para validar formato de correo estándar
   private emailPattern: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -129,7 +129,9 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   originalTieneTrabajadores: string | null = null;
   originalNumeroTrabajadores: string | null = null;
 
-busquedaDespachoRealizada: boolean = false; 
+  busquedaDespachoRealizada: boolean = false; 
+
+  private resetSubscription: Subscription | null = null;
 
   constructor(
     private catalogosContadorService: CatalogosContadorService,
@@ -156,7 +158,51 @@ busquedaDespachoRealizada: boolean = false;
     this.cargarCargosContador();
     console.log('RFC de sesión en ModificaciondatosComponent:', this.rfcSesion);
     this.verificarYRestaurarDatosPrevios();
+        this.resetSubscription = this.sharedService.resetModificacionDatos$.subscribe(() => {
+      console.log('Reiniciando vista de modificación de datos desde el menú...');
+      this.resetearVista();
+    });
   }
+
+
+
+    // Limpiar suscripción al salir ---
+  override ngOnDestroy(): void {
+    super.ngOnDestroy(); 
+    if (this.resetSubscription) {
+      this.resetSubscription.unsubscribe();
+    }
+  }
+
+  // Método que limpia todo ---
+  resetearVista(): void {
+    // 1. Reiniciar el Select principal
+    this.selectedTipoDato = '';
+
+    // 2. Ocultar todas las secciones
+    this.mostrarSeccionColegio = false;
+    this.mostrarSeccionDespacho = false;
+    this.mostrarSeccionPersonales = false;
+
+    // 3. Limpiar objetos de datos cargados
+    this.colegioContador = null;
+    this.despachoContador = null;
+    
+    // 4. Resetear banderas de UI
+    this.habilitarEdicionRfcColegio = false;
+    this.busquedaColegioRealizada = false;
+    this.habilitarCamposDespacho = false;
+    this.deseaActualizarDespacho = null;
+    this.deseaActualizarContacto = null;
+
+    // 5. Limpiar datos temporales del servicio (Para que no se autorrellene al recargar)
+    this.modificacionDatosDataService.clearDatosFormularioPrevio(); 
+
+    // 6. Recargar validaciones básicas o limpiar errores
+    this.formSubmitted = false;
+    this.alertService.clear();
+  }
+
 
 
   /**
@@ -456,26 +502,65 @@ buscarNuevoColegio(): void {
         },
         error: (error: HttpErrorResponse) => {
           console.error('Error al obtener los datos del nuevo colegio:', error);
+          
           if (error.status === 404) {
             this.alertService.error('No se encontraron datos de colegio para el RFC proporcionado. Por favor, verifica el RFC e intenta de nuevo.');
           } else {
             this.alertService.error('Error al consultar los datos del nuevo colegio. Inténtalo de nuevo más tarde.');
           }
-          this.colegioContador = null;
+ 
+          // si existe el objeto, solo limpia la razón social para mostrar que no hubo coincidencia
+          if (this.colegioContador) {
+             this.colegioContador.razonSocial = ''; 
+             // Opcional: Puedes asignar el RFC que se intentó buscar, o dejar el anterior.
+             // this.colegioContador.rfcColegio = this.nuevoRfcColegio; 
+          } else {
+             // Si por alguna razón era nulo, lo inicializamos vacío para que pinte el formulario
+             this.colegioContador = { rfcColegio: '', razonSocial: '' };
+          }
+
+          // Mantenemos la bandera en false para bloquear el botón de Siguiente
           this.busquedaColegioRealizada = false;
         }
       });
   }
 
-  limpiarNuevoRfcColegio(): void {
+limpiarNuevoRfcColegio(): void {
+    // 1. Limpiar campos de texto (RFC y Razón Social)
     this.nuevoRfcColegio = '';
     this.rfcColegioValido = true;
-     this.busquedaColegioRealizada = false;
+    this.busquedaColegioRealizada = false;
+
     if (this.colegioContador) {
       this.colegioContador.razonSocial = '';
       this.colegioContador.rfcColegio = '';
     }
-    this.alertService.info('Campo RFC y razón social limpiados.');
+
+    // 2. Eliminar archivo del servidor si ya se había subido con éxito
+    if (this.fileConstanciaHdfsPath) {
+      this.acreditacionMembresiaService.deleteDocument(this.fileConstanciaHdfsPath).subscribe({
+        next: () => {
+          console.log('Archivo anterior eliminado del servidor al limpiar.');
+        },
+        error: (err) => {
+          console.error('Error al intentar eliminar el archivo del servidor:', err);
+        }
+      });
+    }
+
+    // 3. Resetear variables del archivo localmente
+    this.selectedFileConstancia = null;
+    this.fileConstanciaUploadSuccess = false;
+    this.fileConstanciaHdfsPath = null;
+    this.fileConstanciaError = null;
+
+    // 4. Limpiar el input file del HTML para que se vea vacío visualmente
+    const fileInput = document.getElementById('constanciaMembresia') as HTMLInputElement;
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    this.alertService.info('Campos y archivo adjunto limpiados.');
   }
 
    /**
@@ -940,65 +1025,7 @@ buscarNuevoColegio(): void {
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
     }
   }
-
-  /**
-   * Busca los datos de un despacho por RFC.
-   */
-  /*
-  buscarDatosDespacho(): void {
-    if (!this.nuevoRfcDespacho) {
-      this.alertService.warn('Por favor, ingresa el RFC del despacho para buscar.');
-      this.rfcDespachoValido = false;
-      return;
-    }
-
-    if (!this.validarRfcPersonaMoral(this.nuevoRfcDespacho)) {
-      this.alertService.error('El formato del RFC del despacho no es válido. Debe tener 12 caracteres.');
-      this.rfcDespachoValido = false;
-      return;
-    }
-
-
-    this.rfcDespachoValido = true;
-    this.loadingDespacho = true; // Activar spinner
-
-    const request: RfcColegioRequestDto = { rfc: this.nuevoRfcDespacho }; // Se usa el mismo DTO para RFC de persona moral
-
-    this.catalogosContadorService.getDatoRfcColegio(request)
-      .pipe(finalize(() => this.loadingDespacho = false))
-      .subscribe({
-        next: (data: RfcColegioResponseDto) => {
-          if (!this.despachoContador) {
-            this.despachoContador = {
-              rfcDespacho: '', nombreRazonSocial: '',
-              cveIdTipoSociedad: '', desTipoSociedad: '',
-              cveIdCargoContador: '', desCargoContador: '',
-              telefonoFijo: '',
-              tieneTrabajadores: '',  
-              numeroTrabajadores: ''
-            };
-          }
-          this.despachoContador.rfcDespacho = data.rfc;
-          this.despachoContador.nombreRazonSocial = data.nombreRazonSocial;
-          // Bloqueamos el input y el botón buscar
-          this.busquedaDespachoRealizada = true; 
-          this.alertService.success('Datos del despacho encontrados.');
-        },
-        error: (error: HttpErrorResponse) => {
-          // En error NO bloqueamos para permitir corregir
-           this.busquedaDespachoRealizada = false; 
-          console.error('Error al buscar el RFC del despacho:', error);
-          if (error.status === 404) {
-             // Limpiamos la razón social si no se encuentra, pero dejamos el RFC para que el usuario lo corrija o lo use
-            if (this.despachoContador) this.despachoContador.nombreRazonSocial = '';
-            this.alertService.error('No se encontró información para el RFC proporcionado.');
-          } else {
-            this.alertService.error('Error al consultar el RFC del despacho.');
-          }
-        }
-      });
-  }
-  */
+ 
 
 
   /**
@@ -1055,7 +1082,9 @@ buscarNuevoColegio(): void {
           
           if (error.status === 404) {
              // Limpiamos solo la razón social si no se encuentra
-            if (this.despachoContador) this.despachoContador.nombreRazonSocial = '';
+            if (this.despachoContador){ 
+               this.despachoContador.nombreRazonSocial = '';
+              }
             this.alertService.error('No se encontró información en el SAT para el RFC proporcionado.');
           } else {
             this.alertService.error('Error al consultar el servicio del SAT.');
@@ -1065,22 +1094,7 @@ buscarNuevoColegio(): void {
   }
 
 
-  /**
-   * Limpia los campos de RFC y razón social del despacho.
-   */
-  /*
-  limpiarDatosDespacho(): void {
-    this.nuevoRfcDespacho = '';
-    this.rfcDespachoValido = true;
-    if (this.despachoContador) {
-      this.despachoContador.nombreRazonSocial = '';
-      this.despachoContador.rfcDespacho = '';
-    }
-    // Reactivamos el input y el botón buscar
-    this.busquedaDespachoRealizada = false; 
-    this.alertService.info('Campos de RFC y Razón Social del despacho limpiados.');
-  }
-*/
+ 
 limpiarDatosDespacho(): void {
     this.nuevoRfcDespacho = '';
     this.rfcDespachoValido = true;
@@ -1091,6 +1105,9 @@ limpiarDatosDespacho(): void {
       this.despachoContador.nombreRazonSocial = '';
       this.despachoContador.rfcDespacho = '';
     }
+
+    this.selectedCargoDesempena = '';
+    this.telefonoFijoDespacho = '';
 
     // Reactivamos el input y el botón buscar
     this.busquedaDespachoRealizada = false; 
@@ -1590,7 +1607,30 @@ limpiarDatosDespacho(): void {
 
 
 private obtenerDatosBaseParaAcuse() {
-  const fechaActual = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
+  
+    // 1. Obtenemos la fecha y hora actual del sistema
+    const now = new Date();
+
+    // 2. Definimos los meses en español manualmente para garantizar el idioma
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+
+    // 3. Extraemos las partes de la fecha
+    const dia = now.getDate();
+    const mes = meses[now.getMonth()];
+    const anio = now.getFullYear();
+
+    // 4. Formateamos la hora usando el DatePipe que ya tienes inyectado (formato 24h)
+    // Esto devolverá algo como "12:37:47"
+    const hora = this.datePipe.transform(now, 'HH:mm:ss');
+
+    // 5. Concatenamos todo en la variable final
+    // Resultado: "10 de diciembre de 2025, 12:37:47"
+    const fechaActual = `${dia} de ${mes} de ${anio}, ${hora}`;
+
+
 
   // 1. Formatear Domicilio Fiscal a un solo String
   const d = this.datosContadorData?.domicilioFiscalDto;
@@ -1611,7 +1651,9 @@ private obtenerDatosBaseParaAcuse() {
 
   return {
     folioSolicitud: this.folioSolicitud,
-    folio: this.folioSolicitud,
+    //se solicito que no se muestre el folio en el acuse preview
+    //folio: this.folioSolicitud,
+    folio: "",
     fecha: fechaActual,
 
     // --- CORRECCIÓN DE NOMBRES (Deben ser idénticos a los <field> del XML) ---

@@ -219,11 +219,11 @@
 				<textFieldExpression><![CDATA[$P{folio}]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToTallestObject" x="0" y="239" width="552" height="40" isRemoveLineWhenBlank="true" uuid="f1a9172f-2a32-489c-984c-70274a884e40">
+				<reportElement stretchType="RelativeToTallestObject" x="0" y="234" width="552" height="45" isRemoveLineWhenBlank="true" uuid="f1a9172f-2a32-489c-984c-70274a884e40">
 					<property name="local_mesure_unitheight" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
 					<font fontName="Arial" size="8" isPdfEmbedded="false"/>
@@ -265,7 +265,7 @@
 					<printWhenExpression><![CDATA[!$P{selloDigitalIMSS}.trim().isEmpty() && $P{selloDigitalIMSS} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<text><![CDATA[Sello Digital del Acuse:]]></text>
@@ -312,7 +312,7 @@
 				<text><![CDATA[P r e s e n t e,]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="217" width="184" height="12" uuid="16cfeaf1-3b7b-4ffe-b1dc-27b352608b24">
+				<reportElement x="0" y="212" width="184" height="12" uuid="16cfeaf1-3b7b-4ffe-b1dc-27b352608b24">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -329,7 +329,7 @@
 				<textFieldExpression><![CDATA[$P{rfc}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="184" y="217" width="184" height="12" uuid="0b67b984-a585-476f-8831-c9e5fe3f8459">
+				<reportElement x="184" y="212" width="184" height="12" uuid="0b67b984-a585-476f-8831-c9e5fe3f8459">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -346,7 +346,7 @@
 				<textFieldExpression><![CDATA[$P{curp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="368" y="217" width="184" height="12" uuid="7568b748-5645-47c2-9c73-abf8ebd0c205">
+				<reportElement x="368" y="212" width="184" height="12" uuid="7568b748-5645-47c2-9c73-abf8ebd0c205">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -373,7 +373,7 @@
 					<rightPen lineWidth="0.0"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{docMemSi}]]></textFieldExpression>
@@ -430,21 +430,21 @@
 				</reportElement>
 				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
 				<textElement textAlignment="Justified" verticalAlignment="Middle" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA["El C.P.A. ".concat($P{nombre}!=null ? $P{nombre} :"").concat(" manifiesta bajo protesta de decir verdad que los datos proporcionados en el presente trámite son ciertos, que reúne los requisitos establecidos en los artículos 153 y 154, fracción I del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización, y que conoce el contenido y alcance de la Ley del Seguro Social, sus reglamentos, así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017 y demás disposiciones aplicables.")]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="0" y="69" width="552" height="101" forecolor="#000000" backcolor="#FFFFFF" uuid="0672d758-b991-4b04-b20e-0824ba368833">
+				<reportElement mode="Transparent" x="0" y="69" width="552" height="95" forecolor="#000000" backcolor="#FFFFFF" uuid="0672d758-b991-4b04-b20e-0824ba368833">
 					<property name="local_mesure_unitheight" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<box padding="0" topPadding="0" leftPadding="0" bottomPadding="0" rightPadding="0"/>
 				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="5" rightIndent="5" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA["De conformidad con lo establecido en los artículos 9, segundo párrafo, 16, 251, fracción XXIX, 286 L, 286 M y 286 N, de la Ley del Seguro Social; 17-D, 17-E, 17-I, 19, último párrafo y 19-A del Código Fiscal de la Federación, de aplicación supletoria a la Ley del Seguro Social, así como el numeral 6.2 de las “Reglas de Carácter General para el uso de la Firma Electrónica Avanzada, cuyo certificado digital sea emitido por el Servicio de Administración Tributaria, en los actos que se realicen ante el Instituto Mexicano del Seguro Social”, aprobadas por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número SA2.HCT.280813/234.P.DIR, publicado en el Diario Oficial de la Federación el día 14 de noviembre de 2013, vigente a partir del 15 del mismo mes y año; se hace constar que en esta fecha se recibió su AVISO DE MODIFICACIÓN DE DATOS EN EL REGISTRO DE CONTADORES PÚBLICOS PARA DICTAMINAR, a que se refiere el artículo 154, fracción I, del Reglamento de la Ley del Seguro Social en materia de Afiliación, Clasificación de Empresas, Recaudación y Fiscalización; así como la Regla Tercera del Anexo Único aprobado por el Consejo Técnico del Instituto Mexicano del Seguro Social mediante el Acuerdo número ACDO.SA2.HCT.280617/149.P.DIR, publicado en el Diario Oficial de la Federación el 13 de julio de 2017, correspondiente a:"]]></textFieldExpression>
@@ -476,7 +476,7 @@
 				<text><![CDATA[Folio: ]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="195" width="552" height="12" uuid="37dec14d-3511-4469-b809-6903f5cc212c">
+				<reportElement x="0" y="190" width="552" height="12" uuid="37dec14d-3511-4469-b809-6903f5cc212c">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -493,20 +493,20 @@
 				<textFieldExpression><![CDATA[$P{nombre}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="229" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="79921028-c188-4db8-b03d-0de5da640cf2">
+				<reportElement mode="Transparent" x="0" y="224" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="79921028-c188-4db8-b03d-0de5da640cf2">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Datos modificados:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="7df28ea8-e350-4d94-a521-4ceeac233bbc">
+				<reportElement mode="Transparent" x="0" y="202" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="7df28ea8-e350-4d94-a521-4ceeac233bbc">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -516,13 +516,13 @@
 					<rightPen lineWidth="0.5" lineColor="#ACACAC"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[RFC:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="0" y="185" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="77ff3222-469b-41cd-88ee-5863b49de543">
+				<reportElement mode="Transparent" x="0" y="180" width="552" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="77ff3222-469b-41cd-88ee-5863b49de543">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -535,13 +535,13 @@
 					<rightPen lineColor="#ADACAC"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Nombre:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="368" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="3c5c6cc6-9fb5-4637-92cd-4701f9fea3e5">
+				<reportElement mode="Transparent" x="368" y="202" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="3c5c6cc6-9fb5-4637-92cd-4701f9fea3e5">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -551,13 +551,13 @@
 					<rightPen lineWidth="0.5" lineColor="#ACACAC"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Registro IMSS:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="184" y="207" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="d6c2b894-e038-45af-ab9d-603c2bded2ef">
+				<reportElement mode="Transparent" x="184" y="202" width="184" height="10" forecolor="#000000" backcolor="#FFFFFF" uuid="d6c2b894-e038-45af-ab9d-603c2bded2ef">
 					<property name="local_mesure_unitwidth" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					<property name="local_mesure_unitheight" value="pixel"/>
@@ -567,7 +567,7 @@
 					<rightPen lineWidth="0.5" lineColor="#ACACAC"/>
 				</box>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[CURP:]]></text>
@@ -582,7 +582,7 @@
 					<bottomPen lineWidth="0.0"/>
 				</box>
 				<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single" lineSpacingSize="1.0" firstLineIndent="0" leftIndent="0" rightIndent="0" spacingBefore="0" spacingAfter="0" tabStopWidth="40"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{docMemNo}]]></textFieldExpression>
@@ -594,7 +594,7 @@
 					<printWhenExpression><![CDATA[!$P{cadenaOriginal}.trim().isEmpty() && $P{cadenaOriginal} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<text><![CDATA[Cadena Original del Acuse:]]></text>
@@ -606,7 +606,7 @@
 					<property name="local_mesure_unitheight" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{cadenaOriginal}]]></textFieldExpression>
@@ -633,7 +633,7 @@
 					<printWhenExpression><![CDATA[!$P{firmaElectronica}.trim().isEmpty() && $P{firmaElectronica} != null]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Justified" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
+					<font fontName="Arial" size="8" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<text><![CDATA[Firma electrónica avanzada del Contador Público Autorizado:]]></text>
@@ -668,7 +668,7 @@
 				<text><![CDATA[Contenido del acuse]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Opaque" x="0" y="169" width="552" height="15" forecolor="#000000" backcolor="#EDEBEB" uuid="1f3c69bf-e2dc-4963-a0e5-704f4e22948b">
+				<reportElement mode="Opaque" x="0" y="164" width="552" height="15" forecolor="#000000" backcolor="#EDEBEB" uuid="1f3c69bf-e2dc-4963-a0e5-704f4e22948b">
 					<property name="local_mesure_unitheight" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					<property name="local_mesure_unitwidth" value="pixel"/>
@@ -729,7 +729,7 @@
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
-					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<font fontName="Arial" size="8" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
 					<paragraph leftIndent="5"/>
 				</textElement>
 				<text><![CDATA[Domicilio fiscal:]]></text>

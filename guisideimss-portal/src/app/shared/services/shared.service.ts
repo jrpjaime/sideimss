@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { Constants } from '../../global/Constants';
 
 @Injectable({
@@ -210,5 +210,17 @@ export class SharedService {
     console.log("TERMINA SharedService initializeUserData: " );
   }
 
+
+
+    // 1. Crear el Subject para el evento de reinicio
+  private resetModificacionDatosSource = new Subject<void>();
+
+  // 2. Exponerlo como Observable para que el componente se suscriba
+  resetModificacionDatos$ = this.resetModificacionDatosSource.asObservable();
+
+  // 3. Método para disparar el evento
+  triggerResetModificacionDatos() {
+    this.resetModificacionDatosSource.next();
+  }
 
   }

@@ -129,6 +129,12 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
 
     if (item.route) {
       event.preventDefault();
+      console.log("item.route: "+ item.route);
+      // Detectar clic en Modificación de Datos ---
+      if (item.route === '/contador/modificaciondatos') {
+        // Disparamos la señal para limpiar el formulario
+        this.sharedService.triggerResetModificacionDatos();
+      }
       setTimeout(() => {
         this.router.navigate([item.route!]);
       }, 0);

@@ -163,10 +163,31 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
 
     this.datosFormularioPrevio.vistaPrevia = "SI";
 
+    // --- 1. LÓGICA PARA GENERAR LA FECHA ACTUAL EN ESPAÑOL ---
+    const now = new Date();
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    const dia = now.getDate();
+    const mes = meses[now.getMonth()];
+    const anio = now.getFullYear();
+    // Formato de hora HH:mm:ss
+    const horas = now.getHours().toString().padStart(2, '0');
+    const minutos = now.getMinutes().toString().padStart(2, '0');
+    const segundos = now.getSeconds().toString().padStart(2, '0');
+
+    // Resultado ej: "10 de diciembre de 2025, 16:30:05"
+    const fechaActual = `${dia} de ${mes} de ${anio}, ${horas}:${minutos}:${segundos}`;
+    // ---------------------------------------------------------
+
+
     // Integrar acuseParameters directamente en datosCompletos
     const datosCompletos = {
       ...this.datosFormularioPrevio,
-      ...this.acuseParameters
+      ...this.acuseParameters,
+      fecha: fechaActual 
     };
 
     const datosJson = JSON.stringify(datosCompletos);
@@ -446,11 +467,11 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
         tipoAcuse: 'ACREDITACION_MEMBRESIA'
       };
 
-      this.alertService.info('Enviando solicitud final con firma...', { autoClose: true });
+      this.alertService.info('Enviando solicitud con firma...', { autoClose: true });
       // 4. Enviar el objeto PlantillaDatoDto
       this.acreditacionMembresiaService.acreditacionmembresia(plantillaDato).subscribe({
         next: (response) => {
-          console.log('Respuesta de envío final con firma:', response);
+          console.log('Respuesta de envío con firma:', response);
           if (response.codigo === 0) {
             this.alertService.success('Solicitud enviada exitosamente.' , { autoClose: true });
 
@@ -473,12 +494,12 @@ export class AcreditacionymembresiaAcuseComponent extends BaseComponent  impleme
             }
 
           } else {
-            this.alertService.error(response.mensaje || 'Error al enviar la solicitud final con firma.', { autoClose: true });
+            this.alertService.error(response.mensaje || 'Error al enviar la solicitud con firma.', { autoClose: true });
           }
         },
         error: (err) => {
-          console.error('Error al enviar solicitud final con firma:', err);
-          this.alertService.error('Ocurrió un error al enviar la solicitud final con firma. Por favor, inténtalo de nuevo.', { autoClose: true });
+          console.error('Error al enviar solicitud con firma:', err);
+          this.alertService.error('Ocurrió un error al enviar la solicitud con firma. Por favor, inténtalo de nuevo.', { autoClose: true });
           this.resetFirmaData();
         }
       });

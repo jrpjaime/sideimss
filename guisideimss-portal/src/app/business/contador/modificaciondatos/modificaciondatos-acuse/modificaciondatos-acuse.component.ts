@@ -289,6 +289,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       certificado: this.certificado,
       acuse: this.acuse,
       fecha: this.fechaAcuse,
+      folio: this.folioSolicitud, 
       ...this.acuseParameters
     };
 

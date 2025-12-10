@@ -380,7 +380,11 @@
                           <p class="me-3">* Campo obligatorio</p>
                         </div>
                         <button type="button" class="btn btn-secondary" (click)="cancelarEdicionDespacho()" [disabled]="!habilitarCamposDespacho">Cancelar</button>
-                        <button type="button" class="btn btn-primary" (click)="guardarDatosDespacho()" [disabled]="!habilitarCamposDespacho">Siguiente</button>
+                        <button type="button" class="btn btn-primary" 
+                                (click)="guardarDatosDespacho()" 
+                                [disabled]="!habilitarCamposDespacho || (selectedTipoSociedad !== '2' && !busquedaDespachoRealizada)">
+                                Siguiente
+                        </button>
                   </div>
                 </div>
 
