@@ -74,11 +74,12 @@
                         } @else {
                             <!-- Modo Edición -->
                             <input type="text" class="form-control" style="max-width: 300px;"
-                                [class.is-invalid]="(nuevoRfcColegio && !validarRfcPersonaMoral(nuevoRfcColegio))"
-                                [(ngModel)]="nuevoRfcColegio"
-                                (ngModelChange)="busquedaColegioRealizada = false; rfcColegioValido = true;"
-                                placeholder="Ingrese nuevo RFC" 
-                                maxlength="12">
+                                    [class.is-invalid]="(nuevoRfcColegio && !validarRfcPersonaMoral(nuevoRfcColegio))"
+                                    [(ngModel)]="nuevoRfcColegio"
+                                    (ngModelChange)="busquedaColegioRealizada = false; rfcColegioValido = true;"
+                                    [disabled]="busquedaColegioRealizada"
+                                    placeholder="Ingrese nuevo RFC" 
+                                    maxlength="12">
                             
                             <!-- Mensaje de Error (Estilo Alerta Roja) -->
                             @if (nuevoRfcColegio && !validarRfcPersonaMoral(nuevoRfcColegio)) {
@@ -96,7 +97,7 @@
 
                     @if (habilitarEdicionRfcColegio) {
                          <div  >
-                            <button type="button" class="btn btn-primary me-2" (click)="buscarNuevoColegio()">Buscar</button>
+                            <button type="button" class="btn btn-primary me-2"  (click)="buscarNuevoColegio()" [disabled]="busquedaColegioRealizada">Buscar</button>
                             <button type="button" class="btn btn-secondary" (click)="limpiarNuevoRfcColegio()">Limpiar</button>
                         </div>
 
@@ -115,20 +116,20 @@
                                 <div class="row w-100 m-0">
                                     <div class="col-sm-6 p-0">
                                         <input type="file" class="form-control" id="constanciaMembresia"
-                                               (change)="onFileSelected($event, 'constanciaMembresia')"
-                                               accept="application/pdf"
-                                               [disabled]="fileConstanciaUploadSuccess || loadingFileConstancia">
+                                            (change)="onFileSelected($event, 'constanciaMembresia')"
+                                            accept="application/pdf"
+                                            [disabled]="!habilitarEdicionRfcColegio || fileConstanciaUploadSuccess || loadingFileConstancia">
                                     </div>
                                     <div class="col-sm-3 pr-0">
                                         <button type="button" class="btn btn-primary w-100"
                                                 (click)="uploadFile('constanciaMembresia')"
-                                                [disabled]="!selectedFileConstancia || fileConstanciaUploadSuccess || loadingFileConstancia || !busquedaColegioRealizada">
-                                            @if (loadingFileConstancia) {
-                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                Adjuntando...
-                                            } @else {
-                                                Adjuntar
-                                            }
+                                                [disabled]="!habilitarEdicionRfcColegio || !selectedFileConstancia || fileConstanciaUploadSuccess || loadingFileConstancia || !busquedaColegioRealizada">
+                                                @if (loadingFileConstancia) {
+                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                    Adjuntando...
+                                                } @else {
+                                                    Adjuntar
+                                                }
                                         </button>
                                     </div>
                                 </div>
@@ -282,37 +283,44 @@
                         <!-- ===== OPCIÓN 2: DESPACHO (Cualquier otro ID, ej: '1') ===== -->
                         @if (selectedTipoSociedad && selectedTipoSociedad !== '2') {
 
-                          <div class="mb-3">
-                              <label for="rfcDespacho" class="form-label">* RFC:</label>
-                              <input type="text" id="rfcDespacho" class="form-control" style="max-width: 300px;"
-                                  [class.is-invalid]="formSubmitted && (!nuevoRfcDespacho || !validarRfcPersonaMoral(nuevoRfcDespacho))"
-                                  [(ngModel)]="nuevoRfcDespacho"
-                                  [disabled]="!habilitarCamposDespacho"
-                                  placeholder="Ingrese el RFC del despacho"
-                                  maxlength="12">
-                              
-                              <!-- Alerta de Error: Formato incorrecto -->
-                              @if (formSubmitted && !validarRfcPersonaMoral(nuevoRfcDespacho)) {
-                                  <div class="alert alert-danger mt-1 p-2 d-flex align-items-center" role="alert">
-                                      <i class="bi bi-x-square-fill me-2" style="font-size: 1.2rem;"></i>
-                                      <div>El RFC no cuenta con un formato válido, favor de verificar.</div>
-                                  </div>
-                              }
-                          </div>
+                        <div class="mb-3">
+                            <label for="rfcDespacho" class="form-label">* RFC:</label>
+                            <input type="text" id="rfcDespacho" class="form-control" style="max-width: 300px;"
+                                [class.is-invalid]="formSubmitted && (!nuevoRfcDespacho || !validarRfcPersonaMoral(nuevoRfcDespacho))"
+                                [(ngModel)]="nuevoRfcDespacho"
+                                (ngModelChange)="busquedaDespachoRealizada = false; rfcDespachoValido = true;"
+                                [disabled]="!habilitarCamposDespacho || busquedaDespachoRealizada" 
+                                placeholder="Ingrese el RFC del despacho"
+                                maxlength="12">
+                            
+                            @if (formSubmitted && !validarRfcPersonaMoral(nuevoRfcDespacho)) {
+                                <div class="alert alert-danger mt-1 p-2 d-flex align-items-center" role="alert" style="max-width: 300px;">
+                                    <div>El RFC no cuenta con un formato válido, favor de verificar.</div>
+                                </div>
+                            }
+                        </div>
 
-                          <div class="mb-3">
-                              <label class="form-label">Nombre, denominación o razón social:</label>
-                              <p><strong>{{ despachoContador.nombreRazonSocial || 'N/A' }}</strong></p>
-                          </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre, denominación o razón social:</label>
+                            <!-- Muestra el nombre traído del servicio SAT -->
+                            <p><strong>{{ despachoContador?.nombreRazonSocial || 'N/A' }}</strong></p>
+                        </div>
 
-                          <div >
-                              <button type="button" class="btn btn-primary me-2"
-                                  (click)="buscarDatosDespacho()"
-                                  [disabled]="!habilitarCamposDespacho || !nuevoRfcDespacho || !rfcDespachoValido">Buscar</button>
-                              <button type="button" class="btn btn-secondary"
-                                  (click)="limpiarDatosDespacho()"
-                                  [disabled]="!habilitarCamposDespacho">Limpiar</button>
-                          </div>
+                        <div>
+                            <!-- Botón BUSCAR: Invoca al servicio SAT -->
+                            <button type="button" class="btn btn-primary me-2"
+                                (click)="buscarDatosDespacho()"
+                                [disabled]="!habilitarCamposDespacho || !nuevoRfcDespacho || !rfcDespachoValido || busquedaDespachoRealizada">
+                                Buscar
+                            </button>
+
+                            <!-- Botón LIMPIAR: Desbloquea para nueva búsqueda -->
+                            <button type="button" class="btn btn-secondary"
+                                (click)="limpiarDatosDespacho()"
+                                [disabled]="!habilitarCamposDespacho">
+                                Limpiar
+                            </button>
+                        </div>
 
                           <div class="mb-3">
                               <label for="cargoDesempena" class="form-label">* Cargo que desempeña:</label>
@@ -329,17 +337,34 @@
                               }
                           </div>
 
-                          <div class="mb-3">
-                              <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
-                              <input type="text" id="telefonoFijo" class="form-control" style="max-width: 300px;"
-                                  [(ngModel)]="telefonoFijoDespacho"
-                                  [disabled]="!habilitarCamposDespacho"
-                                  placeholder="Ej. 5512345678"
-                                  maxlength="10">
-                              @if (formSubmitted && (!telefonoFijoDespacho || telefonoFijoDespacho.length < 8)) {
-                                  <small class="text-danger">El teléfono fijo es obligatorio y debe tener al menos 8 dígitos.</small>
-                              }
-                          </div>
+
+                            <div class="mb-3">
+                                <label for="telefonoFijo" class="form-label">* Teléfono fijo:</label>
+                                <!-- 
+                                    CAMBIO 3: Validación de Teléfono 
+                                    - maxlength="12" (para cubrir 10 a 12)
+                                    - Mensaje de error específico
+                                -->
+                                <input type="text" id="telefonoFijo" class="form-control" style="max-width: 300px;"
+                                    [(ngModel)]="telefonoFijoDespacho"
+                                    (keypress)="permitirSoloNumeros($event)"
+                                    [disabled]="!habilitarCamposDespacho"
+                                    placeholder="Ej. 5512345678"
+                                    maxlength="12">
+                                
+                                <!-- Lógica de validación actualizada -->
+                                @if (formSubmitted) {
+                                    @if (!telefonoFijoDespacho) {
+                                        <small class="text-danger">El teléfono fijo es obligatorio.</small>
+                                    } @else if (!validarFormatoTelefono(telefonoFijoDespacho)) {
+                                        <!-- MENSAJE SOLICITADO EXACTO -->
+                                        <div class="alert alert-danger mt-1 p-2 d-flex align-items-center" role="alert" style="max-width: 300px;">
+                                                 
+                                                <div>El campo Teléfono debe de ser de 10 ó 12 dígitos.</div>
+                                        </div>
+                                    }
+                                }
+                            </div>
                         }
 
                     </div>

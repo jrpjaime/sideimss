@@ -1,3 +1,3 @@
 export interface RfcColegioRequestDto {
-  rfcColegio: string;
+  rfc: string;
 }

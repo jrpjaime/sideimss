@@ -129,7 +129,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
   originalTieneTrabajadores: string | null = null;
   originalNumeroTrabajadores: string | null = null;
 
-
+busquedaDespachoRealizada: boolean = false; 
 
   constructor(
     private catalogosContadorService: CatalogosContadorService,
@@ -261,6 +261,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
     console.log('Opción seleccionada:', this.selectedTipoDato);
 
     // Resetear todas las secciones
+    this.busquedaDespachoRealizada = false; 
     this.colegioContador = null;
     this.mostrarSeccionColegio = false;
     this.despachoContador = null; // Limpiar datos del despacho
@@ -412,6 +413,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit 
 
     } else {
       this.habilitarEdicionRfcColegio = false;
+      this.selectedFileConstancia = null; 
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
     }
   }
@@ -437,7 +439,8 @@ buscarNuevoColegio(): void {
 
     this.loadingColegio = true;
     this.busquedaColegioRealizada = false;
-    const request: RfcColegioRequestDto = { rfcColegio: this.nuevoRfcColegio };
+  
+    const request: RfcColegioRequestDto = { rfc: this.nuevoRfcColegio };
 
     this.catalogosContadorService.getDatoRfcColegio(request)
       .pipe(finalize(() => this.loadingColegio = false))
@@ -931,7 +934,7 @@ buscarNuevoColegio(): void {
     if (respuesta) {
       this.habilitarCamposDespacho = true;
       // Los campos de edición ya están pre-cargados desde `consultarDatosDespacho()`
-     // this.alertService.info('Campos de despacho habilitados para edición.', { autoClose: true });
+      this.busquedaDespachoRealizada = false;
     } else {
       this.habilitarCamposDespacho = false;
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
@@ -941,6 +944,7 @@ buscarNuevoColegio(): void {
   /**
    * Busca los datos de un despacho por RFC.
    */
+  /*
   buscarDatosDespacho(): void {
     if (!this.nuevoRfcDespacho) {
       this.alertService.warn('Por favor, ingresa el RFC del despacho para buscar.');
@@ -958,7 +962,7 @@ buscarNuevoColegio(): void {
     this.rfcDespachoValido = true;
     this.loadingDespacho = true; // Activar spinner
 
-    const request: RfcColegioRequestDto = { rfcColegio: this.nuevoRfcDespacho }; // Se usa el mismo DTO para RFC de persona moral
+    const request: RfcColegioRequestDto = { rfc: this.nuevoRfcDespacho }; // Se usa el mismo DTO para RFC de persona moral
 
     this.catalogosContadorService.getDatoRfcColegio(request)
       .pipe(finalize(() => this.loadingDespacho = false))
@@ -976,9 +980,13 @@ buscarNuevoColegio(): void {
           }
           this.despachoContador.rfcDespacho = data.rfc;
           this.despachoContador.nombreRazonSocial = data.nombreRazonSocial;
+          // Bloqueamos el input y el botón buscar
+          this.busquedaDespachoRealizada = true; 
           this.alertService.success('Datos del despacho encontrados.');
         },
         error: (error: HttpErrorResponse) => {
+          // En error NO bloqueamos para permitir corregir
+           this.busquedaDespachoRealizada = false; 
           console.error('Error al buscar el RFC del despacho:', error);
           if (error.status === 404) {
              // Limpiamos la razón social si no se encuentra, pero dejamos el RFC para que el usuario lo corrija o lo use
@@ -990,10 +998,77 @@ buscarNuevoColegio(): void {
         }
       });
   }
+  */
+
+
+  /**
+   * Busca los datos de un despacho por RFC invocando al servicio del SAT (vía backend).
+   * Mantiene intactos el Cargo y el Teléfono que ya estaban cargados o escritos.
+   */
+  buscarDatosDespacho(): void {
+    // 1. Validaciones previas
+    if (!this.nuevoRfcDespacho) {
+      this.alertService.warn('Por favor, ingresa el RFC del despacho para buscar.');
+      this.rfcDespachoValido = false;
+      return;
+    }
+
+    if (!this.validarRfcPersonaMoral(this.nuevoRfcDespacho)) {
+      this.alertService.error('El formato del RFC del despacho no es válido. Debe tener 12 caracteres.');
+      this.rfcDespachoValido = false;
+      return;
+    }
+
+    this.rfcDespachoValido = true;
+    this.loadingDespacho = true; // Activar spinner
+
+    // 2. Preparar petición (Usamos la propiedad 'rfc' para coincidir con el DTO del Backend)
+    const request: RfcColegioRequestDto = { rfc: this.nuevoRfcDespacho };
+
+    // 3. Invocar servicio SAT
+    this.catalogosContadorService.getDatoRfcColegio(request)
+      .pipe(finalize(() => this.loadingDespacho = false))
+      .subscribe({
+        next: (data: RfcColegioResponseDto) => {
+          // Aseguramos que el objeto exista
+          if (!this.despachoContador) {
+            this.inicializarDespachoVacio();
+          }
+
+          // 4. Actualizamos SOLO la información del SAT (RFC y Nombre)
+          if (this.despachoContador) {
+             this.despachoContador.rfcDespacho = data.rfc;
+             this.despachoContador.nombreRazonSocial = data.nombreRazonSocial;
+          }
+
+          // 5. Bloqueamos el input y el botón buscar
+          this.busquedaDespachoRealizada = true; 
+          this.alertService.success('Datos del despacho encontrados.');
+
+          // NOTA: No modificamos 'this.selectedCargoDesempena' ni 'this.telefonoFijoDespacho',
+          // por lo que conservan los datos previos (cargados o editados por el usuario).
+        },
+        error: (error: HttpErrorResponse) => {
+          // En error NO bloqueamos para permitir corregir
+          this.busquedaDespachoRealizada = false; 
+          console.error('Error al buscar el RFC del despacho:', error);
+          
+          if (error.status === 404) {
+             // Limpiamos solo la razón social si no se encuentra
+            if (this.despachoContador) this.despachoContador.nombreRazonSocial = '';
+            this.alertService.error('No se encontró información en el SAT para el RFC proporcionado.');
+          } else {
+            this.alertService.error('Error al consultar el servicio del SAT.');
+          }
+        }
+      });
+  }
+
 
   /**
    * Limpia los campos de RFC y razón social del despacho.
    */
+  /*
   limpiarDatosDespacho(): void {
     this.nuevoRfcDespacho = '';
     this.rfcDespachoValido = true;
@@ -1001,9 +1076,27 @@ buscarNuevoColegio(): void {
       this.despachoContador.nombreRazonSocial = '';
       this.despachoContador.rfcDespacho = '';
     }
+    // Reactivamos el input y el botón buscar
+    this.busquedaDespachoRealizada = false; 
     this.alertService.info('Campos de RFC y Razón Social del despacho limpiados.');
   }
+*/
+limpiarDatosDespacho(): void {
+    this.nuevoRfcDespacho = '';
+    this.rfcDespachoValido = true;
+    
+    // Limpiamos los datos visuales del despacho, pero NO el cargo ni teléfono (opcional)
+    // O si prefieres limpiar todo el formulario, descomenta las líneas de cargo/telefono
+    if (this.despachoContador) {
+      this.despachoContador.nombreRazonSocial = '';
+      this.despachoContador.rfcDespacho = '';
+    }
 
+    // Reactivamos el input y el botón buscar
+    this.busquedaDespachoRealizada = false; 
+    
+    this.alertService.info('Campo RFC limpiado. Puede realizar una nueva búsqueda.');
+  }
 
 
   cancelarEdicionDespacho(): void {
