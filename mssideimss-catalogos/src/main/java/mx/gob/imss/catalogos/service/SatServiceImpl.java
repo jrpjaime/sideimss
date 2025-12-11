@@ -2,6 +2,7 @@ package mx.gob.imss.catalogos.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
@@ -21,8 +22,8 @@ import mx.gob.imss.catalogos.wsdl.sat.SalidaSAT;
 public class SatServiceImpl implements SatService {
     private final static Logger logger = LoggerFactory.getLogger(SatServiceImpl.class);
 
-    // URL del WSDL (Asegúrate de que la VPN esté activa al ejecutar la app)
-    private static final String WSDL_URL = "http://172.16.23.207/ServiciosPerifericos/ConsultaRFC.ws?wsdl";
+    @Value("${integration.sat.wsdl-url}")
+    private String wsdlUrl;
 
     @Override
     public RfcColegioResponseDto consultarRfc(RfcColegioRequestDto rfcColegioRequestDto) {
@@ -35,7 +36,7 @@ public class SatServiceImpl implements SatService {
 
         try {
             // 1. Instanciar el Cliente SOAP
-            URL url = new URL(WSDL_URL);
+            URL url = new URL(this.wsdlUrl);
             SATPatronesService service = new SATPatronesService(url);
             SATPatrones port = service.getSATPatronesSoapPort();
 

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
+import mx.gob.imss.contadores.dto.DictamenEnProcesoDto;
 import mx.gob.imss.contadores.dto.PlantillaDatoDto;
 import mx.gob.imss.contadores.dto.RfcRequestDto;
 import mx.gob.imss.contadores.dto.SolicitudBajaDto;
@@ -646,6 +649,27 @@ public class ContadoresRestController {
 
 
 
+@GetMapping("/validarDictamenEnProceso")
+    public ResponseEntity<Map<String, Boolean>> validarDictamenEnProceso(@RequestParam("numRegistroCpa") Integer numRegistroCpa) {
+        logger.info("Validando dictamen en proceso para registro: {}", numRegistroCpa);
 
+        if (numRegistroCpa == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            Boolean tieneDictamen = contadorPublicoAutorizadoService.tieneDictamenEnProceso(numRegistroCpa);
+            
+            // Creamos una respuesta JSON simple: { "tieneDictamen": true }
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("tieneDictamen", tieneDictamen);
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            logger.error("Error al validar dictamen: {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

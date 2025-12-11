@@ -1,29 +1,44 @@
-
-
-
-  <div class="row">
-    <div class="col-12">
-        <h3 class="mb-0">Bienvenido </h3>
-        <hr class="red">
-    </div>
-  </div>
-
-
-<div class="row">
+<div class="row mb-4">
   <div class="col-12">
-      <div class="container d-flex  "  >
-        <div class="text-center">
-          <!-- Muestra el nombre completo del usuario -->
-          <h3 class="mb-2">{{ nombreCompleto }}</h3>
-          <!-- Muestra el RFC del usuario -->
-          <p class="lead mb-1"><strong>RFC:</strong> {{ rfcUsuario }}</p>
-          <!-- Muestra el CURP del usuario -->
-          <p class="lead"><strong>CURP:</strong> {{ curpUsuario }}</p>
+    
+    <!-- Título de sección sutil -->
+    <h5 class="text-muted fw-light mb-3 ms-1">Panel de Control</h5>
+
+    <!-- Tarjeta Ejecutiva -->
+ 
+        <div class="d-flex align-items-center flex-column flex-md-row">
+          
+          <!-- Icono / Avatar (Opcional pero recomendado) -->
+          <div class="avatar-circle mb-3 mb-md-0 me-md-4">
+            <span class="initials">{{ nombreCompleto.charAt(0) }}</span>
+          </div>
+
+          <!-- Información -->
+          <div class="w-100 text-center text-md-start">
+            <div class="d-flex justify-content-center justify-content-md-between align-items-center mb-1">
+              <h6 class="welcome-text mb-0">Bienvenido </h6>
+             
+              
+            </div>
+            
+            <h2 class="user-name mb-3">{{ nombreCompleto }}</h2>
+
+            <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-3">
+              <!-- Datos en formato "Pill" o etiqueta -->
+              <div class="data-item">
+                <span class="label">RFC:</span>
+                <span class="value">{{ rfcUsuario }}</span>
+              </div>
+              <div class="data-separator d-none d-md-block"></div>
+              <div class="data-item">
+                <span class="label">CURP:</span>
+                <span class="value">{{ curpUsuario }}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
-      </div>
+ 
+
   </div>
 </div>
-
-
-
-

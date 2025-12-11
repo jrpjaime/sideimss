@@ -123,4 +123,19 @@ export class ContadorPublicoAutorizadoService {
        const url = `${environment.contadoresApiUrl}${EPs.contadores.guardarModificacionDatos}`;
       return this.httpClient.post<any>(url, submitDto);
     }
+
+
+  /**
+   * Valida si el contador tiene un dictamen en proceso.
+   * @param numRegistroCpa Número de registro del CPA.
+   * @returns Observable con { tieneDictamen: boolean }
+   */
+  validarDictamenEnProceso(numRegistroCpa: number): Observable<{ tieneDictamen: boolean }> {
+    const url = `${environment.contadoresApiUrl}${EPs.contadores.validarDictamenEnProceso}`;
+ 
+    const params = new HttpParams().set('numRegistroCpa', numRegistroCpa.toString());
+    
+    return this.httpClient.get<{ tieneDictamen: boolean }>(url, { params });
+  }
+
 }

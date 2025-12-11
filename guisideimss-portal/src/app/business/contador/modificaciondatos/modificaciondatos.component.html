@@ -32,10 +32,10 @@
 </div>
 
 <div class="row mb-3">
-    <div class="col-sm-6">
+    <div class="col-sm-8">
        <p>Selecciona la información que quieres actualizar. Debes firmar con FIEL para concluir el trámite.</p>
         <label for="tipoDato" class="form-label">Datos:</label>
-        <select class="form-control" id="tipoDato" [(ngModel)]="selectedTipoDato" (change)="onTipoDatoChange($event)">
+        <select class="form-control" id="tipoDato" [(ngModel)]="selectedTipoDato" (change)="onTipoDatoChange($event)"  style="max-width: 300px;">
             <option value="">Elija opción</option>
             @for (tipo of tiposDatosContador; track tipo.cveIdTipoDato) {
                 <option [value]="tipo.cveIdTipoDato">{{ tipo.desTipoDatos }}</option>
@@ -468,7 +468,7 @@
   } @else if (error) {
     <div class="alert alert-danger" role="alert">
       {{ error }}
-      <button type="button" class="btn btn-primary btn-sm ms-3" (click)="cargarDatosContador()">Reintentar</button>
+     <!-- <button type="button" class="btn btn-primary btn-sm ms-3" (click)="cargarDatosContador()">Reintentar</button>  -->
     </div>
   } @else if (datosContadorData) {
 

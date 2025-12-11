@@ -2,9 +2,12 @@ import { Component, EventEmitter, Output, OnInit, OnDestroy } from '@angular/cor
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
-import { Subscription } from 'rxjs'; // Para gestionar las suscripciones
+import { catchError, of, Subscription, switchMap } from 'rxjs'; // Para gestionar las suscripciones
 import { Constants } from '../../global/Constants';
 import { SharedService } from '../services/shared.service';
+import { ContadorPublicoAutorizadoService } from '../../business/contador/services/contador-publico-autorizado.service';
+import { AlertService } from '../services/alert.service';
+import { LoaderService } from '../services/loader.service';
 
 // Definimos una interfaz para nuestros elementos de menú para tener un código más limpio
 export interface MenuItem {
@@ -38,7 +41,8 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
         { name: 'Modificación de datos', icon: 'bi bi-arrow-repeat', route: '/contador/modificaciondatos' },
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
       ]
-    },
+    }
+    /*,
     {
       name: 'Dictamen electrónico', icon: 'bi bi-people-fill', isExpanded: false,
       roles: [Constants.rolePatron, Constants.roleRepresentante], // Visible para Patron o Representante
@@ -46,15 +50,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
         { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
       ]
-    },
-    {
-      name: 'Consulta al dictamen', icon: 'bi bi-cloud-upload-fill', isExpanded: false,
-      roles: [Constants.rolePatron], // Solo visible para el rol Patron
-      children: [
-        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' },
-        { name: 'Solicitud de baja', icon: 'bi bi-dot', route: '/contador/solicitudbaja' }
-      ]
-    }
+    } */
   ];
 
   // Este será el array de menú que se renderizará, filtrado por roles
@@ -63,7 +59,10 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
 
   constructor(
     private router: Router,
-    private sharedService: SharedService // Inyectamos SharedService
+    private sharedService: SharedService, // Inyectamos SharedService
+    private contadorService: ContadorPublicoAutorizadoService,
+    private alertService: AlertService,
+    private loaderService: LoaderService
   ) { }
 
   ngOnInit(): void {
@@ -127,6 +126,15 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       return;
     }
 
+
+          // SOLICITUD DE BAJA
+      if (item.route === '/contador/solicitudbaja') {
+        this.procesarSolicitudBaja(item.route);
+        return; // Salimos para no ejecutar el navigate de abajo inmediatamente
+      }
+
+
+
     if (item.route) {
       event.preventDefault();
       console.log("item.route: "+ item.route);
@@ -140,4 +148,54 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       }, 0);
     }
   }
+
+
+
+
+  /**
+   * Método auxiliar para manejar la validación de solicitud de baja
+   */
+  private procesarSolicitudBaja(route: string): void {
+    this.loaderService.show();
+    this.alertService.clear();
+
+    // Paso 1: Obtener datos del contador para sacar el registroIMSS o CPA
+   
+    this.contadorService.getDatosContador().pipe(
+      switchMap(datos => { 
+        // Supongamos que necesitamos pasar el registro como parametro, parseamos lo que venga
+        const numRegistro = datos.datosPersonalesDto.registroIMSS ? Number(datos.datosPersonalesDto.registroIMSS) : 0;
+        
+        // Paso 2: Validar si tiene dictamen
+        return this.contadorService.validarDictamenEnProceso(numRegistro);
+      }),
+      catchError(err => {
+        console.error("Error validando dictamen", err);
+        // Retornamos un observable con false para no bloquear si falla el servicio (o manejar error)
+        return of({ tieneDictamen: false }); 
+      })
+    ).subscribe({
+      next: (response) => {
+        this.loaderService.hide();
+
+        if (response.tieneDictamen) {
+          // TIENE DICTAMEN: MANTENER AL USUARIO AQUI Y MOSTRAR ERROR
+          this.alertService.error(
+            'No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', 
+            { autoClose: false, keepAfterRouteChange: false }
+          );
+        } else {
+          // NO TIENE DICTAMEN: DEJAR PASAR
+          this.router.navigate([route]);
+        }
+      },
+      error: (err) => {
+        this.loaderService.hide();
+        // En caso de error técnico mostrar error genérico.
+        
+        this.alertService.error('Ocurrió un error al validar el estado del contador.', { autoClose: true });
+      }
+    });
+  }
+
 }

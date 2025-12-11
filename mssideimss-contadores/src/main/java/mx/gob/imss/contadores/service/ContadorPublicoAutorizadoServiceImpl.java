@@ -1,5 +1,9 @@
 package mx.gob.imss.contadores.service;
 
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +20,12 @@ import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
 import mx.gob.imss.contadores.dto.DatosContactoDto;
 import mx.gob.imss.contadores.dto.DatosPersonalesDto;
+import mx.gob.imss.contadores.dto.DictamenEnProcesoDto;
 import mx.gob.imss.contadores.dto.DomicilioFiscalDto;
 import mx.gob.imss.contadores.dto.SelloResponseDto;
 import mx.gob.imss.contadores.dto.SolicitudBajaDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
+import mx.gob.imss.contadores.repository.NdtPatronDictamenRepository;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import reactor.core.publisher.Mono;
 
@@ -31,9 +37,12 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
     
     private static final Logger logger = LogManager.getLogger(ContadorPublicoAutorizadoServiceImpl.class);
 
-
-        @Autowired
-    private NdtPlantillaDatoRepository ndtPlantillaDatoRepository; // Necesitas inyectar el repositorio
+ 
+    @Autowired
+    private NdtPatronDictamenRepository ndtPatronDictamenRepository;
+   
+    @Autowired
+    private NdtPlantillaDatoRepository ndtPlantillaDatoRepository;  
 
     private final WebClient webClient;
 
@@ -263,5 +272,21 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
             return new ColegioContadorDto("N/A", "Colegio no encontrado");
         }
     }
+
+
+
+    
+
+
+ @Override
+public Boolean tieneDictamenEnProceso(Integer numRegistroCpa) {
+    logger.info("Verificando existencia de dictamenes para CPA: {}", numRegistroCpa);
+    
+    // Ejecuta el query ligero
+    int cantidad = ndtPatronDictamenRepository.countDictamenesPorRegistroCpa(numRegistroCpa);
+    
+    // Retorna true si encontró al menos 1
+    return cantidad > 0;
+}
 
 }

@@ -93,9 +93,23 @@ export class AcreditacionMembresiaService {
 
 
 
-    getNuevoFolioSolicitud(): Observable<string> {
+  /**
+   * Obtiene un nuevo folio. 
+   * Se agrega un parámetro 'timestamp' para evitar el caché del navegador
+   * y asegurar que siempre se obtenga un folio único del servidor.
+   */
+  getNuevoFolioSolicitud(): Observable<string> {
     const url = `${environment.catalogosApiUrl}${EPs.catalogo.getNuevoFolioSolicitud}`;
-    return this.httpClient.get(url, { responseType: 'text' });
-  }
+    
+    // Generamos el timestamp actual (ej. 1715623456789)
+    const timestamp = new Date().getTime().toString();
 
+    // Lo agregamos como parámetro a la URL (?timestamp=1715623456789)
+    const params = new HttpParams().set('nocache', timestamp);
+
+    return this.httpClient.get(url, { 
+      params: params, 
+      responseType: 'text' 
+    });
+  }
 }

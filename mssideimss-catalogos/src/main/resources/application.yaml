@@ -41,3 +41,6 @@ management:
     auditevents:
       enabled: true
     
+integration:
+  sat:
+    wsdl-url: ${SIDEIMSS_SAT_WSDL}

@@ -93,10 +93,10 @@ export class SolicitudbajaComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar los datos del contador:', err);
-        this.error = 'No se pudieron cargar los datos del contador. Intente de nuevo más tarde.';
+        this.error = 'No se pudieron cargar los datos. Intente de nuevo más tarde.';
         this.loading = false;
         this.loaderService.hide();
-        this.alertService.error(this.error, { autoClose: false });
+        this.alertService.error(this.error, { autoClose: true });
       }
     });
   }

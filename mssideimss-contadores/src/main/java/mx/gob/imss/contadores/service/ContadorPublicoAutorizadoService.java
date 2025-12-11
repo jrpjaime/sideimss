@@ -1,6 +1,9 @@
 package mx.gob.imss.contadores.service;
 
+import java.util.List;
+
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
+import mx.gob.imss.contadores.dto.DictamenEnProcesoDto;
 import mx.gob.imss.contadores.dto.SolicitudBajaDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import reactor.core.publisher.Mono;
@@ -14,8 +17,9 @@ public interface ContadorPublicoAutorizadoService {
      */
     SolicitudBajaDto getDatosContador(String rfc);
 
-     public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken);
+    public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken);
 
-      ColegioContadorDto getColegioByRfcContador(String rfcContador);
+    ColegioContadorDto getColegioByRfcContador(String rfcContador);
     
+    Boolean tieneDictamenEnProceso(Integer numRegistroCpa);
 }

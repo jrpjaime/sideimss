@@ -30,3 +30,29 @@ nav.sub-navbar {
   padding-left: 1.0rem;
   margin-top: -5px;  
 }
+
+
+/* 2. Ajuste del menú desplegable */
+.custom-user-dropdown-width {
+  /* Ancho y comportamiento */
+  width: 280px !important; /* Un poco más ancho para nombres largos */
+  min-width: 200px !important;
+  max-width: 90vw !important; /* Evita que se salga en pantallas de celular */
+  
+  /* Posicionamiento forzado a la derecha */
+  position: absolute;
+  right: 0;
+  left: auto;
+  margin-top: 8px; /* Pequeño espacio para separarlo de la barra */
+  
+  /* Estética */
+  border-radius: 0 0 4px 4px;
+}
+
+/* 3. Manejo del texto largo */
+.custom-user-dropdown-width .text-wrap {
+  white-space: normal !important;
+  word-break: break-word !important;
+  line-height: 1.2; /* Mejora la lectura en nombres largos */
+}
+ 

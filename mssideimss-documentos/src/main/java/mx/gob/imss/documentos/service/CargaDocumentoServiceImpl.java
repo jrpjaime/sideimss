@@ -5,6 +5,7 @@ package mx.gob.imss.documentos.service;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.Date; 
 import java.io.IOException; 
 import java.nio.charset.StandardCharsets;
@@ -276,8 +277,10 @@ public class CargaDocumentoServiceImpl implements CargaDocumentoService {
 		}
     	 
     	logger.info("entro en saveDocumentoHdfs");
-    	
-		pathHdfs="contenedorSID/"  + pathHdfs ;
+
+        String uuid = UUID.randomUUID().toString();
+    	//se agrego el uuid para garantizar que si se agrega un archivo con caracteristicas similares sea remplazado
+		pathHdfs="contenedorSID/"  + pathHdfs +  uuid;
     	
         String fullHdfsPath = pathHdfs.endsWith("/") ? pathHdfs + namefile : pathHdfs + "/" + namefile;
         logger.info("Cargando el documento en hadoop pathHdfs: " + pathHdfs);

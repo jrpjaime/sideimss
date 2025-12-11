@@ -7,6 +7,7 @@ import { tokenInterceptor } from './core/interceptor/token-interceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { loaderInterceptor } from './core/interceptor/loader.interceptor';
 import { DatePipe } from '@angular/common';
+import { cacheInterceptor } from './core/interceptor/cacheInterceptor';
 
 
 export const appConfig: ApplicationConfig = {
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withFetch(),
-      withInterceptors([tokenInterceptor, loaderInterceptor ])
+      withInterceptors([tokenInterceptor, loaderInterceptor, cacheInterceptor ])
     ),
     DatePipe
 
