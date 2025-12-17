@@ -8,11 +8,11 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "NDT_PLANTILLA_DATO")
+@Table(name = "NDT_PLANTILLA_DATO", schema = "MGPBDTU9X")
 public class NdtPlantillaDato {
 
     @Id
-    @SequenceGenerator(name = "inc_ndt_plantilla_dato", sequenceName = "NDTS_PLANTILLA_DATO", allocationSize = 1)
+    @SequenceGenerator(name = "inc_ndt_plantilla_dato", sequenceName = "SEQ_NDTSPLANTILLADATO", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "inc_ndt_plantilla_dato")
     @Column(name = "CVE_ID_PALNTILLA_DATO", nullable = false)
     private Long cveIdPlantillaDato;

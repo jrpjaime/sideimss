@@ -4,14 +4,15 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+
 @Data
 @Entity
-@Table(name = "NDT_CONTADOR_PUBLICO_AUT")
+@Table(name = "NDT_CONTADOR_PUBLICO_AUT", schema = "MGPBDTU9X")
 public class NdtContadorPublicoAut {
 
     @Id
     @Column(name = "CVE_ID_CPA")
-    private Long cveIdCpa; // No generamos ID aquí, solo consultamos o actualizamos
+    private Long cveIdCpa;
 
     @Column(name = "NUM_REGISTRO_CPA")
     private Integer numRegistroCpa;
@@ -30,4 +31,8 @@ public class NdtContadorPublicoAut {
 
     @Column(name = "CVE_ID_PERSONA")
     private Long cveIdPersona;
+    
+    // Agregamos usuario para auditoría
+    @Column(name = "CVE_ID_USUARIO")
+    private String cveIdUsuario;
 }

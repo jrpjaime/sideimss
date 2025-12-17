@@ -6,11 +6,11 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "NDT_CPA_ESTATUS")
+@Table(name = "NDT_CPA_ESTATUS", schema = "MGPBDTU9X")
 public class NdtCpaEstatus {
 
     @Id
-    @SequenceGenerator(name = "seq_estatus", sequenceName = "SEQ_NDTCPAESTATUS", allocationSize = 1)
+    @SequenceGenerator(name = "seq_estatus", sequenceName = "MGPBDTU9X.SEQ_NDTCPAESTATUS", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_estatus")
     @Column(name = "CVE_ID_ESTATUS_CPA")
     private Long cveIdEstatusCpa;
@@ -29,4 +29,15 @@ public class NdtCpaEstatus {
 
     @Column(name = "FEC_REGISTRO_ALTA")
     private LocalDateTime fecRegistroAlta;
+    
+    @Column(name = "FEC_REGISTRO_ACTUALIZADO")
+    private LocalDateTime fecRegistroActualizado;
+    
+    // Agregamos usuario para auditoría
+    @Column(name = "CVE_ID_USUARIO")
+    private String cveIdUsuario;
+    
+    // Opcional: Si en el futuro necesitas ligarlo a un trámite
+    @Column(name = "CVE_ID_CPA_TRAMITE")
+    private Long cveIdCpaTramite;
 }

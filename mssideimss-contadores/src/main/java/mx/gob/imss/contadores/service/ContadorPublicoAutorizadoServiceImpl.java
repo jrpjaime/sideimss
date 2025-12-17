@@ -20,7 +20,6 @@ import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
 import mx.gob.imss.contadores.dto.DatosContactoDto;
 import mx.gob.imss.contadores.dto.DatosPersonalesDto;
-import mx.gob.imss.contadores.dto.DictamenEnProcesoDto;
 import mx.gob.imss.contadores.dto.DomicilioFiscalDto;
 import mx.gob.imss.contadores.dto.SelloResponseDto;
 import mx.gob.imss.contadores.dto.SolicitudBajaDto;

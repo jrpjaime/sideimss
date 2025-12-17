@@ -6,11 +6,12 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "NDT_R1_DATOS_PERSONALES")
+@Table(name = "NDT_R1_DATOS_PERSONALES", schema = "MGPBDTU9X")
 public class NdtR1DatosPersonales {
 
     @Id
-    @SequenceGenerator(name = "seq_r1", sequenceName = "SEQ_NDTR1DATOSPERSONALES", allocationSize = 1)
+    // Aseguramos el esquema en la secuencia también
+    @SequenceGenerator(name = "seq_r1", sequenceName = "MGPBDTU9X.SEQ_NDTR1DATOSPERSONALES", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_r1")
     @Column(name = "CVE_ID_R1_DATOS_PERSONALES")
     private Long cveIdR1DatosPersonales;
@@ -32,4 +33,15 @@ public class NdtR1DatosPersonales {
 
     @Column(name = "FEC_REGISTRO_ALTA")
     private LocalDateTime fecRegistroAlta;
+
+    // --- CAMPOS FALTANTES AGREGADOS ---
+
+    @Column(name = "CVE_ID_PFDOM_FISCAL")
+    private Long cveIdPfdomFiscal;
+
+    @Column(name = "CVE_ID_SUBDELEGACION")
+    private Long cveIdSubdelegacion;
+
+    @Column(name = "CVE_ID_USUARIO")
+    private String cveIdUsuario;
 }
