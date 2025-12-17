@@ -3,6 +3,7 @@ package mx.gob.imss.contadores.service;
  
  
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,8 +24,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.contadores.dto.CorreoDto;
 import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
+import mx.gob.imss.contadores.entity.NdtContadorPublicoAut;
+import mx.gob.imss.contadores.entity.NdtCpaAcreditacion;
+import mx.gob.imss.contadores.entity.NdtCpaEstatus;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
+import mx.gob.imss.contadores.entity.NdtR1DatosPersonales;
+import mx.gob.imss.contadores.repository.NdtContadorPublicoAutRepository;
+import mx.gob.imss.contadores.repository.NdtCpaAcreditacionRepository;
+import mx.gob.imss.contadores.repository.NdtCpaEstatusRepository;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
+import mx.gob.imss.contadores.repository.NdtR1DatosPersonalesRepository;
 import mx.gob.imss.contadores.dto.MedioContactoContadoresDto;  
 import mx.gob.imss.contadores.dto.MediosContactoContadoresResponseDto;
 import mx.gob.imss.contadores.dto.SelloResponseDto;
@@ -52,6 +61,16 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
     @Value("${documentos.microservice.url}")
     private String documentosMicroserviceUrl;
+
+
+    @Autowired
+    private NdtContadorPublicoAutRepository contadorRepository;
+    @Autowired
+    private NdtCpaAcreditacionRepository acreditacionRepository;
+    @Autowired
+    private NdtR1DatosPersonalesRepository datosPersonalesRepository;
+    @Autowired
+    private NdtCpaEstatusRepository estatusRepository;
 
  
     public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
@@ -117,6 +136,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
         final String datosJson = ndtPlantillaDato.getDesDatos(); // Hacer final 
         logger.info("obtenerSelloYGuardarPlantilla Contenido inicial de desDatos (datosJson): {}", datosJson);
+        
         final String initialCadenaOriginal;
         final String nombreCompleto;
         final String curp;
@@ -237,7 +257,23 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
                     // Guardar la plantilla con los datos actualizados
                     logger.info("Guardando NdtPlantillaDato con sello digital.");
-                    return Mono.just(ndtPlantillaDatoRepository.save(ndtPlantillaDato));
+                  //  return Mono.just(ndtPlantillaDatoRepository.save(ndtPlantillaDato));
+                    // 1. Guardamos la Plantilla Dato (Tu código actual)
+                    NdtPlantillaDato plantillaGuardada = ndtPlantillaDatoRepository.save(ndtPlantillaDato);
+                    
+                    // 2. AHORA GUARDAMOS EN TABLAS LEGACY
+                    try {
+                        guardarEnTablasLegado(plantillaGuardada);
+                        logger.info("Datos replicados exitosamente en tablas Legacy Oracle");
+                    } catch (Exception e) {
+                        // Decidir si fallamos todo el proceso o solo logueamos el error
+                        logger.error("Error al guardar en tablas legacy: {}", e.getMessage(), e);
+                        // throw new RuntimeException("Error al sincronizar con sistema anterior"); 
+                    }
+
+                    return Mono.just(plantillaGuardada);
+
+
                 } else {
                     logger.error("El microservicio de acuses devolvió un error al generar el sello: {} - {}", selloResponseDto.getCodigo(), selloResponseDto.getMensaje());
                     return Mono.error(new RuntimeException("Ocurrio un error, por favor intente mas tarde: " + selloResponseDto.getMensaje()));
@@ -389,6 +425,107 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             })
             .onErrorResume(e -> Mono.just(""));
     }
+
+
+
+  /**
+     * Método para extraer la CURP del JSON y buscar al contador para guardar en tablas viejas.
+     */
+    private void guardarEnTablasLegado(NdtPlantillaDato plantilla) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(plantilla.getDesDatos());
+        
+        // 1. Obtener CURP del JSON
+        final String curp = rootNode.has("curp") ? rootNode.get("curp").asText() : null;
+
+        if (curp == null || curp.isEmpty()) {
+            logger.warn("No se encontró CURP en el JSON, no se puede guardar en Legacy.");
+            return;
+        }
+
+      
+
+        // 2. Buscar al Contador por CURP
+        NdtContadorPublicoAut contador = contadorRepository.findByCurp(curp)
+            .orElseThrow(() -> new RuntimeException("Contador no encontrado en BD Legacy para CURP: " + curp));
+
+        String tipoAcuse = plantilla.getDesTipoAcuse(); // ACREDITACION, MODIFICACION, BAJA (Verificar nombres exactos)
+
+        // 3. Derivar al guardado específico
+        if ("ACREDITACION".equalsIgnoreCase(tipoAcuse) || "MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
+            guardarAcreditacionLegacy(contador, rootNode);
+        } else if ("MODIFICACION".equalsIgnoreCase(tipoAcuse)) {
+            guardarModificacionLegacy(contador, rootNode);
+        } else if ("BAJA".equalsIgnoreCase(tipoAcuse) || "SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
+            guardarBajaLegacy(contador, rootNode);
+        }
+    }
+
+    private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json) {
+        NdtCpaAcreditacion acreditacion = new NdtCpaAcreditacion();
+        acreditacion.setCveIdCpa(contador.getCveIdCpa());
+        acreditacion.setFecRegistroAlta(LocalDateTime.now());
+        acreditacion.setFecPresentacionAcreditacion(LocalDateTime.now());
+
+        // Extraer datos específicos del JSON (Asegúrate que los nombres coincidan con tu Front)
+        if (json.has("idColegio")) {
+            acreditacion.setCveIdColegio(json.get("idColegio").asLong());
+        }
+        
+        // Determinar si es acreditación (0) o membresía (1) - Ajustar lógica según negocio
+        int tipo = 0; 
+        if (json.has("esMembresia") && json.get("esMembresia").asBoolean()) {
+            tipo = 1;
+        }
+        acreditacion.setIndAcredMembresia(tipo);
+        
+        acreditacionRepository.save(acreditacion);
+    }
+
+    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json) {
+        NdtR1DatosPersonales r1 = new NdtR1DatosPersonales();
+        r1.setCveIdCpa(contador.getCveIdCpa());
+        r1.setFecRegistroAlta(LocalDateTime.now());
+        
+        // Mapeo de campos (Ajustar nombres de atributos JSON)
+        if (json.has("cedulaProfesional")) r1.setCedulaProfesional(json.get("cedulaProfesional").asText());
+        if (json.has("titulo")) r1.setDesTituloExpedidoPor(json.get("titulo").asText());
+        if (json.has("correo")) r1.setCorreoImss(json.get("correo").asText());
+        if (json.has("telefono")) r1.setTelefonoImss(json.get("telefono").asText());
+        
+        // IDs fijos o calculados (ejemplos, ajustar según lógica real)
+      //  r1.setCveIdSubdelegacion(1L); // Debes obtener esto del catálogo o JSON
+     //   r1.setCveIdPfdomFiscal(1L);   // Debes obtener esto del JSON o lógica
+        
+        datosPersonalesRepository.save(r1);
+    }
+
+    private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json) {
+        // ID Estatus BAJA (IMPORTANTE: Verificar este ID en BD, tabla NDC_ESTADO_CPA)
+        // Por ejemplo, si 4 es "Baja Voluntaria"
+        Long ID_ESTADO_BAJA = 4L; 
+
+        // 1. Guardar en Histórico
+        NdtCpaEstatus estatus = new NdtCpaEstatus();
+        estatus.setCveIdCpa(contador.getCveIdCpa());
+        estatus.setFecRegistroAlta(LocalDateTime.now());
+        estatus.setFecBaja(LocalDateTime.now());
+        estatus.setCveIdEstadoCpa(ID_ESTADO_BAJA); 
+        
+        if (json.has("motivoBaja")) {
+            estatus.setDesComentarios(json.get("motivoBaja").asText());
+        }
+        
+        estatusRepository.save(estatus);
+
+        // 2. Actualizar Maestro
+        contador.setCveIdEstadoCpa(ID_ESTADO_BAJA);
+        contador.setFecRegistroBaja(LocalDateTime.now());
+        contador.setFecRegistroActualizado(LocalDateTime.now());
+        
+        contadorRepository.save(contador);
+    }
+    
 }
  
 
