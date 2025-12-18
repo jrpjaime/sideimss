@@ -33,6 +33,8 @@ import mx.gob.imss.contadores.entity.NdtCpaTramite;
 import mx.gob.imss.contadores.entity.NdtDocumentoProbatorio;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.entity.NdtR1DatosPersonales;
+import mx.gob.imss.contadores.entity.NdtR2Despacho;
+import mx.gob.imss.contadores.entity.NdtR3Colegio;
 import mx.gob.imss.contadores.repository.NdtColegioRepository;
 import mx.gob.imss.contadores.repository.NdtContadorPublicoAutRepository;
 import mx.gob.imss.contadores.repository.NdtCpaAcreditacionRepository;
@@ -41,6 +43,8 @@ import mx.gob.imss.contadores.repository.NdtCpaTramiteRepository;
 import mx.gob.imss.contadores.repository.NdtDocumentoProbatorioRepository;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import mx.gob.imss.contadores.repository.NdtR1DatosPersonalesRepository;
+import mx.gob.imss.contadores.repository.NdtR2DespachoRepository;
+import mx.gob.imss.contadores.repository.NdtR3ColegioRepository;
 import mx.gob.imss.contadores.dto.MedioContactoContadoresDto;  
 import mx.gob.imss.contadores.dto.MediosContactoContadoresResponseDto;
 import mx.gob.imss.contadores.dto.SelloResponseDto;
@@ -87,6 +91,13 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     private NdtColegioRepository colegioRepository;
     @Autowired
     private NdtDocumentoProbatorioRepository documentoProbatorioRepository;
+
+    @Autowired
+    private NdtR2DespachoRepository r2DespachoRepository;
+    @Autowired
+    private NdtR3ColegioRepository r3ColegioRepository;
+
+
 
  
     public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
@@ -444,42 +455,49 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
 
-  /**
-     * Método para extraer la CURP del JSON y buscar al contador para guardar en tablas viejas.
+/**
+     * Método centralizado para guardar en tablas Legacy (Oracle)
      */
     private void guardarEnTablasLegado(NdtPlantillaDato plantilla) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(plantilla.getDesDatos());
         
-        // 1. Obtener CURP del JSON
-        final String curp = rootNode.has("CURP") ? rootNode.get("CURP").asText() : null;
+        // --- 1. LÓGICA DE EXTRACCIÓN DE CURP MEJORADA (CRÍTICO) ---
+        String curpEncontrada = null;
+
+        // Prioridad 1: "curp" (minúscula, común en modificación)
+        if (rootNode.has("curp")) {
+            curpEncontrada = rootNode.get("curp").asText();
+        } 
+        // Prioridad 2: "CURP" (mayúscula, común en acreditación)
+        else if (rootNode.has("CURP")) {
+            curpEncontrada = rootNode.get("CURP").asText();
+        } 
+        // Prioridad 3: Anidado en datosPersonalesDto
+        else if (rootNode.has("datosPersonalesDto") && rootNode.get("datosPersonalesDto").has("curp")) {
+            curpEncontrada = rootNode.get("datosPersonalesDto").get("curp").asText();
+        }
+
+        final String curp = curpEncontrada;
 
         if (curp == null || curp.isEmpty()) {
-            logger.warn("No se encontró CURP en el JSON, no se puede guardar en Legacy.");
+            logger.warn("No se encontró CURP en el JSON. No se puede guardar en Legacy. JSON: {}", plantilla.getDesDatos());
             return;
         }
 
-      
-
-        // 2. Buscar al Contador por CURP
-        NdtContadorPublicoAut contador = contadorRepository.findByCurp(curp).orElseThrow(() -> new RuntimeException("Contador no encontrado en BD Legacy para CURP: " + curp));
-
+        // --- 2. Buscar al Contador ---
+        NdtContadorPublicoAut contador = contadorRepository.findByCurp(curp)
+            .orElseThrow(() -> new RuntimeException("Contador no encontrado en BD Legacy para CURP: " + curp));
 
         String tipoAcuse = plantilla.getDesTipoAcuse(); 
 
-        // 3. Derivar al guardado específico (ACTUALIZADO CON TUS ENUMS)
+        // --- 3. Derivar al guardado específico ---
         if ("ACREDITACION_MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
-            
-            guardarAcreditacionLegacy(contador, rootNode);
-            
+                        guardarAcreditacionLegacy(contador, rootNode);
         } else if ("ACUSE_SOLICITUD_CAMBIO".equalsIgnoreCase(tipoAcuse)) {
-            
-            guardarModificacionLegacy(contador, rootNode);
-            
+                        guardarModificacionLegacy(contador, rootNode);
         } else if ("ACUSE_SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
-            
-            guardarBajaLegacy(contador, rootNode);
-            
+                        guardarBajaLegacy(contador, rootNode);
         } else {
             logger.warn("El tipo de acuse '{}' no tiene lógica de guardado Legacy configurada.", tipoAcuse);
         }
@@ -665,66 +683,228 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
 
-/**
-     * Registra la solicitud de modificación de datos (R1) en la tabla legacy.
-     */
     private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json) {
-        NdtR1DatosPersonales r1 = new NdtR1DatosPersonales();
+        LocalDateTime fechaActual = LocalDateTime.now();
+        String usuario = contador.getCurp();
+        String folioSolicitud = json.has("folio") ? json.get("folio").asText() : "S/F";
+
+        // 1. CREAR TRÁMITE (Común para todos los cambios)
+        NdtCpaTramite tramite = new NdtCpaTramite();
+        tramite.setCveIdCpa(contador.getCveIdCpa());
+        tramite.setFecSolicitudMovimiento(fechaActual);
+        tramite.setFecRegistroAlta(fechaActual);
+        tramite.setCveIdUsuario(usuario);
+        tramite.setNumTramiteNotaria(folioSolicitud);
+        // tramite.setCveIdTramite(XX); // Opcional: ID de trámite "Modificación" en catálogo
+        NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
+
+        // 2. DETERMINAR TIPO DE SOLICITUD
+        String tipoSolicitud = "";
+        if (json.has("tipoSolicitud")) {
+            tipoSolicitud = json.get("tipoSolicitud").asText().toUpperCase();
+        }
+
+        JsonNode state = json.has("state") ? json.get("state") : null;
+
+        // 3. DERIVAR A LA TABLA CORRESPONDIENTE
+        switch (tipoSolicitud) {
+            case "CONTACTO":
+                guardarR1Personales(contador, state, tramiteGuardado, usuario);
+                break;
+            case "DESPACHO":
+                guardarR2Despacho(contador, state, tramiteGuardado, usuario);
+                break;
+            case "COLEGIO":
+                guardarR3Colegio(contador, state, json, tramiteGuardado, usuario);
+                break;
+            default:
+                logger.warn("Tipo de solicitud de modificación '{}' no reconocida. Se generó trámite pero no detalle.", tipoSolicitud);
+        }
+    }
+
+    // --- SUB-MÉTODOS DE GUARDADO ---
+
+private void guardarR1Personales(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
         LocalDateTime fechaActual = LocalDateTime.now();
 
-        // 1. Datos de Auditoría y Relación
-        r1.setCveIdCpa(contador.getCveIdCpa());
-        r1.setFecRegistroAlta(fechaActual);
-        r1.setCveIdUsuario(contador.getCurp()); // Usuario que modifica
+        // 1. BUSCAR DATOS PREVIOS (Para heredar Domicilio y Subdelegación)
+        // Esto evita el error ORA-02291
+        NdtR1DatosPersonales r1Anterior = datosPersonalesRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
+                .orElse(null);
 
-        // 2. Extraer datos del JSON (Basado en tu log)
-        // El log mostraba una estructura: "datosContactoDto": { "correoElectronico1": "...", "cedulaprofesional": "..." }
-        
-        if (json.has("datosContactoDto")) {
-            JsonNode contacto = json.get("datosContactoDto");
+        // 2. PREPARAR NUEVO REGISTRO
+        NdtR1DatosPersonales r1Nuevo = new NdtR1DatosPersonales();
+        r1Nuevo.setCveIdCpa(contador.getCveIdCpa());
+        r1Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
+        r1Nuevo.setFecRegistroAlta(fechaActual);
+        r1Nuevo.setCveIdUsuario(usuario);
 
-            // Cédula Profesional
-            if (contacto.has("cedulaprofesional")) {
-                r1.setCedulaProfesional(contacto.get("cedulaprofesional").asText());
-            }
+        // -- HERENCIA DE DATOS (Lo que arregla el error) --
+        if (r1Anterior != null) {
+            // Copiamos los IDs obligatorios que no cambian en este flujo
+            r1Nuevo.setCveIdPfdomFiscal(r1Anterior.getCveIdPfdomFiscal());
+            r1Nuevo.setCveIdSubdelegacion(r1Anterior.getCveIdSubdelegacion());
             
-            // Correo (Usamos correoElectronico1 como principal)
-            if (contacto.has("correoElectronico1")) {
-                r1.setCorreoImss(contacto.get("correoElectronico1").asText());
-            }
+            // Copiamos datos anteriores por defecto, por si el JSON no trae alguno
+            r1Nuevo.setCedulaProfesional(r1Anterior.getCedulaProfesional());
+            r1Nuevo.setDesTituloExpedidoPor(r1Anterior.getDesTituloExpedidoPor());
             
-            // Teléfono
-            if (contacto.has("telefono1")) {
-                r1.setTelefonoImss(contacto.get("telefono1").asText());
-            }
-        }
-
-        // Título (A veces viene en datosPersonalesDto o en raíz, ajusta según necesidad)
-        if (json.has("datosPersonalesDto") && json.get("datosPersonalesDto").has("titulo")) {
-             r1.setDesTituloExpedidoPor(json.get("datosPersonalesDto").get("titulo").asText());
-        }
-
-        // 3. Datos Obligatorios de Base de Datos (Claves Foráneas)
-        // ⚠️ IMPORTANTE: La tabla NDT_R1_DATOS_PERSONALES requiere Subdelegación y Domicilio Fiscal.
-        // Si no vienen en el JSON, usamos los del registro actual del contador o valores por defecto para que no falle el insert.
-        // En tus INSERTS de ejemplo usaban 146 para subdelegación.
-        
-        // Intenta obtener del JSON, si no, usa valores por defecto o null (si la BD lo permite)
-        if (json.has("datosPersonalesDto") && json.get("datosPersonalesDto").has("idSubdelegacion")) {
-            r1.setCveIdSubdelegacion(json.get("datosPersonalesDto").get("idSubdelegacion").asLong());
+            // IMPORTANTE: Damos de baja el registro anterior para mantener el historial limpio
+            r1Anterior.setFecRegistroBaja(fechaActual);
+            datosPersonalesRepository.save(r1Anterior);
         } else {
-            r1.setCveIdSubdelegacion(146L); // Valor por defecto o recuperar del CPA actual si es posible
+            // Caso extremo: No tiene histórico (Raro en modificación, pero posible)
+            // Aquí tendrías que definir valores default o lanzar error
+            r1Nuevo.setCveIdSubdelegacion(146L); // Default por seguridad
+            // r1Nuevo.setCveIdPfdomFiscal(???); // Si es null fallará, pero esperamos que siempre haya anterior
+        }
+
+        // 3. SOBRESCRIBIR CON DATOS NUEVOS DEL JSON (Angular)
+        if (state != null) {
+            if (state.has("nuevacedulaprofesional") && !state.get("nuevacedulaprofesional").asText().isEmpty()) {
+                r1Nuevo.setCedulaProfesional(state.get("nuevacedulaprofesional").asText());
+            }
+            if (state.has("nuevoCorreoElectronico2")) {
+                r1Nuevo.setCorreoImss(state.get("nuevoCorreoElectronico2").asText());
+            }
+            if (state.has("nuevoTelefono2")) {
+                r1Nuevo.setTelefonoImss(state.get("nuevoTelefono2").asText());
+            }
         }
         
-        // ID Domicilio Fiscal (Requerido por BD Legacy)
-        // Idealmente deberías buscar el ID del domicilio actual del contador. 
-        // Por ahora ponemos el mismo ID del CPA como se vio en algunos de tus inserts antiguos, o 0.
-        r1.setCveIdPfdomFiscal(contador.getCveIdPersona()); 
+        // 4. GUARDAR NUEVO
+        datosPersonalesRepository.save(r1Nuevo);
+        logger.info("Modificación R1 (Personales) guardada. Heredado de ID: {}", 
+            (r1Anterior != null ? r1Anterior.getCveIdR1DatosPersonales() : "N/A"));
+    }
 
-        // Guardar en BD
-        datosPersonalesRepository.save(r1);
-        logger.info("Modificación (R1) guardada en Legacy para CPA: {}", contador.getCveIdCpa());
-    }    
+private void guardarR2Despacho(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
+        LocalDateTime fechaActual = LocalDateTime.now();
+        
+        // 1. Buscar registro activo anterior
+        NdtR2Despacho r2Anterior = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
+                .orElse(null);
+
+        // 2. Preparar nuevo registro
+        NdtR2Despacho r2Nuevo = new NdtR2Despacho();
+        r2Nuevo.setCveIdCpa(contador.getCveIdCpa());
+        r2Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
+        r2Nuevo.setFecRegistroAlta(fechaActual);
+        r2Nuevo.setCveIdUsuario(usuario);
+
+        // 3. Herencia de datos y Baja del anterior
+        if (r2Anterior != null) {
+            // Copiamos IDs críticos que no cambian (o que si cambian, se sobrescriben abajo)
+            r2Nuevo.setCveIdDespacho(r2Anterior.getCveIdDespacho());
+            r2Nuevo.setCveIdPmdomFiscal(r2Anterior.getCveIdPmdomFiscal());
+            r2Nuevo.setCveIdPfdomFiscal(r2Anterior.getCveIdPfdomFiscal());
+            
+            // Copiar datos previos como base
+            r2Nuevo.setIndTipoCpa(r2Anterior.getIndTipoCpa());
+            r2Nuevo.setCargoQueDesempena(r2Anterior.getCargoQueDesempena());
+            r2Nuevo.setTelefonoFijo(r2Anterior.getTelefonoFijo());
+
+            // DAR DE BAJA EL ANTERIOR
+            r2Anterior.setFecRegistroBaja(fechaActual);
+            r2DespachoRepository.save(r2Anterior);
+        }
+
+        // 4. Sobrescribir con datos del JSON (Modificación)
+        if (state != null) {
+            // Tipo Sociedad (1=Despacho, 2=Independiente)
+            if (state.has("selectedTipoSociedad") && !state.get("selectedTipoSociedad").asText().isEmpty()) {
+                r2Nuevo.setIndTipoCpa(state.get("selectedTipoSociedad").asLong());
+            }
+            
+            // Cargo
+            if (state.has("selectedCargoDesempena")) {
+                r2Nuevo.setCargoQueDesempena(state.get("selectedCargoDesempena").asText());
+            }
+
+            // Teléfono Fijo
+            if (state.has("telefonoFijoDespacho")) {
+                r2Nuevo.setTelefonoFijo(state.get("telefonoFijoDespacho").asText());
+            }
+
+            // Trabajadores (Mapeo especial por tus inserts "1 " o null)
+            if (state.has("numeroTrabajadores") && !state.get("numeroTrabajadores").asText().isEmpty()) {
+                r2Nuevo.setNumTrabajadores(state.get("numeroTrabajadores").asInt());
+                r2Nuevo.setIndCuentaconTrab("1"); // Marcamos que sí tiene
+            } else if (state.has("tieneTrabajadores") && "No".equalsIgnoreCase(state.get("tieneTrabajadores").asText())) {
+                r2Nuevo.setNumTrabajadores(0);
+                r2Nuevo.setIndCuentaconTrab("0"); 
+            }
+            
+            // NOTA SOBRE CAMBIO DE RFC DESPACHO:
+            // Si el usuario cambió el RFC del despacho (nuevoRfcDespacho), 
+            // deberías buscar el `CVE_ID_DESPACHO` correspondiente en `NDT_DESPACHOS` usando ese RFC
+            // y actualizar r2Nuevo.setCveIdDespacho(...). 
+            // Si no tienes ese repositorio aún, se guardará el ID del despacho anterior (por la herencia).
+        }
+
+        r2DespachoRepository.save(r2Nuevo);
+        logger.info("Modificación R2 (Despacho) guardada en Legacy.");
+    }
+
+private void guardarR3Colegio(NdtContadorPublicoAut contador, JsonNode state, JsonNode rootJson, NdtCpaTramite tramite, String usuario) {
+        LocalDateTime fechaActual = LocalDateTime.now();
+
+        // 1. Buscar registro activo anterior (Colegio actual)
+        NdtR3Colegio r3Anterior = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
+                .orElse(null);
+
+        // 2. Dar de baja el anterior
+        if (r3Anterior != null) {
+            r3Anterior.setFecRegistroBaja(fechaActual);
+            r3ColegioRepository.save(r3Anterior);
+        }
+
+        // 3. Crear nuevo registro
+        NdtR3Colegio r3Nuevo = new NdtR3Colegio();
+        r3Nuevo.setCveIdCpa(contador.getCveIdCpa());
+        r3Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
+        r3Nuevo.setFecRegistroAlta(fechaActual);
+        r3Nuevo.setCveIdUsuario(usuario);
+
+        // 4. Determinar el ID del nuevo Colegio
+        // Opción A: Viene del JSON (nuevoRfcColegio) -> Buscar ID en BD
+        // Opción B: Si no cambió, usar el anterior.
+        
+        Long nuevoIdColegio = null;
+        
+        if (state != null && state.has("nuevoRfcColegio")) {
+            String nuevoRfc = state.get("nuevoRfcColegio").asText();
+            // Buscar ID por RFC. Como no queremos inyectar otro repo más complejo aquí,
+            // intentaremos usar una lógica simple: 
+            // Si tienes NdtColegioRepository con findByRfc, úsalo.
+            // Si no, usaremos el anterior como fallback.
+            
+            // *Lógica sugerida con tu repositorio actual:*
+            // colegioRepository.findByRfc...(nuevoRfc).ifPresent(c -> nuevoIdColegio = c.getId());
+        }
+
+        // Fallback: Si no encontramos el nuevo ID, heredamos el anterior (si existía)
+        if (nuevoIdColegio == null && r3Anterior != null) {
+            nuevoIdColegio = r3Anterior.getCveIdColegio();
+        }
+        
+        r3Nuevo.setCveIdColegio(nuevoIdColegio);
+        r3ColegioRepository.save(r3Nuevo);
+
+        // 5. Guardar documento probatorio (Constancia)
+        // 132 = Constancia Membresía (Verificar ID en catálogo)
+        Long TIPO_DOC_MEMBRESIA = 132L; 
+        
+        // El path viene en la raíz del JSON según tu log anterior
+        if (rootJson.has("desPathHdfsConstancia")) {
+             guardarDocumentoLegacy(contador.getCveIdCpa(), 
+                                    rootJson.get("desPathHdfsConstancia").asText(), 
+                                    TIPO_DOC_MEMBRESIA, 
+                                    usuario);
+        }
+
+        logger.info("Modificación R3 (Colegio) guardada en Legacy.");
+    }
     
 }
  

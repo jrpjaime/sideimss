@@ -44,4 +44,10 @@ public class NdtR1DatosPersonales {
 
     @Column(name = "CVE_ID_USUARIO")
     private String cveIdUsuario;
+
+    @Column(name = "CVE_ID_CPA_TRAMITE")
+    private Long cveIdCpaTramite;
+
+    @Column(name = "FEC_REGISTRO_BAJA")
+    private LocalDateTime fecRegistroBaja;
 }
