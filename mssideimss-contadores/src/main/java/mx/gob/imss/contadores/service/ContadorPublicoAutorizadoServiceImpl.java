@@ -1,7 +1,6 @@
 package mx.gob.imss.contadores.service;
 
-import java.sql.Date;
-import java.util.ArrayList;
+
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -142,61 +141,7 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
     }
     
 
-    /*
-    @Override
-    public SolicitudBajaDto getDatosContador(String rfc) {
-        logger.info("Iniciando consulta de datos del contador para RFC: {}", rfc);
- 
-        
-        // --- SIMULACIÓN CON DATOS DUMMY (MOCK) ---
-        
-        DatosPersonalesDto datosPersonales = new DatosPersonalesDto(
-            rfc, 
-            "SEF900101XYZ",
-            "SÁNCHEZ",
-            "FERNÁNDEZ",
-            "LAURA",
-            "1234567890",
-            "ACTIVO",
-            "DEL NORTE",
-            "SUBDELEGACIÓN ZACATENCO"
-        );
 
-        DomicilioFiscalDto domicilioFiscal = new DomicilioFiscalDto(
-            "AV. SIEMPRE VIVA",
-            "150",
-            "Piso 1",
-            "CALLE DE LA PAZ",
-            "CALLE DE LA GUERRA",
-            "COLONIA CENTRO",
-            "CIUDAD DE MÉXICO",
-            "CUAUHTÉMOC",
-            "CIUDAD DE MÉXICO",
-            "06000"
-        );
-
-        DatosContactoDto datosContacto = new DatosContactoDto(
-            "laura.sanchez@contador.com.mx",
-            "5512345678",
-            "laura.contacto@otroemail.com",
-            "Pedro.contacto@otroemail.com", // Correo 3 vacío
-            "5598765432",
-            "55556666666"
-        );
-
-        SolicitudBajaDto solicitud = new SolicitudBajaDto(
-            "20251101-0001", // Folio de ejemplo
-            datosPersonales,
-            domicilioFiscal,
-            datosContacto,
-            "BAJA POR CAMBIO DE FIRMA FISCAL"
-        );
-
-        logger.info("Datos dummy generados exitosamente para RFC: {}", rfc);
-        return solicitud;
-    }
-
-    */
 
 
       @Override
@@ -328,35 +273,6 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
 
 
 
-
-    /**
-     * Método para consultar el colegio vinculado a un contador. 
-     *
-     * @param rfcContador El RFC del contador a consultar.
-     * @return Un objeto ColegioContadorDto con el RFC y nombre/razón social del colegio.
-     */
-    /*
-    @Override
-    public ColegioContadorDto getColegioByRfcContador(String rfcContador) {
-        logger.info("Iniciando consulta de colegio para RFC de contador: {}", rfcContador);
-
-        // --- SIMULACIÓN DE LÓGICA DE NEGOCIO / CONSULTA A BASE DE DATOS ---
-        //  aquí consulta    base de datos para obtener el colegio
-        // vinculado al RFC del contador. Esto podría implicar JOINS entre tablas.
-        // Por ahora, simularemos con datos dummy basados en el RFC.
-
-        if (rfcContador != null && rfcContador.startsWith("MOG")) {
-            logger.info("Se encontró un colegio dummy para RFC: {}", rfcContador);
-            return new ColegioContadorDto("RME1210096M2", "ROKI MEXICO SA DE CV");
-     
-        } else {
-            logger.warn("No se encontró un colegio simulado para RFC: {}", rfcContador);
-            // Podrías devolver null, o un DTO con campos vacíos, o lanzar una excepción si no se encuentra.
-            // Para este ejemplo, devolvemos un DTO con valores por defecto.
-            return new ColegioContadorDto("N/A", "Colegio no encontrado");
-        }
-    }
-*/
 
 
         @Override

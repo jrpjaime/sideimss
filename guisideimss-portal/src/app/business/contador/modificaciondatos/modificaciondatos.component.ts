@@ -129,7 +129,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
   originalTieneTrabajadores: string | null = null;
   originalNumeroTrabajadores: string | null = null;
 
-  busquedaDespachoRealizada: boolean = false; 
+  busquedaDespachoRealizada: boolean = false;
 
   private resetSubscription: Subscription | null = null;
 
@@ -168,7 +168,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
 
     // Limpiar suscripción al salir ---
   override ngOnDestroy(): void {
-    super.ngOnDestroy(); 
+    super.ngOnDestroy();
     if (this.resetSubscription) {
       this.resetSubscription.unsubscribe();
     }
@@ -187,7 +187,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
     // 3. Limpiar objetos de datos cargados
     this.colegioContador = null;
     this.despachoContador = null;
-    
+
     // 4. Resetear banderas de UI
     this.habilitarEdicionRfcColegio = false;
     this.busquedaColegioRealizada = false;
@@ -196,7 +196,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
     this.deseaActualizarContacto = null;
 
     // 5. Limpiar datos temporales del servicio (Para que no se autorrellene al recargar)
-    this.modificacionDatosDataService.clearDatosFormularioPrevio(); 
+    this.modificacionDatosDataService.clearDatosFormularioPrevio();
 
     // 6. Recargar validaciones básicas o limpiar errores
     this.formSubmitted = false;
@@ -307,7 +307,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
     console.log('Opción seleccionada:', this.selectedTipoDato);
 
     // Resetear todas las secciones
-    this.busquedaDespachoRealizada = false; 
+    this.busquedaDespachoRealizada = false;
     this.colegioContador = null;
     this.mostrarSeccionColegio = false;
     this.despachoContador = null; // Limpiar datos del despacho
@@ -459,7 +459,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
 
     } else {
       this.habilitarEdicionRfcColegio = false;
-      this.selectedFileConstancia = null; 
+      this.selectedFileConstancia = null;
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
     }
   }
@@ -474,8 +474,8 @@ buscarNuevoColegio(): void {
     // Validar formato de RFC de persona moral antes de la búsqueda
     if (!this.validarRfcPersonaMoral(this.nuevoRfcColegio)) {
       // El mensaje se muestra en el HTML, aquí solo marcamos la bandera
-      this.rfcColegioValido = false; 
-   
+      this.rfcColegioValido = false;
+
       //this.alertService.error('El RFC ingresado no cumple con el formato de 12 caracteres para Persona Moral.');
       return;
     }
@@ -485,7 +485,7 @@ buscarNuevoColegio(): void {
 
     this.loadingColegio = true;
     this.busquedaColegioRealizada = false;
-  
+
     const request: RfcColegioRequestDto = { rfc: this.nuevoRfcColegio };
 
     this.catalogosContadorService.getDatoRfcColegio(request)
@@ -502,18 +502,18 @@ buscarNuevoColegio(): void {
         },
         error: (error: HttpErrorResponse) => {
           console.error('Error al obtener los datos del nuevo colegio:', error);
-          
+
           if (error.status === 404) {
             this.alertService.error('No se encontraron datos de colegio para el RFC proporcionado. Por favor, verifica el RFC e intenta de nuevo.');
           } else {
             this.alertService.error('Error al consultar los datos del nuevo colegio. Inténtalo de nuevo más tarde.');
           }
- 
+
           // si existe el objeto, solo limpia la razón social para mostrar que no hubo coincidencia
           if (this.colegioContador) {
-             this.colegioContador.razonSocial = ''; 
+             this.colegioContador.razonSocial = '';
              // Opcional: Puedes asignar el RFC que se intentó buscar, o dejar el anterior.
-             // this.colegioContador.rfcColegio = this.nuevoRfcColegio; 
+             // this.colegioContador.rfcColegio = this.nuevoRfcColegio;
           } else {
              // Si por alguna razón era nulo, lo inicializamos vacío para que pinte el formulario
              this.colegioContador = { rfcColegio: '', razonSocial: '' };
@@ -972,7 +972,7 @@ limpiarNuevoRfcColegio(): void {
 
   /**
    * Método auxiliar para inicializar el formulario cuando no hay datos
-   * o cuando ocurre un error (simulando el comportamiento "else" del mock anterior).
+   *
    */
   private inicializarDespachoVacio(): void {
     this.despachoContador = {
@@ -1025,7 +1025,7 @@ limpiarNuevoRfcColegio(): void {
       this.router.navigate(['/home']); // Redirigir a /home si la respuesta es No
     }
   }
- 
+
 
 
   /**
@@ -1069,7 +1069,7 @@ limpiarNuevoRfcColegio(): void {
           }
 
           // 5. Bloqueamos el input y el botón buscar
-          this.busquedaDespachoRealizada = true; 
+          this.busquedaDespachoRealizada = true;
           this.alertService.success('Datos del despacho encontrados.');
 
           // NOTA: No modificamos 'this.selectedCargoDesempena' ni 'this.telefonoFijoDespacho',
@@ -1077,12 +1077,12 @@ limpiarNuevoRfcColegio(): void {
         },
         error: (error: HttpErrorResponse) => {
           // En error NO bloqueamos para permitir corregir
-          this.busquedaDespachoRealizada = false; 
+          this.busquedaDespachoRealizada = false;
           console.error('Error al buscar el RFC del despacho:', error);
-          
+
           if (error.status === 404) {
              // Limpiamos solo la razón social si no se encuentra
-            if (this.despachoContador){ 
+            if (this.despachoContador){
                this.despachoContador.nombreRazonSocial = '';
               }
             this.alertService.error('No se encontró información en el SAT para el RFC proporcionado.');
@@ -1094,11 +1094,11 @@ limpiarNuevoRfcColegio(): void {
   }
 
 
- 
+
 limpiarDatosDespacho(): void {
     this.nuevoRfcDespacho = '';
     this.rfcDespachoValido = true;
-    
+
     // Limpiamos los datos visuales del despacho, pero NO el cargo ni teléfono (opcional)
     // O si prefieres limpiar todo el formulario, descomenta las líneas de cargo/telefono
     if (this.despachoContador) {
@@ -1110,8 +1110,8 @@ limpiarDatosDespacho(): void {
     this.telefonoFijoDespacho = '';
 
     // Reactivamos el input y el botón buscar
-    this.busquedaDespachoRealizada = false; 
-    
+    this.busquedaDespachoRealizada = false;
+
     this.alertService.info('Campo RFC limpiado. Puede realizar una nueva búsqueda.');
   }
 
@@ -1196,7 +1196,7 @@ limpiarDatosDespacho(): void {
     if (respuesta) { // Si el usuario dice "Si" (abre la actualización)
       this.precargarDatosContacto();
 
-    }  
+    }
   }
 
   /**
@@ -1362,14 +1362,14 @@ limpiarDatosDespacho(): void {
 
       // Enviamos el nuevo RFC y la Razón Social actual (sea nueva o vieja, es la vigente para el trámite)
       rfcColegioNuevo: this.nuevoRfcColegio,
-      razonSocialColegio: this.colegioContador?.razonSocial || '', 
+      razonSocialColegio: this.colegioContador?.razonSocial || '',
 
       desPathHdfsConstancia: this.fileConstanciaHdfsPath,
       nomArchivoConstancia: this.selectedFileConstancia?.name,
 
       tipoTramite: 'ACUSE_SOLICITUD_CAMBIO',
       state: {
-        nuevoRfcColegio: this.nuevoRfcColegio, 
+        nuevoRfcColegio: this.nuevoRfcColegio,
         fileConstanciaHdfsPath: this.fileConstanciaHdfsPath,
         nomArchivoConstancia: this.selectedFileConstancia?.name
       }
@@ -1408,7 +1408,7 @@ limpiarDatosDespacho(): void {
              return;
         }
     } else {
-        // Validaciones para Despacho 
+        // Validaciones para Despacho
         if (!this.nuevoRfcDespacho || !this.validarRfcPersonaMoral(this.nuevoRfcDespacho) || !this.selectedCargoDesempena || !this.telefonoFijoDespacho) {
            this.alertService.error('Verifique los campos obligatorios del despacho.');
            return;
@@ -1607,7 +1607,7 @@ limpiarDatosDespacho(): void {
 
 
 private obtenerDatosBaseParaAcuse() {
-  
+
     // 1. Obtenemos la fecha y hora actual del sistema
     const now = new Date();
 
