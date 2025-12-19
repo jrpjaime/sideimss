@@ -33,4 +33,7 @@ public class NdtCpaTramite {
     
     @Column(name = "CVE_ID_USUARIO")
     private String cveIdUsuario;
+
+    @Column(name = "URL_ACUSE_NOTARIA")
+    private String urlAcuseNotaria;
 }

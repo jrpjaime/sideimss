@@ -13,4 +13,6 @@ import mx.gob.imss.contadores.entity.NdtR3Colegio;
 public interface NdtR3ColegioRepository extends JpaRepository<NdtR3Colegio, Long> {
     @Query("SELECT r FROM NdtR3Colegio r WHERE r.cveIdCpa = :cveIdCpa AND r.fecRegistroBaja IS NULL")
     Optional<NdtR3Colegio> findRegistroActivoByCpa(@Param("cveIdCpa") Long cveIdCpa);
+
+     Optional<NdtR3Colegio> findByCveIdCpaAndFecRegistroBajaIsNull(Long cveIdCpa);
 }

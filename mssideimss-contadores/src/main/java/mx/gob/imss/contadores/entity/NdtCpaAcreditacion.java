@@ -45,4 +45,7 @@ public class NdtCpaAcreditacion {
      
     @Column(name = "CVE_ID_USUARIO")
     private String cveIdUsuario;
+
+    @Column(name = "CVE_ID_CPA_TRAMITE")
+    private Long cveIdCpaTramite;
 }

@@ -492,6 +492,17 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             return;
         }
 
+
+
+        String urlAcuseHdfs = rootNode.has("desPathHdfsAcuse") ? rootNode.get("desPathHdfsAcuse").asText() : null;
+    
+        // Extraemos el folio (numTramiteNotaria es el estándar del JSON de acuses)
+        String folio = rootNode.has("numTramiteNotaria") ? rootNode.get("numTramiteNotaria").asText() : 
+                    (rootNode.has("folioFirma") ? rootNode.get("folioFirma").asText() : "S/F");
+                    
+
+
+
         // --- 2. Buscar al Contador ---
         NdtContadorPublicoAut contador = contadorRepository.findByCurp(curp)
             .orElseThrow(() -> new RuntimeException("Contador no encontrado en BD Legacy para CURP: " + curp));
@@ -500,55 +511,57 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
         // --- 3. Derivar al guardado específico ---
         if ("ACREDITACION_MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
-                        guardarAcreditacionLegacy(contador, rootNode);
+                        guardarAcreditacionLegacy(contador, rootNode, folio, urlAcuseHdfs);
         } else if ("ACUSE_SOLICITUD_CAMBIO".equalsIgnoreCase(tipoAcuse)) {
-                        guardarModificacionLegacy(contador, rootNode);
+                        guardarModificacionLegacy(contador, rootNode, folio, urlAcuseHdfs);
         } else if ("ACUSE_SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
-                        guardarBajaLegacy(contador, rootNode);
+                        guardarBajaLegacy(contador, rootNode, folio, urlAcuseHdfs);
         } else {
             logger.warn("El tipo de acuse '{}' no tiene lógica de guardado Legacy configurada.", tipoAcuse);
         }
     }
 
-      private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json) {
-        NdtCpaAcreditacion acreditacion = new NdtCpaAcreditacion();
-        LocalDateTime fechaActual = LocalDateTime.now();
-        String usuario = contador.getCurp(); // O el RFC
-        
-        acreditacion.setCveIdCpa(contador.getCveIdCpa());
-        acreditacion.setFecRegistroAlta(fechaActual);
-        acreditacion.setFecRegistroActualizado(fechaActual); 
-        acreditacion.setCveIdUsuario(usuario);
+private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
+    LocalDateTime fechaActual = LocalDateTime.now();
+    String usuario = contador.getCurp();
+    
+    // --- 1. CREAR EL TRÁMITE ---
+    NdtCpaTramite tramite = new NdtCpaTramite();
+    tramite.setCveIdCpa(contador.getCveIdCpa());
+    tramite.setFecSolicitudMovimiento(fechaActual);
+    tramite.setFecRegistroAlta(fechaActual);
+    tramite.setCveIdUsuario(usuario);
+    tramite.setNumTramiteNotaria(folio);      // Folio UUID
+    tramite.setUrlAcuseNotaria(urlAcuse);     // RUTA HDFS BASE64
+    
+    NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
 
-        // --- 1. BUSCAR EL COLEGIO (Automático por RFC) ---
-        // Como no viene en el JSON, lo buscamos en la BD usando el usuario del contador
-        // Suponemos que el contador ya tiene un colegio activo asociado a su usuario
-        colegioRepository.findByCveIdUsuarioAndFecRegistroBajaIsNull(contador.getCveIdUsuario())
-            .ifPresent(colegio -> acreditacion.setCveIdColegio(colegio.getCveIdColegio()));
+    // --- 2. GUARDAR ACREDITACIÓN VINCULADA ---
+    NdtCpaAcreditacion acreditacion = new NdtCpaAcreditacion();
+    acreditacion.setCveIdCpa(contador.getCveIdCpa());
+    acreditacion.setCveIdCpaTramite(tramiteGuardado.getCveIdCpaTramite()); 
+    acreditacion.setFecRegistroAlta(fechaActual);
+    acreditacion.setFecRegistroActualizado(fechaActual); 
+    acreditacion.setCveIdUsuario(usuario);
 
-             logger.info("Colegio encontrado: " + acreditacion.getCveIdColegio());
+    // Búsqueda del colegio activo (SQL Lógica)
+    r3ColegioRepository.findByCveIdCpaAndFecRegistroBajaIsNull(contador.getCveIdCpa())
+        .ifPresent(r3 -> acreditacion.setCveIdColegio(r3.getCveIdColegio()));
+ 
+ 
 
-        // --- 2. MAPEO DE FECHAS (Nombres corregidos según tu Angular) ---
-        
-        if (json.has("fechaExpedicionAcreditacion")) {
-            // Mapea a la columna FEC_ACREDITACION_CP
-            acreditacion.setFecAcreditacionCp(parseFecha(json.get("fechaExpedicionAcreditacion").asText()));
-        }
+    // --- 4. MAPEO DE FECHAS (Desde el JSON de Angular) ---
+    if (json.has("fechaExpedicionAcreditacion")) {
+        acreditacion.setFecAcreditacionCp(parseFecha(json.get("fechaExpedicionAcreditacion").asText()));
+    }
+    if (json.has("fechaExpedicionMembresia")) {
+        acreditacion.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
+    }
 
-        if (json.has("fechaExpedicionMembresia")) {
-            // Mapea a FEC_DOCUMENTO1 (Usualmente usado para fecha de constancia/membresía)
-            acreditacion.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
-        }
-
-     
-
-        // --- 3. TIPO (0=Acreditación, 1=Membresía) ---
-        // Si subió ambos archivos, el sistema legacy suele marcarlo como 0 o según regla.
-        // Aquí lo dejamos en 0 por defecto como en tu insert.
-        acreditacion.setIndAcredMembresia(0);
-        
-        // Guardamos la acreditación
-        NdtCpaAcreditacion acreditacionGuardada = acreditacionRepository.save(acreditacion);
+    acreditacion.setIndAcredMembresia(0); // 0 según regla de negocio para estos movimientos
+    
+    // Guardamos la acreditación
+    acreditacionRepository.save(acreditacion);
 
         // --- 4. GUARDAR DOCUMENTOS (PDFs) en NDT_DOCUMENTO_PROBATORIO ---
         // IDs de tipo de documento (Debes confirmar estos IDs en tu tabla NDC_TIPO_DOCUMENTO)
@@ -642,7 +655,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 15	3RA. AMONESTACIÓN
     */
 
-   private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json) {
+   private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
         Long ID_ESTADO_BAJA = 10L; 
         LocalDateTime fechaActual = LocalDateTime.now();
         String usuario = contador.getCurp();
@@ -654,8 +667,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         tramite.setFecSolicitudMovimiento(fechaActual);
         tramite.setFecRegistroAlta(fechaActual);
         tramite.setCveIdUsuario(usuario);
-        tramite.setNumTramiteNotaria(folioSolicitud); // Guardamos el UUID aquí para rastreo
-        // tramite.setCveIdTramite(??); // Si tienes el ID de tipo de trámite "Baja" en catalogo, ponlo aquí.
+        tramite.setNumTramiteNotaria(folioSolicitud);
+        tramite.setUrlAcuseNotaria(urlAcuse); // Guardamos ruta de Hadoop
         
         NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
 
@@ -694,7 +707,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
 
-    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json) {
+    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
         LocalDateTime fechaActual = LocalDateTime.now();
         String usuario = contador.getCurp();
         String folioSolicitud = json.has("folio") ? json.get("folio").asText() : "S/F";
@@ -706,7 +719,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         tramite.setFecRegistroAlta(fechaActual);
         tramite.setCveIdUsuario(usuario);
         tramite.setNumTramiteNotaria(folioSolicitud);
-        // tramite.setCveIdTramite(XX); // Opcional: ID de trámite "Modificación" en catálogo
+        tramite.setNumTramiteNotaria(folio);
+        tramite.setUrlAcuseNotaria(urlAcuse);
         NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
 
         // 2. DETERMINAR TIPO DE SOLICITUD
