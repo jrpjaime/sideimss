@@ -15,6 +15,7 @@ public interface NdtPatronDictamenRepository extends JpaRepository<NdtPatronDict
            "INNER JOIN MGPBDTU9X.NDT_PATRON_DICTAMEN_CPA CP ON CP.CVE_ID_PATRON_DICTAMEN = PD.CVE_ID_PATRON_DICTAMEN " +
            "INNER JOIN MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT CPA ON CP.CVE_ID_CPA = CPA.CVE_ID_CPA " +
            "INNER JOIN MGPBDTU9X.NDC_ESTADO_DICTAMEN E ON E.CVE_ID_ESTADO_DICTAMEN = PD.CVE_ID_ESTADO_DICTAMEN " +
+           "AND E.DES_ESTADO_DICTAMEN = 'EN PROCESO' "+
            "WHERE CPA.NUM_REGISTRO_CPA = :numRegistroCpa", nativeQuery = true)
     int countDictamenesPorRegistroCpa(@Param("numRegistroCpa") Integer numRegistroCpa);
 }
