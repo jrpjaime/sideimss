@@ -221,7 +221,7 @@
             <p class="me-3">* Campo obligatorio</p>
           </div>
           <button type="button" class="btn btn-secondary" (click)="onCancelar()">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="continuarConAcuse()" [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud">Siguiente</button>
+          <button type="button" class="btn btn-primary" (click)="continuarConAcuse()" [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud || tieneBloqueoDictamen">Siguiente</button>
 
     </div>
   </div>

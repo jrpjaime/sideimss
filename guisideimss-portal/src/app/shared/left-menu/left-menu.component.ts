@@ -8,6 +8,7 @@ import { SharedService } from '../services/shared.service';
 import { ContadorPublicoAutorizadoService } from '../../business/contador/services/contador-publico-autorizado.service';
 import { AlertService } from '../services/alert.service';
 import { LoaderService } from '../services/loader.service';
+import { SolicitudBajaDataService } from '../../business/contador/services/solicitud-baja-data.service';
 
 // Definimos una interfaz para nuestros elementos de menú para tener un código más limpio
 export interface MenuItem {
@@ -62,7 +63,8 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
     private sharedService: SharedService, // Inyectamos SharedService
     private contadorService: ContadorPublicoAutorizadoService,
     private alertService: AlertService,
-    private loaderService: LoaderService
+    private loaderService: LoaderService,
+    private solicitudBajaDataService: SolicitudBajaDataService
   ) { }
 
   ngOnInit(): void {
@@ -156,23 +158,28 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
    * Método auxiliar para manejar la validación de solicitud de baja
    */
   private procesarSolicitudBaja(route: string): void {
+
+    this.solicitudBajaDataService.clearSolicitudBajaData();
+    this.solicitudBajaDataService.clearDatosParaRegresar();
+    this.sharedService.triggerResetSolicitudBaja();
+
     this.loaderService.show();
     this.alertService.clear();
 
     // Paso 1: Obtener datos del contador para sacar el registroIMSS o CPA
-   
+
     this.contadorService.getDatosContador().pipe(
-      switchMap(datos => { 
+      switchMap(datos => {
         // Supongamos que necesitamos pasar el registro como parametro, parseamos lo que venga
         const numRegistro = datos.datosPersonalesDto.registroIMSS ? Number(datos.datosPersonalesDto.registroIMSS) : 0;
-        
+
         // Paso 2: Validar si tiene dictamen
         return this.contadorService.validarDictamenEnProceso(numRegistro);
       }),
       catchError(err => {
         console.error("Error validando dictamen", err);
         // Retornamos un observable con false para no bloquear si falla el servicio (o manejar error)
-        return of({ tieneDictamen: false }); 
+        return of({ tieneDictamen: false });
       })
     ).subscribe({
       next: (response) => {
@@ -181,7 +188,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
         if (response.tieneDictamen) {
           // TIENE DICTAMEN: MANTENER AL USUARIO AQUI Y MOSTRAR ERROR
           this.alertService.error(
-            'No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', 
+            'No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.',
             { autoClose: false, keepAfterRouteChange: false }
           );
         } else {
@@ -192,7 +199,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       error: (err) => {
         this.loaderService.hide();
         // En caso de error técnico mostrar error genérico.
-        
+
         this.alertService.error('Ocurrió un error al validar el estado del contador.', { autoClose: true });
       }
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'; // Importa OnInit
+import { Component, OnDestroy, OnInit } from '@angular/core'; // Importa OnInit
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Necesario para ngIf y otros
 import { ContadorPublicoAutorizadoService } from '../services/contador-publico-autorizado.service'; // Importa el servicio
@@ -8,6 +8,8 @@ import { NAV } from '../../../global/navigation';
 import { AlertService } from '../../../shared/services/alert.service';
 import { Router } from '@angular/router';
 import { LoaderService } from '../../../shared/services/loader.service';
+import { SharedService } from '../../../shared/services/shared.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-solicitudbaja',
@@ -16,7 +18,9 @@ import { LoaderService } from '../../../shared/services/loader.service';
   templateUrl: './solicitudbaja.component.html',
   styleUrl: './solicitudbaja.component.css'
 })
-export class SolicitudbajaComponent implements OnInit {
+export class SolicitudbajaComponent implements OnInit, OnDestroy {
+
+   private resetSubscription!: Subscription;
 
   solicitudBajaData: SolicitudBajaDto | null = null;
   loading: boolean = true;
@@ -27,18 +31,42 @@ export class SolicitudbajaComponent implements OnInit {
   caracteresRestantes: number = this.maxCaracteres;
   folioSolicitud: string | null = null;
 
+  tieneBloqueoDictamen: boolean = false;
+
   constructor(
     private contadorPublicoAutorizadoService: ContadorPublicoAutorizadoService,
     private solicitudBajaDataService: SolicitudBajaDataService,
     private alertService: AlertService,
     private router: Router,
-    private loaderService: LoaderService
+    private loaderService: LoaderService,
+    private sharedService: SharedService
+
   ) { }
 
   ngOnInit(): void {
+      this.resetSubscription = this.sharedService.resetSolicitudBaja$.subscribe(() => {
+      this.resetFormulario();
+    });
     this.loaderService.show();
     this.cargarDatosPreviosYFolio();
   }
+
+
+    ngOnDestroy(): void {
+    if (this.resetSubscription) {
+      this.resetSubscription.unsubscribe();
+    }
+  }
+
+
+    resetFormulario(): void {
+    this.motivoBaja = '';
+    this.solicitudBajaData = null;
+    this.folioSolicitud = null;
+    this.caracteresRestantes = this.maxCaracteres;
+    this.error = null;
+  }
+
 
   async cargarDatosPreviosYFolio(): Promise<void> {
     const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
@@ -81,15 +109,35 @@ export class SolicitudbajaComponent implements OnInit {
 
     this.loading = true;
     this.error = null;
+    this.tieneBloqueoDictamen = false;
     this.contadorPublicoAutorizadoService.getDatosContador().subscribe({
       next: (data) => {
         // Asegúrate de que `data` no sobrescriba el folio si ya lo tiene.
         // Pero idealmente, la API debería devolver los datos del contador sin el folio
         // y nosotros lo adjuntamos.
         this.solicitudBajaData = { ...data, folioSolicitud: this.folioSolicitud!, motivoBaja: this.motivoBaja }; // Aquí usamos el operador !
-        this.loading = false;
-        this.loaderService.hide();
-        console.log('Datos del contador cargados:', this.solicitudBajaData);
+        const numRegistro = parseInt(data.datosPersonalesDto.registroIMSS);
+
+        if (!isNaN(numRegistro)) {
+          this.contadorPublicoAutorizadoService.validarDictamenEnProceso(numRegistro).subscribe({
+            next: (res) => {
+              if (res.tieneDictamen) {
+                this.tieneBloqueoDictamen = true;
+                // Mostramos el mensaje de error de la imagen
+                this.alertService.error('No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', { autoClose: false });
+              }
+              this.loading = false;
+              this.loaderService.hide();
+            },
+            error: () => {
+              this.loading = false;
+              this.loaderService.hide();
+            }
+          });
+        } else {
+          this.loading = false;
+          this.loaderService.hide();
+        }
       },
       error: (err) => {
         console.error('Error al cargar los datos del contador:', err);

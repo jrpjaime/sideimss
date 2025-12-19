@@ -145,7 +145,7 @@ export class SharedService {
     this.numeroRegistroImssSesionSource.next(numeroRegistroImssSesion);
   }
 
- 
+
   get currentNumeroRegistroImssSesionValue(): string {
     return this.numeroRegistroImssSesionSource.getValue();
   }
@@ -164,7 +164,7 @@ export class SharedService {
 
     const roles: string[] = payload.roles || []; // Asumiendo que el claim se llama 'roles'
 
-     
+
     const rfc = payload.rfc;
     const curp = payload.curp;
     const nombre = payload.nombre;
@@ -221,6 +221,15 @@ export class SharedService {
   // 3. Método para disparar el evento
   triggerResetModificacionDatos() {
     this.resetModificacionDatosSource.next();
+  }
+
+
+
+  private resetSolicitudBajaSource = new Subject<void>();
+  resetSolicitudBaja$ = this.resetSolicitudBajaSource.asObservable();
+
+  triggerResetSolicitudBaja() {
+    this.resetSolicitudBajaSource.next();
   }
 
   }
