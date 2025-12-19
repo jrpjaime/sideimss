@@ -38,6 +38,9 @@ public class NdtCpaAcreditacion {
 
     @Column(name = "FEC_REGISTRO_ALTA")
     private LocalDateTime fecRegistroAlta;
+
+    @Column(name = "FEC_REGISTRO_ACTUALIZADO")
+    private LocalDateTime fecRegistroActualizado;
     
      
     @Column(name = "CVE_ID_USUARIO")

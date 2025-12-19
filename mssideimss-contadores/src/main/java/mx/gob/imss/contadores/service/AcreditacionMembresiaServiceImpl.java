@@ -526,6 +526,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         colegioRepository.findByCveIdUsuarioAndFecRegistroBajaIsNull(contador.getCveIdUsuario())
             .ifPresent(colegio -> acreditacion.setCveIdColegio(colegio.getCveIdColegio()));
 
+             logger.info("Colegio encontrado: " + acreditacion.getCveIdColegio());
+
         // --- 2. MAPEO DE FECHAS (Nombres corregidos según tu Angular) ---
         
         if (json.has("fechaExpedicionAcreditacion")) {
