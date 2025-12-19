@@ -46,8 +46,7 @@ public class NdtR2Despacho {
     @Column(name = "CARGO_QUE_DESEMPENA")
     private String cargoQueDesempena;
 
-    @Column(name = "TELEFONO_FIJO")
-    private String telefonoFijo;
+   
     
     @Column(name = "NUM_TRABAJADORES_CONTRATADOS")
     private Integer numTrabajadores;

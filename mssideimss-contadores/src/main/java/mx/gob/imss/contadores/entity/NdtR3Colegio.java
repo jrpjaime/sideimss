@@ -12,7 +12,8 @@ public class NdtR3Colegio {
     @Id
     @SequenceGenerator(name = "seq_r3", sequenceName = "MGPBDTU9X.SEQ_NDTR3COLEGIO", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_r3")
-    @Column(name = "CVE_ID_R3_COLEGIO")
+    // CORRECCIÓN: Nombre exacto con el guion bajo al final
+    @Column(name = "CVE_ID_R3_COLEGIO_XCONTADOR_") 
     private Long cveIdR3Colegio;
 
     @Column(name = "CVE_ID_CPA")
@@ -27,10 +28,15 @@ public class NdtR3Colegio {
     @Column(name = "FEC_REGISTRO_ALTA")
     private LocalDateTime fecRegistroAlta;
     
-    // --- CAMPO NECESARIO ---
     @Column(name = "FEC_REGISTRO_BAJA")
     private LocalDateTime fecRegistroBaja;
 
     @Column(name = "CVE_ID_USUARIO")
     private String cveIdUsuario;
+ 
+    @Column(name = "CVE_ID_PMDOM_FISCAL")
+    private Long cveIdPmdomFiscal;
+
+    @Column(name = "CVE_ID_DOCTO_PROBATORIO")
+    private Long cveIdDoctoProbatorio;
 }
