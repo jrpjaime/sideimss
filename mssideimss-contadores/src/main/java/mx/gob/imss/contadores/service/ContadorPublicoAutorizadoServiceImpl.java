@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
 import mx.gob.imss.contadores.dto.DatosContactoDto;
@@ -29,6 +31,9 @@ import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import reactor.core.publisher.Mono;
 
 import org.springframework.http.HttpHeaders;  
+
+ 
+import jakarta.persistence.Query;
 
  
 @Service("contadorPublicoAutorizadoService")
@@ -52,19 +57,96 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
         this.webClient = webClientBuilder.build();
     }
 
+
+
+        @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public SolicitudBajaDto getDatosContador(String rfc) {
+        logger.info("Consultando base de datos para RFC: {}", rfc);
+
+        // --- 1. CONSULTA DATOS PERSONALES Y FISCALES ---
+        String sqlFiscal = "SELECT DPER.RFC, DPER.CURP, DPER.NOM_PRIMER_APELLIDO, DPER.NOM_SEGUNDO_APELLIDO, DPER.NOM_NOMBRE, " +
+                "DDP.NUM_REGISTRO_CPA, ECP.DES_ESTADO_CPA, DPC.DES_DELEG, SU.DES_SUBDELEGACION, " +
+                "UPPER(DS.CALLE) as CALLE, UPPER(DS.NUM_EXTERIOR) as NUM_EXT, UPPER(DS.NUM_INTERIOR) as NUM_INT, " +
+                "UPPER(DS.ENTRE_CALLE_1) as ENTRE1, UPPER(DS.ENTRE_CALLE_2) as ENTRE2, UPPER(DS.COLONIA) as COLONIA, " +
+                "UPPER(DS.LOCALIDAD) as LOCALIDAD, UPPER(DS.MUNICIPIO) as MUNICIPIO, UPPER(DS.ENTIDAD_FEDERATIVA) as ENTIDAD, DS.CODIGO " +
+                "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT DDP " +
+                "INNER JOIN MGPBDTU9X.DIT_PERSONA DPER ON DPER.CVE_ID_PERSONA = DDP.CVE_ID_PERSONA " +
+                "INNER JOIN MGPBDTU9X.NDT_R1_DATOS_PERSONALES RDP ON RDP.CVE_ID_CPA = DDP.CVE_ID_CPA " +
+                "INNER JOIN MGPBDTU9X.DIT_PERSONAF_DOM_FISCAL PDF ON PDF.CVE_ID_PFDOM_FISCAL = RDP.CVE_ID_PFDOM_FISCAL " +
+                "INNER JOIN MGPBDTU9X.DIT_DOMICILIO_SAT DS ON DS.CVE_ID_DOMICILIO = PDF.CVE_ID_DOMICILIO " +
+                "INNER JOIN MGPBDTU9X.NDC_ESTADO_CPA ECP ON DDP.CVE_ID_ESTADO_CPA = ECP.CVE_ID_ESTADO_CPA " +
+                "LEFT OUTER JOIN MGPBDTU9X.DIC_SUBDELEGACION SU ON RDP.CVE_ID_SUBDELEGACION = SU.CVE_ID_SUBDELEGACION " +
+                "LEFT OUTER JOIN MGPBDTU9X.DIC_DELEGACION DPC ON SU.CVE_ID_DELEGACION = DPC.CVE_ID_DELEGACION " +
+                "WHERE DPER.RFC = :rfc AND RDP.FEC_REGISTRO_BAJA IS NULL";
+
+        Query qFiscal = entityManager.createNativeQuery(sqlFiscal);
+        qFiscal.setParameter("rfc", rfc);
+        Object[] resFiscal = (Object[]) qFiscal.getSingleResult();
+
+        DatosPersonalesDto personales = new DatosPersonalesDto(
+            (String) resFiscal[0], (String) resFiscal[1], (String) resFiscal[2], (String) resFiscal[3],
+            (String) resFiscal[4], String.valueOf(resFiscal[5]), (String) resFiscal[6], (String) resFiscal[7], (String) resFiscal[8]
+        );
+
+        DomicilioFiscalDto domicilio = new DomicilioFiscalDto(
+            (String) resFiscal[9], (String) resFiscal[10], (String) resFiscal[11], (String) resFiscal[12],
+            (String) resFiscal[13], (String) resFiscal[14], (String) resFiscal[15], (String) resFiscal[16],
+            (String) resFiscal[17], (String) resFiscal[18]
+        );
+
+        // --- 2. CONSULTA CONTACTO (IMSS DIGITAL Y SIDEIMSS) ---
+        DatosContactoDto contacto = new DatosContactoDto();
+        
+        // IMSS Digital (Correo 1 y Tel 1)
+        String sqlImssDig = "SELECT fc.cve_id_tipo_contacto, fc.des_forma_contacto FROM MGPBDTU9X.Dit_Persona_Fisica P " +
+                "INNER JOIN MGPBDTU9X.Dit_Personaf_Contacto PFC on P.Cve_Id_Persona = Pfc.Cve_Id_Persona " +
+                "INNER JOIN MGPBDTU9X.DIT_FORMA_CONTACTO FC ON PFC.CVE_ID_FORMA_CONTACTO = FC.CVE_ID_FORMA_CONTACTO " +
+                "INNER JOIN MGPBDTU9X.DIT_LLAVE_PERSONA DP on DP.Cve_Id_Persona = Pfc.Cve_Id_Persona " +
+                "WHERE DP.RFC = :rfc AND FC.FEC_REGISTRO_BAJA IS NULL AND FC.CVE_ID_TIPO_CONTACTO IN (1,2)";
+        
+        List<Object[]> resImssDig = entityManager.createNativeQuery(sqlImssDig).setParameter("rfc", rfc).getResultList();
+        for (Object[] row : resImssDig) {
+            int tipo = ((Number) row[0]).intValue();
+            if (tipo == 1) contacto.setTelefono1((String) row[1]);
+            if (tipo == 2) contacto.setCorreoElectronico1((String) row[1]);
+        }
+
+        // SIDEIMSS (Correo 2, 3, Tel 2 y Cédula)
+        String sqlSideimss = "Select fc.cve_id_tipo_contacto, fc.des_forma_contacto, R.CEDULA_PROFESIONAL " +
+                "FROM MGPBDTU9X.Ndt_Contador_Publico_Aut CPA " +
+                "INNER JOIN MGPBDTU9X.DIT_LLAVE_PERSONA DP ON cpa.cve_id_persona = Dp.cve_id_persona " +
+                "INNER JOIN MGPBDTU9X.NDT_R1_DATOS_PERSONALES R ON CPA.CVE_ID_CPA = R.CVE_ID_CPA " +
+                "INNER JOIN MGPBDTU9X.NDT_R1_FORMACONTACTO F ON F.CVE_ID_R1_DATOS_PERSONALES = R.CVE_ID_R1_DATOS_PERSONALES " +
+                "INNER JOIN MGPBDTU9X.NDT_FORMA_CONTACTO FC ON FC.CVE_ID_FORMA_CONTACTO = F.CVE_ID_FORMA_CONTACTO " +
+                "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_R1_DATOS_PERSONALES DESC";
+
+        List<Object[]> resSide = entityManager.createNativeQuery(sqlSideimss).setParameter("rfc", rfc).getResultList();
+        int emailIdx = 0;
+        for (Object[] row : resSide) {
+            int tipo = ((Number) row[0]).intValue();
+            if (row[2] != null) contacto.setCedulaprofesional((String) row[2]);
+            
+            if (tipo == 1) { // Telefono
+                contacto.setTelefono2((String) row[1]);
+            } else if (tipo == 2) { // Emails
+                emailIdx++;
+                if (emailIdx == 1) contacto.setCorreoElectronico2((String) row[1]);
+                else if (emailIdx == 2) contacto.setCorreoElectronico3((String) row[1]);
+            }
+        }
+
+        return new SolicitudBajaDto(null, personales, domicilio, contacto, null);
+    }
+    
+
+    /*
     @Override
     public SolicitudBajaDto getDatosContador(String rfc) {
         logger.info("Iniciando consulta de datos del contador para RFC: {}", rfc);
-
-        // --- SIMULACIÓN DE CONSULTA SQL ---
-        /* * Aquí iría la lógica real de la base de datos, por ejemplo:
-         * * String sql = "SELECT * FROM TBL_CONTADORES C "
-         * + "JOIN TBL_DOMICILIOS D ON C.ID_DOMICILIO = D.ID_DOMICILIO "
-         * + "WHERE C.RFC = ?";
-         * * // Implementación de acceso a datos (JdbcTemplate, JPA, etc.)
-         * Map<String, Object> resultadoDB = jdbcTemplate.queryForMap(sql, rfc);
-         * * // Luego mapearías 'resultadoDB' a los DTOs.
-         */
+ 
         
         // --- SIMULACIÓN CON DATOS DUMMY (MOCK) ---
         
@@ -113,6 +195,8 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
         logger.info("Datos dummy generados exitosamente para RFC: {}", rfc);
         return solicitud;
     }
+
+    */
 
 
       @Override
@@ -251,6 +335,7 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
      * @param rfcContador El RFC del contador a consultar.
      * @return Un objeto ColegioContadorDto con el RFC y nombre/razón social del colegio.
      */
+    /*
     @Override
     public ColegioContadorDto getColegioByRfcContador(String rfcContador) {
         logger.info("Iniciando consulta de colegio para RFC de contador: {}", rfcContador);
@@ -271,10 +356,28 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
             return new ColegioContadorDto("N/A", "Colegio no encontrado");
         }
     }
+*/
 
 
-
-    
+        @Override
+    public ColegioContadorDto getColegioByRfcContador(String rfcContador) {
+        String sql = "SELECT PM.RFC, PM.DENOMINACION_RAZON_SOCIAL " +
+                "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT DDP " +
+                "INNER JOIN MGPBDTU9X.DIT_PERSONA DPER ON DPER.CVE_ID_PERSONA = DDP.CVE_ID_PERSONA " +
+                "INNER JOIN MGPBDTU9X.Ndt_R3_colegio RC ON RC.CVE_ID_CPA = DDP.CVE_ID_CPA " +
+                "INNER JOIN MGPBDTU9X.Ndt_colegio C ON C.CVE_ID_COLEGIO = RC.CVE_ID_COLEGIO " +
+                "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                "WHERE DPER.RFC = :rfc AND RC.FEC_REGISTRO_BAJA IS NULL";
+        
+        try {
+            Object[] row = (Object[]) entityManager.createNativeQuery(sql)
+                    .setParameter("rfc", rfcContador)
+                    .getSingleResult();
+            return new ColegioContadorDto((String) row[0], (String) row[1]);
+        } catch (Exception e) {
+            return new ColegioContadorDto("N/A", "No se encontró colegio vinculado");
+        }
+    }
 
 
  @Override
