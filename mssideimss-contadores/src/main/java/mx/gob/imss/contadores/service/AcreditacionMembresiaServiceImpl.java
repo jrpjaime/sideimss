@@ -517,7 +517,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         
         acreditacion.setCveIdCpa(contador.getCveIdCpa());
         acreditacion.setFecRegistroAlta(fechaActual);
-        acreditacion.setFecPresentacionAcreditacion(fechaActual);
+        acreditacion.setFecRegistroActualizado(fechaActual); 
         acreditacion.setCveIdUsuario(usuario);
 
         // --- 1. BUSCAR EL COLEGIO (Automático por RFC) ---
@@ -537,8 +537,10 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
         if (json.has("fechaExpedicionMembresia")) {
             // Mapea a FEC_DOCUMENTO1 (Usualmente usado para fecha de constancia/membresía)
-            acreditacion.setFecDocumento1(parseFecha(json.get("fechaExpedicionMembresia").asText()));
+            acreditacion.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
         }
+
+     
 
         // --- 3. TIPO (0=Acreditación, 1=Membresía) ---
         // Si subió ambos archivos, el sistema legacy suele marcarlo como 0 o según regla.
@@ -551,7 +553,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         // --- 4. GUARDAR DOCUMENTOS (PDFs) en NDT_DOCUMENTO_PROBATORIO ---
         // IDs de tipo de documento (Debes confirmar estos IDs en tu tabla NDC_TIPO_DOCUMENTO)
         // Ejemplo: 74 = Acreditación, 132 = Membresía
-        Long TIPO_DOC_ACREDITACION = 74L; 
+        Long TIPO_DOC_ACREDITACION = 133L; 
         Long TIPO_DOC_MEMBRESIA = 132L;   
 
         if (json.has("desPathHdfsAcreditacion")) {
