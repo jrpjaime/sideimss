@@ -34,6 +34,7 @@ import mx.gob.imss.contadores.entity.NdtDocumentoProbatorio;
 import mx.gob.imss.contadores.entity.NdtFormaContacto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.entity.NdtR1DatosPersonales;
+import mx.gob.imss.contadores.entity.NdtR1FormaContacto;
 import mx.gob.imss.contadores.entity.NdtR2Despacho;
 import mx.gob.imss.contadores.entity.NdtR2FormaContacto;
 import mx.gob.imss.contadores.entity.NdtR3Colegio;
@@ -46,6 +47,7 @@ import mx.gob.imss.contadores.repository.NdtDocumentoProbatorioRepository;
 import mx.gob.imss.contadores.repository.NdtFormaContactoRepository;
 import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
 import mx.gob.imss.contadores.repository.NdtR1DatosPersonalesRepository;
+import mx.gob.imss.contadores.repository.NdtR1FormaContactoRepository;
 import mx.gob.imss.contadores.repository.NdtR2DespachoRepository;
 import mx.gob.imss.contadores.repository.NdtR2FormaContactoRepository;
 import mx.gob.imss.contadores.repository.NdtR3ColegioRepository;
@@ -105,6 +107,10 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     private NdtR2FormaContactoRepository r2FormaContactoRepository;
     @Autowired
     private NdtFormaContactoRepository formaContactoRepository;
+
+
+    @Autowired
+    private NdtR1FormaContactoRepository r1FormaContactoRepository;
 
  
     public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
@@ -752,63 +758,85 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
         }
     }
 
-    // --- SUB-MÉTODOS DE GUARDADO ---
-
 private void guardarR1Personales(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
-        LocalDateTime fechaActual = LocalDateTime.now();
+    LocalDateTime fechaActual = LocalDateTime.now();
 
-        // 1. BUSCAR DATOS PREVIOS (Para heredar Domicilio y Subdelegación)
-        // Esto evita el error ORA-02291
-        NdtR1DatosPersonales r1Anterior = datosPersonalesRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
-                .orElse(null);
+    // 1. BUSCAR REGISTRO ACTIVO ANTERIOR PARA HEREDAR DATOS FIJOS
+    NdtR1DatosPersonales r1Anterior = datosPersonalesRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
+            .orElse(null);
 
-        // 2. PREPARAR NUEVO REGISTRO
-        NdtR1DatosPersonales r1Nuevo = new NdtR1DatosPersonales();
-        r1Nuevo.setCveIdCpa(contador.getCveIdCpa());
-        r1Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
-        r1Nuevo.setFecRegistroAlta(fechaActual);
-        r1Nuevo.setCveIdUsuario(usuario);
+    // 2. PREPARAR NUEVO REGISTRO R1 (Para mantener integridad con el SQL)
+    NdtR1DatosPersonales r1Nuevo = new NdtR1DatosPersonales();
+    r1Nuevo.setCveIdCpa(contador.getCveIdCpa());
+    r1Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
+    r1Nuevo.setFecRegistroAlta(fechaActual);
+    r1Nuevo.setCveIdUsuario(usuario);
 
-        // -- HERENCIA DE DATOS (Lo que arregla el error) --
-        if (r1Anterior != null) {
-            // Copiamos los IDs obligatorios que no cambian en este flujo
-            r1Nuevo.setCveIdPfdomFiscal(r1Anterior.getCveIdPfdomFiscal());
-            r1Nuevo.setCveIdSubdelegacion(r1Anterior.getCveIdSubdelegacion());
-            
-            // Copiamos datos anteriores por defecto, por si el JSON no trae alguno
-            r1Nuevo.setCedulaProfesional(r1Anterior.getCedulaProfesional());
-            r1Nuevo.setDesTituloExpedidoPor(r1Anterior.getDesTituloExpedidoPor());
-            
-            // IMPORTANTE: Damos de baja el registro anterior para mantener el historial limpio
-            r1Anterior.setFecRegistroBaja(fechaActual);
-            datosPersonalesRepository.save(r1Anterior);
-        } else {
-            // Caso extremo: No tiene histórico (Raro en modificación, pero posible)
-            // Aquí tendrías que definir valores default o lanzar error
-            r1Nuevo.setCveIdSubdelegacion(146L); // Default por seguridad
-            // r1Nuevo.setCveIdPfdomFiscal(???); // Si es null fallará, pero esperamos que siempre haya anterior
-        }
-
-        // 3. SOBRESCRIBIR CON DATOS NUEVOS DEL JSON (Angular)
-        if (state != null) {
-            if (state.has("nuevacedulaprofesional") && !state.get("nuevacedulaprofesional").asText().isEmpty()) {
-                r1Nuevo.setCedulaProfesional(state.get("nuevacedulaprofesional").asText());
-            }
-            if (state.has("nuevoCorreoElectronico2")) {
-                r1Nuevo.setCorreoImss(state.get("nuevoCorreoElectronico2").asText());
-            }
-            if (state.has("nuevoTelefono2")) {
-                r1Nuevo.setTelefonoImss(state.get("nuevoTelefono2").asText());
-            }
-        }
+    if (r1Anterior != null) {
+        // --- BLOQUE DE SEGURIDAD: NO MODIFICAR CÉDULA ---
+        r1Nuevo.setCedulaProfesional(r1Anterior.getCedulaProfesional()); // Se hereda la original
+        r1Nuevo.setDesTituloExpedidoPor(r1Anterior.getDesTituloExpedidoPor());
+        r1Nuevo.setFecExpedicionCedprof(r1Anterior.getFecExpedicionCedprof());
         
-        // 4. GUARDAR NUEVO
-        datosPersonalesRepository.save(r1Nuevo);
-        logger.info("Modificación R1 (Personales) guardada. Heredado de ID: {}", 
-            (r1Anterior != null ? r1Anterior.getCveIdR1DatosPersonales() : "N/A"));
+        // Otros datos obligatorios para evitar ORA-02291
+        r1Nuevo.setCveIdSubdelegacion(r1Anterior.getCveIdSubdelegacion());
+        r1Nuevo.setCveIdPfdomFiscal(r1Anterior.getCveIdPfdomFiscal());
+
+        // Damos de baja el anterior para que el SQL "fec_registro_baja is null" funcione
+        r1Anterior.setFecRegistroBaja(fechaActual);
+        datosPersonalesRepository.save(r1Anterior);
     }
 
+    // 3. GUARDAR EL NUEVO R1 PARA OBTENER SU ID
+    NdtR1DatosPersonales r1Guardado = datosPersonalesRepository.save(r1Nuevo);
+
+    // 4. PROCESAR MEDIOS DE CONTACTO DE LA IMAGEN
+    if (state != null) {
+        // CORREO ELECTRÓNICO 2 (Tipo 1)
+        if (state.has("nuevoCorreoElectronico2")) {
+            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
+                                state.get("nuevoCorreoElectronico2").asText(), 1L, usuario);
+        }
+
+        // CORREO ELECTRÓNICO 3 (Tipo 1)
+        if (state.has("nuevoCorreoElectronico3")) {
+            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
+                                state.get("nuevoCorreoElectronico3").asText(), 1L, usuario);
+        }
+
+        // TELÉFONO 2 (Tipo 2)
+        if (state.has("nuevoTelefono2")) {
+            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
+                                state.get("nuevoTelefono2").asText(), 2L, usuario);
+        }
+    }
     
+    logger.info("Sincronización R1 completa. Trámite vinculado: {}", tramite.getCveIdCpaTramite());
+}
+
+/**
+ * Método auxiliar que sigue la estructura de las columnas proporcionadas para NDT_R1_FORMACONTACTO
+ */
+private void vincularDatoContacto(Long idR1, String valor, Long tipoId, String usuario) {
+    if (valor == null || valor.trim().isEmpty()) return;
+
+    // A. Crear registro en NDT_FORMA_CONTACTO
+    NdtFormaContacto fc = new NdtFormaContacto();
+    fc.setDesFormaContacto(valor);
+    fc.setCveIdTipoContacto(tipoId);
+    fc.setFecRegistroAlta(LocalDateTime.now());
+    NdtFormaContacto fcGuardada = formaContactoRepository.save(fc);
+
+    // B. Crear registro en NDT_R1_FORMACONTACTO (Usando la nueva entidad)
+    NdtR1FormaContacto relacion = new NdtR1FormaContacto();
+    relacion.setCveIdR1DatosPersonales(idR1);
+    relacion.setCveIdFormaContacto(fcGuardada.getCveIdFormaContacto()); // <-- Nombre corregido
+    relacion.setFecRegistroAlta(LocalDateTime.now());
+    relacion.setFecRegistroActualizado(LocalDateTime.now());
+    relacion.setCveIdUsuario(usuario);
+
+    r1FormaContactoRepository.save(relacion);
+}  
 
 private void guardarR2Despacho(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
         LocalDateTime fechaActual = LocalDateTime.now();
