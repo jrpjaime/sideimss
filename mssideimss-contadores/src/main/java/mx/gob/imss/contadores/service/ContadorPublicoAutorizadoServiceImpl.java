@@ -109,8 +109,14 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
         List<Object[]> resImssDig = entityManager.createNativeQuery(sqlImssDig).setParameter("rfc", rfc).getResultList();
         for (Object[] row : resImssDig) {
             int tipo = ((Number) row[0]).intValue();
-            if (tipo == 1) contacto.setTelefono1((String) row[1]);
-            if (tipo == 2) contacto.setCorreoElectronico1((String) row[1]);
+            String valor = (String) row[1];
+            
+            // TIPO 1 es Correo, TIPO 2 es Teléfono
+            if (tipo == 1) {
+                contacto.setCorreoElectronico1(valor);
+            } else if (tipo == 2) {
+                contacto.setTelefono1(valor);
+            }
         }
 
         // SIDEIMSS (Correo 2, 3, Tel 2 y Cédula)
@@ -122,20 +128,35 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
                 "INNER JOIN MGPBDTU9X.NDT_FORMA_CONTACTO FC ON FC.CVE_ID_FORMA_CONTACTO = F.CVE_ID_FORMA_CONTACTO " +
                 "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_FORMA_CONTACTO,  F.CVE_ID_R1_DATOS_PERSONALES DESC";
 
-        List<Object[]> resSide = entityManager.createNativeQuery(sqlSideimss).setParameter("rfc", rfc).getResultList();
-        int emailIdx = 0;
-        for (Object[] row : resSide) {
-            int tipo = ((Number) row[0]).intValue();
-            if (row[2] != null) contacto.setCedulaprofesional((String) row[2]);
-            
-            if (tipo == 1) { // Telefono
-                contacto.setTelefono2((String) row[1]);
-            } else if (tipo == 2) { // Emails
-                emailIdx++;
-                if (emailIdx == 1) contacto.setCorreoElectronico2((String) row[1]);
-                else if (emailIdx == 2) contacto.setCorreoElectronico3((String) row[1]);
+            List<Object[]> resSide = entityManager.createNativeQuery(sqlSideimss).setParameter("rfc", rfc).getResultList();
+            int emailIdx = 0;
+
+            for (Object[] row : resSide) {
+                int tipo = ((Number) row[0]).intValue();
+                String valor = (String) row[1];
+                
+                if (row[2] != null) {
+                    contacto.setCedulaprofesional((String) row[2]);
+                }
+                
+                // TIPO 1 = CORREO  
+                if (tipo == 1) { 
+                    emailIdx++;
+                    if (emailIdx == 1) {
+                        contacto.setCorreoElectronico2(valor);
+                    } else if (emailIdx == 2) {
+                        contacto.setCorreoElectronico3(valor);
+                    }
+                } 
+                // TIPO 2 = TELÉFONO  
+                else if (tipo == 2) { 
+                    // Opcional: limpiar los pipes '|' si solo necesitas los números
+                    if (valor != null) {
+                        valor = valor.replace("|", ""); 
+                    }
+                    contacto.setTelefono2(valor);
+                }
             }
-        }
 
         return new SolicitudBajaDto(null, personales, domicilio, contacto, null);
     }
