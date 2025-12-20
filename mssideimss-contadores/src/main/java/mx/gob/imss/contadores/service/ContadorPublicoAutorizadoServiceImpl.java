@@ -120,7 +120,7 @@ public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAuto
                 "INNER JOIN MGPBDTU9X.NDT_R1_DATOS_PERSONALES R ON CPA.CVE_ID_CPA = R.CVE_ID_CPA " +
                 "INNER JOIN MGPBDTU9X.NDT_R1_FORMACONTACTO F ON F.CVE_ID_R1_DATOS_PERSONALES = R.CVE_ID_R1_DATOS_PERSONALES " +
                 "INNER JOIN MGPBDTU9X.NDT_FORMA_CONTACTO FC ON FC.CVE_ID_FORMA_CONTACTO = F.CVE_ID_FORMA_CONTACTO " +
-                "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_R1_DATOS_PERSONALES DESC";
+                "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_FORMA_CONTACTO,  F.CVE_ID_R1_DATOS_PERSONALES DESC";
 
         List<Object[]> resSide = entityManager.createNativeQuery(sqlSideimss).setParameter("rfc", rfc).getResultList();
         int emailIdx = 0;

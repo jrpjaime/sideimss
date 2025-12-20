@@ -13,7 +13,10 @@ import java.util.List;
 @Repository
 public interface MediosContactoRepository extends JpaRepository<NdtFormaContacto, Long> {
 
-    // Utiliza una consulta nativa para combinar los resultados de ambas partes
+    /*
+    Ejecuta la Consulta A: Obtiene el tipo de contacto y descripción de la persona física (marcando el origen como 'CONTADOR').
+Ejecuta la Consulta B: Obtiene el tipo de contacto y descripción del contador en el sistema SIDEIMSS (marcando el origen como 'TODOS').
+Combina y Elimina Duplicados: Aquí está el secreto. El UNION (a diferencia del UNION ALL) compara las filas de ambos resultados y elimina las que sean exactamente iguales. Si un correo aparece en ambos sistemas con el mismo tipo, solo te devolverá uno (a menos que el campo rfcAsociado los haga diferentes). */
     @Query(value = """
         ---OBTENER CORREO 1 DE IMSS DIGITAL ---
         SELECT FC.CVE_ID_TIPO_CONTACTO AS "tipoContacto", 
