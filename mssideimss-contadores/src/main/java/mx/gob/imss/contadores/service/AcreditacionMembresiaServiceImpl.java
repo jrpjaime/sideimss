@@ -494,7 +494,9 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
 
 
-        String urlAcuseHdfs = rootNode.has("desPathHdfsAcuse") ? rootNode.get("desPathHdfsAcuse").asText() : null;
+        String idPlantillaReferencia = (plantilla.getCveIdPlantillaDato() != null) 
+                                   ? plantilla.getCveIdPlantillaDato().toString() 
+                                   : null;
     
         // Extraemos el folio (numTramiteNotaria es el estándar del JSON de acuses)
         String folio = rootNode.has("numTramiteNotaria") ? rootNode.get("numTramiteNotaria").asText() : 
@@ -511,17 +513,17 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
         // --- 3. Derivar al guardado específico ---
         if ("ACREDITACION_MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
-                        guardarAcreditacionLegacy(contador, rootNode, folio, urlAcuseHdfs);
+            guardarAcreditacionLegacy(contador, rootNode, folio, idPlantillaReferencia);
         } else if ("ACUSE_SOLICITUD_CAMBIO".equalsIgnoreCase(tipoAcuse)) {
-                        guardarModificacionLegacy(contador, rootNode, folio, urlAcuseHdfs);
+            guardarModificacionLegacy(contador, rootNode, folio, idPlantillaReferencia);
         } else if ("ACUSE_SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
-                        guardarBajaLegacy(contador, rootNode, folio, urlAcuseHdfs);
+            guardarBajaLegacy(contador, rootNode, folio, idPlantillaReferencia);
         } else {
             logger.warn("El tipo de acuse '{}' no tiene lógica de guardado Legacy configurada.", tipoAcuse);
         }
     }
 
-private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
+private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
     LocalDateTime fechaActual = LocalDateTime.now();
     String usuario = contador.getCurp();
     
@@ -532,9 +534,10 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
     tramite.setFecRegistroAlta(fechaActual);
     tramite.setCveIdUsuario(usuario);
     tramite.setNumTramiteNotaria(folio);      // Folio UUID
-    tramite.setUrlAcuseNotaria(urlAcuse);     // RUTA HDFS BASE64
+    tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
     
     NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
+    logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
 
     // --- 2. GUARDAR ACREDITACIÓN VINCULADA ---
     NdtCpaAcreditacion acreditacion = new NdtCpaAcreditacion();
@@ -655,7 +658,7 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
 15	3RA. AMONESTACIÓN
     */
 
-   private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
+   private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
         Long ID_ESTADO_BAJA = 10L; 
         LocalDateTime fechaActual = LocalDateTime.now();
         String usuario = contador.getCurp();
@@ -668,9 +671,10 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
         tramite.setFecRegistroAlta(fechaActual);
         tramite.setCveIdUsuario(usuario);
         tramite.setNumTramiteNotaria(folioSolicitud);
-        tramite.setUrlAcuseNotaria(urlAcuse); // Guardamos ruta de Hadoop
+        tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
         
         NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
+        logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
 
         // --- 2. Guardar en Histórico (NDT_CPA_ESTATUS) ---
         NdtCpaEstatus estatus = new NdtCpaEstatus();
@@ -707,7 +711,7 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
 
 
 
-    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String urlAcuse) {
+    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
         LocalDateTime fechaActual = LocalDateTime.now();
         String usuario = contador.getCurp();
         String folioSolicitud = json.has("folio") ? json.get("folio").asText() : "S/F";
@@ -720,8 +724,9 @@ private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode 
         tramite.setCveIdUsuario(usuario);
         tramite.setNumTramiteNotaria(folioSolicitud);
         tramite.setNumTramiteNotaria(folio);
-        tramite.setUrlAcuseNotaria(urlAcuse);
+        tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
         NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
+        logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
 
         // 2. DETERMINAR TIPO DE SOLICITUD
         String tipoSolicitud = "";
