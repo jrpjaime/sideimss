@@ -2,330 +2,206 @@ package mx.gob.imss.contadores.service;
 
 
 import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
-import mx.gob.imss.contadores.dto.ColegioContadorDto;
-import mx.gob.imss.contadores.dto.DatosContactoDto;
-import mx.gob.imss.contadores.dto.DatosPersonalesDto;
-import mx.gob.imss.contadores.dto.DomicilioFiscalDto;
-import mx.gob.imss.contadores.dto.SelloResponseDto;
-import mx.gob.imss.contadores.dto.SolicitudBajaDto;
+import jakarta.persistence.Tuple;
+import lombok.RequiredArgsConstructor;
+import mx.gob.imss.contadores.dto.*;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
-import mx.gob.imss.contadores.repository.NdtPatronDictamenRepository;
-import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
+import mx.gob.imss.contadores.repository.NdtPatronDictamenRepository; 
 import reactor.core.publisher.Mono;
-
+import reactor.core.scheduler.Schedulers;
 import org.springframework.http.HttpHeaders;  
+import org.springframework.transaction.annotation.Transactional;
 
- 
-import jakarta.persistence.Query;
-
- 
 @Service("contadorPublicoAutorizadoService")
+@RequiredArgsConstructor
 public class ContadorPublicoAutorizadoServiceImpl implements ContadorPublicoAutorizadoService {
     
     private static final Logger logger = LogManager.getLogger(ContadorPublicoAutorizadoServiceImpl.class);
 
- 
-    @Autowired
-    private NdtPatronDictamenRepository ndtPatronDictamenRepository;
-   
-    @Autowired
-    private NdtPlantillaDatoRepository ndtPlantillaDatoRepository;  
-
-    private final WebClient webClient;
+    // Definimos todos como final para que RequiredArgsConstructor genere el constructor correctamente
+    private final NdtPatronDictamenRepository ndtPatronDictamenRepository;
+    
+    @PersistenceContext
+    private final EntityManager entityManager;
+    
+    private final WebClient.Builder webClientBuilder;
+    private final PlantillaPersistenceService persistenceService; 
 
     @Value("${sideimss.acuses.microservice.url}")
     private String acusesMicroserviceUrl;
 
-    public ContadorPublicoAutorizadoServiceImpl(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
-    }
-
-
-
-        @PersistenceContext
-    private EntityManager entityManager;
-
     @Override
     public SolicitudBajaDto getDatosContador(String rfc) {
-        logger.info("Consultando base de datos para RFC: {}", rfc);
+        logger.info("Consultando datos maestros para RFC: {}", rfc);
 
-        // --- 1. CONSULTA DATOS PERSONALES Y FISCALES ---
-        String sqlFiscal = "SELECT DPER.RFC, DPER.CURP, DPER.NOM_PRIMER_APELLIDO, DPER.NOM_SEGUNDO_APELLIDO, DPER.NOM_NOMBRE, " +
-                "DDP.NUM_REGISTRO_CPA, ECP.DES_ESTADO_CPA, DPC.DES_DELEG, SU.DES_SUBDELEGACION, " +
-                "UPPER(DS.CALLE) as CALLE, UPPER(DS.NUM_EXTERIOR) as NUM_EXT, UPPER(DS.NUM_INTERIOR) as NUM_INT, " +
-                "UPPER(DS.ENTRE_CALLE_1) as ENTRE1, UPPER(DS.ENTRE_CALLE_2) as ENTRE2, UPPER(DS.COLONIA) as COLONIA, " +
-                "UPPER(DS.LOCALIDAD) as LOCALIDAD, UPPER(DS.MUNICIPIO) as MUNICIPIO, UPPER(DS.ENTIDAD_FEDERATIVA) as ENTIDAD, DS.CODIGO " +
+        String sqlFiscal = "SELECT DPER.RFC as rfc, DPER.CURP as curp, DPER.NOM_PRIMER_APELLIDO as apePat, " +
+                "DPER.NOM_SEGUNDO_APELLIDO as apeMat, DPER.NOM_NOMBRE as nombre, DDP.NUM_REGISTRO_CPA as registro, " +
+                "ECP.DES_ESTADO_CPA as estatus, DPC.DES_DELEG as delegacion, SU.DES_SUBDELEGACION as subdelegacion, " +
+                "UPPER(DS.CALLE) as calle, UPPER(DS.NUM_EXTERIOR) as nExt, UPPER(DS.NUM_INTERIOR) as nInt, " +
+                "UPPER(DS.ENTRE_CALLE_1) as e1, UPPER(DS.ENTRE_CALLE_2) as e2, UPPER(DS.COLONIA) as col, " +
+                "UPPER(DS.LOCALIDAD) as loc, UPPER(DS.MUNICIPIO) as mun, UPPER(DS.ENTIDAD_FEDERATIVA) as ent, DS.CODIGO as cp " +
                 "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT DDP " +
                 "INNER JOIN MGPBDTU9X.DIT_PERSONA DPER ON DPER.CVE_ID_PERSONA = DDP.CVE_ID_PERSONA " +
                 "INNER JOIN MGPBDTU9X.NDT_R1_DATOS_PERSONALES RDP ON RDP.CVE_ID_CPA = DDP.CVE_ID_CPA " +
                 "INNER JOIN MGPBDTU9X.DIT_PERSONAF_DOM_FISCAL PDF ON PDF.CVE_ID_PFDOM_FISCAL = RDP.CVE_ID_PFDOM_FISCAL " +
                 "INNER JOIN MGPBDTU9X.DIT_DOMICILIO_SAT DS ON DS.CVE_ID_DOMICILIO = PDF.CVE_ID_DOMICILIO " +
                 "INNER JOIN MGPBDTU9X.NDC_ESTADO_CPA ECP ON DDP.CVE_ID_ESTADO_CPA = ECP.CVE_ID_ESTADO_CPA " +
-                "LEFT OUTER JOIN MGPBDTU9X.DIC_SUBDELEGACION SU ON RDP.CVE_ID_SUBDELEGACION = SU.CVE_ID_SUBDELEGACION " +
-                "LEFT OUTER JOIN MGPBDTU9X.DIC_DELEGACION DPC ON SU.CVE_ID_DELEGACION = DPC.CVE_ID_DELEGACION " +
+                "LEFT JOIN MGPBDTU9X.DIC_SUBDELEGACION SU ON RDP.CVE_ID_SUBDELEGACION = SU.CVE_ID_SUBDELEGACION " +
+                "LEFT JOIN MGPBDTU9X.DIC_DELEGACION DPC ON SU.CVE_ID_DELEGACION = DPC.CVE_ID_DELEGACION " +
                 "WHERE DPER.RFC = :rfc AND RDP.FEC_REGISTRO_BAJA IS NULL";
 
-        Query qFiscal = entityManager.createNativeQuery(sqlFiscal);
-        qFiscal.setParameter("rfc", rfc);
-        Object[] resFiscal = (Object[]) qFiscal.getSingleResult();
+        List<Tuple> fiscalResult = entityManager.createNativeQuery(sqlFiscal, Tuple.class)
+                .setParameter("rfc", rfc)
+                .getResultList();
+
+        if (fiscalResult.isEmpty()) throw new RuntimeException("No se encontró el contador con RFC: " + rfc);
+        Tuple row = fiscalResult.get(0);
 
         DatosPersonalesDto personales = new DatosPersonalesDto(
-            (String) resFiscal[0], (String) resFiscal[1], (String) resFiscal[2], (String) resFiscal[3],
-            (String) resFiscal[4], String.valueOf(resFiscal[5]), (String) resFiscal[6], (String) resFiscal[7], (String) resFiscal[8]
+            row.get("rfc", String.class), row.get("curp", String.class), row.get("apePat", String.class),
+            row.get("apeMat", String.class), row.get("nombre", String.class), String.valueOf(row.get("registro")),
+            row.get("estatus", String.class), row.get("delegacion", String.class), row.get("subdelegacion", String.class)
         );
 
         DomicilioFiscalDto domicilio = new DomicilioFiscalDto(
-            (String) resFiscal[9], (String) resFiscal[10], (String) resFiscal[11], (String) resFiscal[12],
-            (String) resFiscal[13], (String) resFiscal[14], (String) resFiscal[15], (String) resFiscal[16],
-            (String) resFiscal[17], (String) resFiscal[18]
+            row.get("calle", String.class), row.get("nExt", String.class), row.get("nInt", String.class),
+            row.get("e1", String.class), row.get("e2", String.class), row.get("col", String.class),
+            row.get("loc", String.class), row.get("mun", String.class), row.get("ent", String.class), row.get("cp", String.class)
         );
 
-        // --- 2. CONSULTA CONTACTO (IMSS DIGITAL Y SIDEIMSS) ---
-        DatosContactoDto contacto = new DatosContactoDto();
+        // --- UNIFICACIÓN DE CONTACTOS (Ambas fuentes) ---
+        DatosContactoDto contacto = obtenerContactosUnificados(rfc);
+
+        return new SolicitudBajaDto(null, personales, domicilio, contacto, null);
+    }
+
+    private DatosContactoDto obtenerContactosUnificados(String rfc) {
+        DatosContactoDto dto = new DatosContactoDto();
         
-        // IMSS Digital (Correo 1 y Tel 1)
-        String sqlImssDig = "SELECT fc.cve_id_tipo_contacto, fc.des_forma_contacto FROM MGPBDTU9X.Dit_Persona_Fisica P " +
-                "INNER JOIN MGPBDTU9X.Dit_Personaf_Contacto PFC on P.Cve_Id_Persona = Pfc.Cve_Id_Persona " +
+        // 1. FUENTE: IMSS DIGITAL (Correo 1 y Tel 1)
+        String sqlImss = "SELECT fc.cve_id_tipo_contacto as tipo, fc.des_forma_contacto as valor " +
+                "FROM MGPBDTU9X.Dit_Personaf_Contacto PFC " +
                 "INNER JOIN MGPBDTU9X.DIT_FORMA_CONTACTO FC ON PFC.CVE_ID_FORMA_CONTACTO = FC.CVE_ID_FORMA_CONTACTO " +
                 "INNER JOIN MGPBDTU9X.DIT_LLAVE_PERSONA DP on DP.Cve_Id_Persona = Pfc.Cve_Id_Persona " +
                 "WHERE DP.RFC = :rfc AND FC.FEC_REGISTRO_BAJA IS NULL AND FC.CVE_ID_TIPO_CONTACTO IN (1,2)";
         
-        List<Object[]> resImssDig = entityManager.createNativeQuery(sqlImssDig).setParameter("rfc", rfc).getResultList();
-        for (Object[] row : resImssDig) {
-            int tipo = ((Number) row[0]).intValue();
-            String valor = (String) row[1];
-            
-            // TIPO 1 es Correo, TIPO 2 es Teléfono
-            if (tipo == 1) {
-                contacto.setCorreoElectronico1(valor);
-            } else if (tipo == 2) {
-                contacto.setTelefono1(valor);
-            }
+        List<Tuple> resImss = entityManager.createNativeQuery(sqlImss, Tuple.class).setParameter("rfc", rfc).getResultList();
+        for (Tuple t : resImss) {
+            int tipo = ((Number) t.get("tipo")).intValue();
+            if (tipo == 1) dto.setCorreoElectronico1(t.get("valor", String.class));
+            else if (tipo == 2) dto.setTelefono1(t.get("valor", String.class));
         }
 
-        // SIDEIMSS (Correo 2, 3, Tel 2 y Cédula)
-        String sqlSideimss = "Select fc.cve_id_tipo_contacto, fc.des_forma_contacto, R.CEDULA_PROFESIONAL " +
-                "FROM MGPBDTU9X.Ndt_Contador_Publico_Aut CPA " +
+        // 2. FUENTE: SIDEIMSS (Correo 2, 3 y Tel 2)
+        String sqlSide = "Select fc.cve_id_tipo_contacto as tipo, fc.des_forma_contacto as valor, R.CEDULA_PROFESIONAL as cedula " +
+                "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT CPA " +
                 "INNER JOIN MGPBDTU9X.DIT_LLAVE_PERSONA DP ON cpa.cve_id_persona = Dp.cve_id_persona " +
                 "INNER JOIN MGPBDTU9X.NDT_R1_DATOS_PERSONALES R ON CPA.CVE_ID_CPA = R.CVE_ID_CPA " +
                 "INNER JOIN MGPBDTU9X.NDT_R1_FORMACONTACTO F ON F.CVE_ID_R1_DATOS_PERSONALES = R.CVE_ID_R1_DATOS_PERSONALES " +
                 "INNER JOIN MGPBDTU9X.NDT_FORMA_CONTACTO FC ON FC.CVE_ID_FORMA_CONTACTO = F.CVE_ID_FORMA_CONTACTO " +
-                "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_FORMA_CONTACTO,  F.CVE_ID_R1_DATOS_PERSONALES DESC";
+                "WHERE DP.RFC = :rfc AND R.fec_registro_baja is null ORDER BY F.CVE_ID_FORMA_CONTACTO ASC";
 
-            List<Object[]> resSide = entityManager.createNativeQuery(sqlSideimss).setParameter("rfc", rfc).getResultList();
-            int emailIdx = 0;
+        List<Tuple> resSide = entityManager.createNativeQuery(sqlSide, Tuple.class).setParameter("rfc", rfc).getResultList();
+        int emailCount = 0;
+        for (Tuple t : resSide) {
+            int tipo = ((Number) t.get("tipo")).intValue();
+            String valor = t.get("valor", String.class);
+            if (t.get("cedula") != null) dto.setCedulaprofesional(t.get("cedula", String.class));
 
-            for (Object[] row : resSide) {
-                int tipo = ((Number) row[0]).intValue();
-                String valor = (String) row[1];
-                
-                if (row[2] != null) {
-                    contacto.setCedulaprofesional((String) row[2]);
-                }
-                
-                // TIPO 1 = CORREO  
-                if (tipo == 1) { 
-                    emailIdx++;
-                    if (emailIdx == 1) {
-                        contacto.setCorreoElectronico2(valor);
-                    } else if (emailIdx == 2) {
-                        contacto.setCorreoElectronico3(valor);
-                    }
-                } 
-                // TIPO 2 = TELÉFONO  
-                else if (tipo == 2) { 
-                    // Opcional: limpiar los pipes '|' si solo necesitas los números
-                    if (valor != null) {
-                        valor = valor.replace("|", ""); 
-                    }
-                    contacto.setTelefono2(valor);
-                }
+            if (tipo == 1) { // Emails adicionales
+                emailCount++;
+                if (emailCount == 1) dto.setCorreoElectronico2(valor);
+                else if (emailCount == 2) dto.setCorreoElectronico3(valor);
+            } else if (tipo == 2) { // Teléfono adicional
+                dto.setTelefono2(valor != null ? valor.replace("|", "") : "");
             }
-
-        return new SolicitudBajaDto(null, personales, domicilio, contacto, null);
+        }
+        return dto;
     }
-    
 
-
-
-
-      @Override
+    @Override
     public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
-        logger.info("Iniciando proceso para obtener sello digital y guardar plantilla (Solicitud Baja).");
+        return Mono.fromCallable(() -> prepararRequest(ndtPlantillaDato))
+            .subscribeOn(Schedulers.boundedElastic())
+            .<NdtPlantillaDato>flatMap(request -> 
+                llamarServicioSello(request, jwtToken)
+                    .flatMap(selloDto -> 
+                        Mono.fromCallable(() -> 
+                            persistenceService.actualizarYGuardar(ndtPlantillaDato, selloDto.getSello(), request.getCadenaOriginal(), ndtPlantillaDato.getDesDatos())
+                        ).subscribeOn(Schedulers.boundedElastic())
+                    )
+            )
+            .onErrorMap(e -> new RuntimeException("Error en proceso de sellado: " + e.getMessage()));
+    }
 
-        final String datosJson = ndtPlantillaDato.getDesDatos();
-        logger.info("obtenerSelloYGuardarPlantilla Contenido inicial de desDatos (datosJson): {}", datosJson);
-        final String initialCadenaOriginal;
-        final String nombreCompleto;
-        final String curp;
-        final String folioFirma;
+    private CadenaOriginalRequestDto prepararRequest(NdtPlantillaDato dato) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(dato.getDesDatos());
+        String cadena = root.path("cadenaOriginal").asText();
+        String folio = root.path("folioFirma").asText();
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(datosJson);
+        if (cadena.isEmpty()) throw new RuntimeException("La cadena original es requerida para el sellado.");
 
-            JsonNode cadenaOriginalNode = rootNode.get("cadenaOriginal");
-            if (cadenaOriginalNode != null) {
-                initialCadenaOriginal = cadenaOriginalNode.asText();
-                logger.debug("Cadena original extraída: {}", initialCadenaOriginal);
-            } else {
-                logger.warn("No se encontró 'cadenaOriginal' en el JSON de datos.");
-                return Mono.error(new RuntimeException("Error: La cadenaOriginal no se encontró en los datos de la plantilla."));
-            }
-
-            JsonNode nombreCompletoNode = rootNode.get("nombreCompleto");
-            nombreCompleto = (nombreCompletoNode != null) ? nombreCompletoNode.asText() : null;
-            if (nombreCompleto != null) logger.debug("Nombre completo extraído: {}", nombreCompleto);
-
-            JsonNode curpNode = rootNode.get("curp");
-            curp = (curpNode != null) ? curpNode.asText() : null;
-            if (curp != null) logger.debug("CURP extraída: {}", curp);
-
-            JsonNode folioFirmaNode = rootNode.get("folioFirma");
-            folioFirma = (folioFirmaNode != null) ? folioFirmaNode.asText() : null;
-            if (folioFirma != null) logger.debug("folioFirma extraída: {}", folioFirma);
-
-        } catch (Exception e) {
-            logger.error("Error al parsear datosJson para extraer cadenaOriginal: {}", e.getMessage(), e);
-            return Mono.error(new RuntimeException("Error al procesar los datos de la plantilla para obtener la cadena original."));
+        if (folio != null && !folio.isEmpty() && cadena.contains("|HASH|")) {
+            int idx = cadena.indexOf("|HASH|");
+            int start = idx + 6;
+            int end = cadena.indexOf("|", start);
+            String oldHash = (end != -1) ? cadena.substring(start, end) : cadena.substring(start);
+            cadena = cadena.replace("|HASH|" + oldHash, "|HASH|" + folio + "|" + oldHash);
         }
 
-        final String modifiedCadenaOriginal;
+        CadenaOriginalRequestDto req = new CadenaOriginalRequestDto();
+        req.setCadenaOriginal(cadena);
+        req.setRfc(dato.getDesRfc());
+        req.setNombreRazonSocial(root.path("nombreCompleto").asText(null));
+        req.setCurp(root.path("curp").asText(null));
+        return req;
+    }
 
-        if (folioFirma != null && !folioFirma.isEmpty()) {
-            String hashTag = "|HASH|";
-            int indexHash = initialCadenaOriginal.indexOf(hashTag);
-            if (indexHash != -1) {
-                int startIndexHashValue = indexHash + hashTag.length();
-                int endIndexHashValue = initialCadenaOriginal.indexOf("|", startIndexHashValue);
-
-                String currentHashValue = "";
-                if (endIndexHashValue != -1) {
-                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue, endIndexHashValue);
-                } else {
-                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue);
-                }
-
-                String newHashSegment = hashTag + folioFirma + "|" + currentHashValue;
-                modifiedCadenaOriginal = initialCadenaOriginal.replace(hashTag + currentHashValue, newHashSegment);
-                logger.info("Cadena original modificada con folioFirma: {}", modifiedCadenaOriginal);
-            } else {
-                logger.warn("No se encontró el tag '|HASH|' en la cadena original para insertar folioFirma.");
-                modifiedCadenaOriginal = initialCadenaOriginal;
-            }
-        } else {
-            modifiedCadenaOriginal = initialCadenaOriginal;
-        }
-
-        CadenaOriginalRequestDto requestDto = new CadenaOriginalRequestDto();
-        requestDto.setCadenaOriginal(modifiedCadenaOriginal);
-        requestDto.setRfc(ndtPlantillaDato.getDesRfc());
-
-        if (nombreCompleto != null) {
-            requestDto.setNombreRazonSocial(nombreCompleto);
-        }
-        if (curp != null) {
-            requestDto.setCurp(curp);
-        }
-
-        String urlGeneraSello = acusesMicroserviceUrl.trim() + "/generaSello";
-        logger.info("Llamando al microservicio de acuses para generar sello en: {}", urlGeneraSello);
-
-        return webClient.post()
-            .uri(urlGeneraSello)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-            .bodyValue(requestDto)
+    private Mono<SelloResponseDto> llamarServicioSello(CadenaOriginalRequestDto req, String token) {
+        return webClientBuilder.build().post()
+            .uri(acusesMicroserviceUrl.trim() + "/generaSello")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .bodyValue(req)
             .retrieve()
-            .onStatus(HttpStatusCode::isError, response -> {
-                logger.error("Error HTTP {} al obtener sello digital de mssideimss-acuses (Solicitud Baja).", response.statusCode());
-                return response.bodyToMono(String.class)
-                    .flatMap(errorBody -> Mono.error(new RuntimeException(
-                        "Error al generar el sello digital para Solicitud Baja (" + response.statusCode().value() + "): " + errorBody
-                    )));
-            })
+            .onStatus(HttpStatusCode::isError, r -> r.bodyToMono(String.class).flatMap(b -> Mono.error(new RuntimeException(b))))
             .bodyToMono(SelloResponseDto.class)
-            .flatMap(selloResponseDto -> {
-                if (selloResponseDto.getCodigo() == 0 && selloResponseDto.getSello() != null && !selloResponseDto.getSello().isEmpty()) {
-                    logger.info("Sello digital obtenido exitosamente para Solicitud Baja.");
-                    String selloDigitalIMSS = selloResponseDto.getSello();
-
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        ObjectNode rootNode = (ObjectNode) objectMapper.readTree(datosJson);
-                        rootNode.put("selloDigitalIMSS", selloDigitalIMSS);
-                        rootNode.put("cadenaOriginal", modifiedCadenaOriginal);
-
-                        ndtPlantillaDato.setDesDatos(objectMapper.writeValueAsString(rootNode));
-                        logger.info("Sello digital y cadenaOriginal (Solicitud Baja) insertados en desDatos. Datos actualizados: {}", ndtPlantillaDato.getDesDatos());
-                    } catch (Exception e) {
-                        logger.error("Error al insertar el sello digital/actualizar cadenaOriginal en el JSON de datos (Solicitud Baja): {}", e.getMessage(), e);
-                        return Mono.error(new RuntimeException("Error al actualizar los datos con el sello digital para Solicitud Baja."));
-                    }
-
-                    logger.info("Guardando NdtPlantillaDato con sello digital (Solicitud Baja).");
-                    return Mono.just(ndtPlantillaDatoRepository.save(ndtPlantillaDato));
-                } else {
-                    logger.error("El microservicio de acuses devolvió un error al generar el sello para Solicitud Baja: {} - {}", selloResponseDto.getCodigo(), selloResponseDto.getMensaje());
-                    return Mono.error(new RuntimeException("Ocurrió un error al generar el sello para Solicitud Baja, por favor intente más tarde: " + selloResponseDto.getMensaje()));
-                }
-            })
-            .onErrorResume(e -> {
-                logger.error("Fallo completo al obtener el sello o guardar la plantilla para Solicitud Baja: {}", e.getMessage(), e);
-                return Mono.error(new RuntimeException("Ocurrió un error al procesar la solicitud de baja, por favor intente más tarde: " + e.getMessage()));
-            });
+            .flatMap(res -> res.getCodigo() == 0 ? Mono.just(res) : Mono.error(new RuntimeException(res.getMensaje())));
     }
 
-
-
-
-
-
-        @Override
-    public ColegioContadorDto getColegioByRfcContador(String rfcContador) {
-        String sql = "SELECT PM.RFC, PM.DENOMINACION_RAZON_SOCIAL " +
-                "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT DDP " +
-                "INNER JOIN MGPBDTU9X.DIT_PERSONA DPER ON DPER.CVE_ID_PERSONA = DDP.CVE_ID_PERSONA " +
-                "INNER JOIN MGPBDTU9X.Ndt_R3_colegio RC ON RC.CVE_ID_CPA = DDP.CVE_ID_CPA " +
-                "INNER JOIN MGPBDTU9X.Ndt_colegio C ON C.CVE_ID_COLEGIO = RC.CVE_ID_COLEGIO " +
-                "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
-                "WHERE DPER.RFC = :rfc AND RC.FEC_REGISTRO_BAJA IS NULL";
-        
+    @Transactional(readOnly = true)
+    @Override
+    public ColegioContadorDto getColegioByRfcContador(String rfc) {
+        String sql = "SELECT PM.RFC as rfc, PM.DENOMINACION_RAZON_SOCIAL as nombre " +
+                     "FROM MGPBDTU9X.NDT_CONTADOR_PUBLICO_AUT DDP " +
+                     "INNER JOIN MGPBDTU9X.Ndt_R3_colegio RC ON RC.CVE_ID_CPA = DDP.CVE_ID_CPA " +
+                     "INNER JOIN MGPBDTU9X.Ndt_colegio C ON C.CVE_ID_COLEGIO = RC.CVE_ID_COLEGIO " +
+                     "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                     "WHERE DDP.CVE_ID_PERSONA = (SELECT CVE_ID_PERSONA FROM MGPBDTU9X.DIT_PERSONA WHERE RFC = :rfc) " +
+                     "AND RC.FEC_REGISTRO_BAJA IS NULL";
         try {
-            Object[] row = (Object[]) entityManager.createNativeQuery(sql)
-                    .setParameter("rfc", rfcContador)
-                    .getSingleResult();
-            return new ColegioContadorDto((String) row[0], (String) row[1]);
+            List<Tuple> res = entityManager.createNativeQuery(sql, Tuple.class).setParameter("rfc", rfc).getResultList();
+            if (res.isEmpty()) return new ColegioContadorDto("N/A", "Sin colegio vinculado");
+            Tuple t = res.get(0);
+            return new ColegioContadorDto(t.get("rfc", String.class), t.get("nombre", String.class));
         } catch (Exception e) {
-            return new ColegioContadorDto("N/A", "No se encontró colegio vinculado");
+            return new ColegioContadorDto("N/A", "No se pudo obtener información del colegio");
         }
     }
 
-
- @Override
-public Boolean tieneDictamenEnProceso(Integer numRegistroCpa) {
-    logger.info("Verificando existencia de dictamenes para CPA: {}", numRegistroCpa);
-    
-    // Ejecuta el query ligero
-    int cantidad = ndtPatronDictamenRepository.countDictamenesPorRegistroCpa(numRegistroCpa);
-    
-    // Retorna true si encontró al menos 1
-    return cantidad > 0;
-}
-
+    @Transactional(readOnly = true)
+    @Override
+    public Boolean tieneDictamenEnProceso(Integer numRegistroCpa) {
+        return ndtPatronDictamenRepository.countDictamenesPorRegistroCpa(numRegistroCpa) > 0;
+    }
 }
