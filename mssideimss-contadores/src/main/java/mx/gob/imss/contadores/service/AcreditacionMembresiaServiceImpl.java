@@ -1,1008 +1,463 @@
 package mx.gob.imss.contadores.service;
-
- 
- 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.http.HttpHeaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode; 
-import com.fasterxml.jackson.databind.JsonNode; 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 
-
-import mx.gob.imss.contadores.dto.CadenaOriginalRequestDto;
-import mx.gob.imss.contadores.dto.CorreoDto;
-import mx.gob.imss.contadores.dto.DocumentoIndividualDto;
-import mx.gob.imss.contadores.entity.NdtContadorPublicoAut;
-import mx.gob.imss.contadores.entity.NdtCpaAcreditacion;
-import mx.gob.imss.contadores.entity.NdtCpaEstatus;
-import mx.gob.imss.contadores.entity.NdtCpaTramite;
-import mx.gob.imss.contadores.entity.NdtDocumentoProbatorio;
-import mx.gob.imss.contadores.entity.NdtFormaContacto;
-import mx.gob.imss.contadores.entity.NdtPlantillaDato;
-import mx.gob.imss.contadores.entity.NdtR1DatosPersonales;
-import mx.gob.imss.contadores.entity.NdtR1FormaContacto;
-import mx.gob.imss.contadores.entity.NdtR2Despacho;
-import mx.gob.imss.contadores.entity.NdtR2FormaContacto;
-import mx.gob.imss.contadores.entity.NdtR3Colegio;
-import mx.gob.imss.contadores.repository.NdtColegioRepository;
-import mx.gob.imss.contadores.repository.NdtContadorPublicoAutRepository;
-import mx.gob.imss.contadores.repository.NdtCpaAcreditacionRepository;
-import mx.gob.imss.contadores.repository.NdtCpaEstatusRepository;
-import mx.gob.imss.contadores.repository.NdtCpaTramiteRepository;
-import mx.gob.imss.contadores.repository.NdtDocumentoProbatorioRepository;
-import mx.gob.imss.contadores.repository.NdtFormaContactoRepository;
-import mx.gob.imss.contadores.repository.NdtPlantillaDatoRepository;
-import mx.gob.imss.contadores.repository.NdtR1DatosPersonalesRepository;
-import mx.gob.imss.contadores.repository.NdtR1FormaContactoRepository;
-import mx.gob.imss.contadores.repository.NdtR2DespachoRepository;
-import mx.gob.imss.contadores.repository.NdtR2FormaContactoRepository;
-import mx.gob.imss.contadores.repository.NdtR3ColegioRepository;
-import mx.gob.imss.contadores.dto.MedioContactoContadoresDto;  
-import mx.gob.imss.contadores.dto.MediosContactoContadoresResponseDto;
-import mx.gob.imss.contadores.dto.SelloResponseDto;
-import reactor.core.publisher.Mono;  
- 
-import org.springframework.http.HttpHeaders;  
+import lombok.RequiredArgsConstructor;
+import mx.gob.imss.contadores.dto.*;
+import mx.gob.imss.contadores.entity.*;
+import mx.gob.imss.contadores.repository.*;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service("acreditacionMembresiaService")
+@RequiredArgsConstructor
 public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaService {
-	private static final Logger logger = LogManager.getLogger(AcreditacionMembresiaServiceImpl.class);
+
+    private static final Logger logger = LogManager.getLogger(AcreditacionMembresiaServiceImpl.class);
 
     @Value("${serviciosdigitales.url.correo}")
     private String urlSendCorreoElectronico;
 
-    @Value("${sideimss.catalogos.microservice.url}") 
+    @Value("${sideimss.catalogos.microservice.url}")
     private String catalogosMicroserviceUrl;
 
-    @Value("${sideimss.acuses.microservice.url}")  
+    @Value("${sideimss.acuses.microservice.url}")
     private String acusesMicroserviceUrl;
-	
-    @Autowired
-    private NdtPlantillaDatoRepository  ndtPlantillaDatoRepository;
-	
-    private final WebClient webClient;
 
     @Value("${documentos.microservice.url}")
     private String documentosMicroserviceUrl;
 
-
-    @Autowired
-    private NdtContadorPublicoAutRepository contadorRepository;
-    @Autowired
-    private NdtCpaAcreditacionRepository acreditacionRepository;
-    @Autowired
-    private NdtR1DatosPersonalesRepository datosPersonalesRepository;
-    @Autowired
-    private NdtCpaEstatusRepository estatusRepository;
-
-    @Autowired
-    private NdtCpaTramiteRepository tramiteRepository;
-
-
-    @Autowired
-    private NdtColegioRepository colegioRepository;
-    @Autowired
-    private NdtDocumentoProbatorioRepository documentoProbatorioRepository;
-
-    @Autowired
-    private NdtR2DespachoRepository r2DespachoRepository;
-    @Autowired
-    private NdtR3ColegioRepository r3ColegioRepository;
-
-    @Autowired
-    private NdtR2FormaContactoRepository r2FormaContactoRepository;
-    @Autowired
-    private NdtFormaContactoRepository formaContactoRepository;
-
-
-    @Autowired
-    private NdtR1FormaContactoRepository r1FormaContactoRepository;
-
- 
-    public AcreditacionMembresiaServiceImpl(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
-    }
-
+    private final NdtPlantillaDatoRepository ndtPlantillaDatoRepository;
+    private final NdtContadorPublicoAutRepository contadorRepository;
+    private final NdtCpaAcreditacionRepository acreditacionRepository;
+    private final NdtR1DatosPersonalesRepository datosPersonalesRepository;
+    private final NdtCpaEstatusRepository estatusRepository;
+    private final NdtCpaTramiteRepository tramiteRepository;
+    private final NdtDocumentoProbatorioRepository documentoProbatorioRepository;
+    private final NdtR2DespachoRepository r2DespachoRepository;
+    private final NdtR3ColegioRepository r3ColegioRepository;
+    private final NdtR2FormaContactoRepository r2FormaContactoRepository;
+    private final NdtFormaContactoRepository formaContactoRepository;
+    private final NdtR1FormaContactoRepository r1FormaContactoRepository;
+    
+    private final WebClient webClient;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public Mono<DocumentoIndividualDto> cargarDocumentoAlmacenamiento(DocumentoIndividualDto documento, String jwtToken) {
-        logger.info("Preparando para enviar documento '{}' al microservicio de documentos.", documento.getNomArchivo());
-        String url = documentosMicroserviceUrl;
-
+        logger.info("Enviando documento '{}' al microservicio de documentos.", documento.getNomArchivo());
         return webClient.post()
-            .uri(url)
+            .uri(documentosMicroserviceUrl)
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
             .bodyValue(documento)
-            .retrieve()  
-            .onStatus(HttpStatusCode::isError, response -> {  
-                logger.error("Error HTTP {} al intentar cargar documento '{}'.", response.statusCode(), documento.getNomArchivo());
-                return response.bodyToMono(String.class)
-                    .flatMap(errorBody -> {
-                         
-                        return Mono.error(new RuntimeException(
-                            "Error del microservicio de documentos (" + response.statusCode().value() + "): " + errorBody
-                        ));
-                    });
-            })
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class)
+                .flatMap(errorBody -> Mono.error(new RuntimeException("Error microservicio documentos: " + errorBody))))
             .bodyToMono(DocumentoIndividualDto.class)
-            .doOnSuccess(result -> {
-                if (result.getCodigo() != null && result.getCodigo() == 0) {
-                    logger.info("Documento '{}' cargado exitosamente. Path HDFS: {}", documento.getNomArchivo(), result.getDesPathHdfs());
-                } else {
-                    logger.warn("El microservicio de documentos devolvió un código de error para '{}': {} - {}", documento.getNomArchivo(), result.getCodigo(), result.getMensaje());
-                }
-            })
             .onErrorResume(e -> {
-                logger.error("Fallo completo al cargar documento '{}': {}", documento.getNomArchivo(), e.getMessage(), e);
+                logger.error("Fallo al cargar documento: {}", e.getMessage());
                 DocumentoIndividualDto errorDto = new DocumentoIndividualDto();
-                if (e instanceof RuntimeException && e.getMessage() != null && e.getMessage().contains("Error del microservicio de documentos")) {
-                    errorDto.setCodigo(HttpStatus.BAD_GATEWAY.value()); 
-                } else {
-                    errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                }
-                errorDto.setMensaje("Fallo en la comunicación/procesamiento del documento: " + e.getMessage());
+                errorDto.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+                errorDto.setMensaje("Fallo en procesamiento de documento: " + e.getMessage());
                 return Mono.just(errorDto);
             });
     }
 
     @Override
     public NdtPlantillaDato guardarPlantillaDato(NdtPlantillaDato plantillaDato) {
-        logger.info("Guardando NdtPlantillaDato con datos: {}", plantillaDato.getDesDatos());
         return ndtPlantillaDatoRepository.save(plantillaDato);
     }
 
-
-
-
-
-
     @Override
- public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
-        logger.info("Iniciando proceso para obtener sello digital y guardar plantilla.");
+    public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
+        logger.info("Iniciando proceso reactivo de sellado y sincronización Legacy.");
 
-        final String datosJson = ndtPlantillaDato.getDesDatos(); // Hacer final 
-        logger.info("obtenerSelloYGuardarPlantilla Contenido inicial de desDatos (datosJson): {}", datosJson);
-        
-        final String initialCadenaOriginal;
-        final String nombreCompleto;
-        final String curp;
-        final String folioFirma;
+        return Mono.just(ndtPlantillaDato).<NdtPlantillaDato>flatMap(dato -> {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode rootNode = objectMapper.readTree(dato.getDesDatos());
+                
+                String initialCadena = rootNode.path("cadenaOriginal").asText("");
+                String folioFirma = rootNode.path("folioFirma").asText("");
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(datosJson);
-
-            JsonNode cadenaOriginalNode = rootNode.get("cadenaOriginal");
-            if (cadenaOriginalNode != null) {
-                initialCadenaOriginal = cadenaOriginalNode.asText();
-                logger.debug("Cadena original extraída: {}", initialCadenaOriginal);
-            } else {
-                logger.warn("No se encontró 'cadenaOriginal' en el JSON de datos.");
-                return Mono.error(new RuntimeException("Error: La cadenaOriginal no se encontró en los datos de la plantilla."));
-            }
-
-            JsonNode nombreCompletoNode = rootNode.get("nombreCompleto");
-            nombreCompleto = (nombreCompletoNode != null) ? nombreCompletoNode.asText() : null;
-            if (nombreCompleto != null) logger.debug("Nombre completo extraído: {}", nombreCompleto);
-
-            JsonNode curpNode = rootNode.get("curp");
-            curp = (curpNode != null) ? curpNode.asText() : null;
-            if (curp != null) logger.debug("CURP extraída: {}", curp);
-
-            JsonNode folioFirmaNode = rootNode.get("folioFirma");
-            folioFirma = (folioFirmaNode != null) ? folioFirmaNode.asText() : null;
-            if (folioFirma != null) logger.debug("folioFirma extraída: {}", folioFirma);
-
-        } catch (Exception e) {
-            logger.error("Error al parsear datosJson para extraer cadenaOriginal: {}", e.getMessage(), e);
-            return Mono.error(new RuntimeException("Error al procesar los datos de la plantilla para obtener la cadena original."));
-        }
-
-     
-        final String modifiedCadenaOriginal;  
-
-        if (folioFirma != null && !folioFirma.isEmpty()) {
-            String hashTag = "|HASH|";
-            int indexHash = initialCadenaOriginal.indexOf(hashTag);
-            if (indexHash != -1) {
-                int startIndexHashValue = indexHash + hashTag.length();
-                int endIndexHashValue = initialCadenaOriginal.indexOf("|", startIndexHashValue);
-
-                String currentHashValue = "";
-                if (endIndexHashValue != -1) {
-                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue, endIndexHashValue);
-                } else {
-                    currentHashValue = initialCadenaOriginal.substring(startIndexHashValue);
+                if (initialCadena.isEmpty()) {
+                    return Mono.<NdtPlantillaDato>error(new RuntimeException("Error: La cadenaOriginal no existe en los datos."));
                 }
 
-                String newHashSegment = hashTag + folioFirma + "|" + currentHashValue;
-                modifiedCadenaOriginal = initialCadenaOriginal.replace(hashTag + currentHashValue, newHashSegment);
-                logger.info("Cadena original modificada con folioFirma: {}", modifiedCadenaOriginal);
-            } else {
-                logger.warn("No se encontró el tag '|HASH|' en la cadena original para insertar folioFirma.");
-                modifiedCadenaOriginal = initialCadenaOriginal; // Si no se encuentra, usamos la original
-            }
-        } else {
-            modifiedCadenaOriginal = initialCadenaOriginal; // Si no hay folioFirma, usamos la original
-        }
-        // --- Fin de la lógica de modificación ---
+                String modifiedCadena = aplicarLogicaHash(initialCadena, folioFirma);
 
-        // 'modifiedCadenaOriginal' ahora es efectivamente final y puede ser usada en las lambdas.
-
-        // Preparar la solicitud para el microservicio de acuses
-        CadenaOriginalRequestDto requestDto = new CadenaOriginalRequestDto();
-        requestDto.setCadenaOriginal(modifiedCadenaOriginal); // Usamos la variable final/effectively final
-        requestDto.setRfc(ndtPlantillaDato.getDesRfc());
-
-
-        if (nombreCompleto != null) {
-            requestDto.setNombreRazonSocial(nombreCompleto);
-        }
-        if (curp != null) {
-            requestDto.setCurp(curp);
-        }
-
-        String urlGeneraSello = acusesMicroserviceUrl.trim() + "/generaSello";
-        logger.info("Llamando al microservicio de acuses para generar sello en: {}", urlGeneraSello);
-
-        return webClient.post()
-            .uri(urlGeneraSello)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
-            .bodyValue(requestDto)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError, response -> {
-                logger.error("Error HTTP {} al obtener sello digital de mssideimss-acuses.", response.statusCode());
-                return response.bodyToMono(String.class)
-                    .flatMap(errorBody -> Mono.error(new RuntimeException(
-                        "Error al generar el sello digital (" + response.statusCode().value() + "): " + errorBody
-                    )));
-            })
-            .bodyToMono(SelloResponseDto.class)
-            .flatMap(selloResponseDto -> {
-                if (selloResponseDto.getCodigo() == 0 && selloResponseDto.getSello() != null && !selloResponseDto.getSello().isEmpty()) {
-                    logger.info("Sello digital obtenido exitosamente.");
-                    String selloDigitalIMSS = selloResponseDto.getSello();
-
-                    // Insertar el sello en el JSON de datos
-                    try {
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        // Al crear el rootNode a partir de 'datosJson', obtenemos una copia.
-                        // Luego modificamos esta copia.
-                        ObjectNode rootNode = (ObjectNode) objectMapper.readTree(datosJson);
-                        rootNode.put("selloDigitalIMSS", selloDigitalIMSS);
-
-                        // Es crucial actualizar la cadenaOriginal dentro del JSON con la versión modificada
-                        rootNode.put("cadenaOriginal", modifiedCadenaOriginal); // Usamos la variable final/effectively final
-
-                        ndtPlantillaDato.setDesDatos(objectMapper.writeValueAsString(rootNode));
-                        logger.info("Sello digital y cadenaOriginal (si fue modificada) insertados en desDatos. Datos actualizados: {}", ndtPlantillaDato.getDesDatos());
-                    } catch (Exception e) {
-                        logger.error("Error al insertar el sello digital/actualizar cadenaOriginal en el JSON de datos: {}", e.getMessage(), e);
-                        return Mono.error(new RuntimeException("Error al actualizar los datos con el sello digital."));
-                    }
-
-                    // Guardar la plantilla con los datos actualizados
-                    logger.info("Guardando NdtPlantillaDato con sello digital.");
-                  //  return Mono.just(ndtPlantillaDatoRepository.save(ndtPlantillaDato));
-                    // 1. Guardamos la Plantilla Dato (Tu código actual)
-                    NdtPlantillaDato plantillaGuardada = ndtPlantillaDatoRepository.save(ndtPlantillaDato);
-                    
-                    // 2. AHORA GUARDAMOS EN TABLAS LEGACY
-                    try {
-                        guardarEnTablasLegado(plantillaGuardada);
-                        logger.info("Datos replicados exitosamente en tablas Legacy Oracle");
-                    } catch (Exception e) {
-                        // Decidir si fallamos todo el proceso o solo logueamos el error
-                        logger.error("Error al guardar en tablas legacy: {}", e.getMessage(), e);
-                        // throw new RuntimeException("Error al sincronizar con sistema anterior"); 
-                    }
-
-                    return Mono.just(plantillaGuardada);
-
-
-                } else {
-                    logger.error("El microservicio de acuses devolvió un error al generar el sello: {} - {}", selloResponseDto.getCodigo(), selloResponseDto.getMensaje());
-                    return Mono.error(new RuntimeException("Ocurrio un error, por favor intente mas tarde: " + selloResponseDto.getMensaje()));
-                }
-            })
-            .onErrorResume(e -> {
-                logger.error("Fallo completo al obtener el sello o guardar la plantilla: {}", e.getMessage(), e);
-                return Mono.error(new RuntimeException("Ocurrio un error, por favor intente mas tarde: " + e.getMessage()));
-            });
-    }
-
-
- 
-
-
-    /**
-     * Método PRIVADO GENÉRICO que maneja toda la lógica de envío.
-     * Recibe el asunto y el fragmento de HTML específico.
-     */
-    private Mono<String> procesarEnvioCorreo(String rfc, String nombreCompleto, String jwtToken, String asunto, String contenidoHtmlEspecifico) {
-        logger.info("Iniciando proceso genérico de envío de correo para RFC: {}. Asunto: {}", rfc, asunto);
-
-        return obtenerCorreoDeMediosContacto(rfc, jwtToken)
-            .flatMap(correoDestino -> {
-                if (correoDestino == null || correoDestino.isEmpty()) {
-                    logger.warn("No se encontró correo para RFC: {}. Continuando.", rfc);
-                    return Mono.just("No se encontró un correo electrónico. El proceso continuará.");
-                }
-
-                logger.info("Enviando correo a: {}", correoDestino);
-
-                CorreoDto correoDto = new CorreoDto();
-                correoDto.setRemitente("tramites.cpa@imss.gob.mx");
-                // Para pruebas mantienes override, para prod usarías correoDestino
-                //correoDto.setCorreoPara(Collections.singletonList("jaime.rodriguez@imss.gob.mx")); 
-                correoDto.setCorreoPara(Collections.singletonList(correoDestino)); 
-                correoDto.setAsunto(asunto);
-
-                // Construcción del HTML completo usando el fragmento específico
-                String cuerpoCorreoHtml = construirHtmlBase(nombreCompleto, rfc, contenidoHtmlEspecifico);
-                correoDto.setCuerpoCorreo(cuerpoCorreoHtml);
+                CadenaOriginalRequestDto requestDto = new CadenaOriginalRequestDto();
+                requestDto.setCadenaOriginal(modifiedCadena);
+                requestDto.setRfc(dato.getDesRfc());
+                requestDto.setNombreRazonSocial(rootNode.path("nombreCompleto").asText(null));
+                requestDto.setCurp(rootNode.path("curp").asText(null));
 
                 return webClient.post()
-                    .uri(urlSendCorreoElectronico)
-                    .bodyValue(correoDto)
+                    .uri(acusesMicroserviceUrl.trim() + "/generaSello")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken)
+                    .bodyValue(requestDto)
                     .retrieve()
-                    .onStatus(HttpStatusCode::isError, response -> {
-                        logger.error("Error HTTP {} al enviar correo a {}.", response.statusCode(), correoDestino);
-                        return response.bodyToMono(String.class)
-                            .flatMap(errorBody -> Mono.error(new RuntimeException(
-                                "Fallo envío correo: " + response.statusCode().value() + " - " + errorBody)));
-                    })
-                    .toBodilessEntity()
-                    .thenReturn("Correo enviado exitosamente.")
-                    .onErrorResume(e -> {
-                        String errorMsg = (e instanceof WebClientResponseException) 
-                            ? "Fallo WebClient: " + ((WebClientResponseException) e).getStatusCode()
-                            : "Fallo genérico: " + e.getMessage();
-                        logger.error("Error enviando correo a {}: {}. Continuando.", correoDestino, errorMsg);
-                        return Mono.just("Error en servicio de correo. El proceso continuará.");
+                    .onStatus(HttpStatusCode::isError, resp -> resp.bodyToMono(String.class)
+                        .flatMap(err -> Mono.error(new RuntimeException("Error Sello: " + err))))
+                    .bodyToMono(SelloResponseDto.class)
+                    .flatMap(selloDto -> {
+                        if (selloDto.getCodigo() != 0 || selloDto.getSello() == null) {
+                            return Mono.<NdtPlantillaDato>error(new RuntimeException("Error en sello: " + selloDto.getMensaje()));
+                        }
+
+                        return Mono.<NdtPlantillaDato>fromCallable(() -> {
+                            return transactionTemplate.execute(status -> {
+                                try {
+                                    ObjectNode nodeFinal = (ObjectNode) objectMapper.readTree(dato.getDesDatos());
+                                    nodeFinal.put("selloDigitalIMSS", selloDto.getSello());
+                                    nodeFinal.put("cadenaOriginal", modifiedCadena);
+                                    dato.setDesDatos(objectMapper.writeValueAsString(nodeFinal));
+
+                                    NdtPlantillaDato guardada = ndtPlantillaDatoRepository.save(dato);
+                                    sincronizarConLegacy(guardada, nodeFinal);
+
+                                    return guardada;
+                                } catch (Exception ex) {
+                                    logger.error("Error en persistencia, ejecutando Rollback: {}", ex.getMessage());
+                                    status.setRollbackOnly();
+                                    throw new RuntimeException(ex.getMessage());
+                                }
+                            });
+                        }).subscribeOn(Schedulers.boundedElastic());
                     });
-            })
-            .onErrorResume(e -> {
-                logger.warn("Error al obtener medios de contacto para RFC {}: {}", rfc, e.getMessage());
-                return Mono.just("No se pudo obtener correo electrónico. El proceso continuará.");
-            });
+            } catch (Exception e) {
+                return Mono.<NdtPlantillaDato>error(new RuntimeException("Error procesamiento: " + e.getMessage()));
+            }
+        })
+        .onErrorResume(e -> {
+            logger.error("Fallo crítico en el trámite: {}", e.getMessage());
+            return Mono.error(new RuntimeException("No se pudo completar el trámite. Intente más tarde."));
+        });
     }
 
-    /**
-     * Construye la estructura HTML común para todos los correos.
-     */
-    private String construirHtmlBase(String nombre, String rfc, String contenidoEspecifico) {
-        return String.format(
-            "<!DOCTYPE html>" +
-            "<html><head><meta charset=\"UTF-8\"></head><body>" +
-          //  "<strong>Estimado(a) %s con RFC %s,</strong><br><br>" +
-            "%s" + // Aquí se inyecta el contenido variable
-            "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-            "<strong>Por lo anterior, se anexa al presente el respectivo acuse de recibo.</strong>" +
-            "</p>" +
-            "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-            "Asimismo, podrá dar seguimiento a su trámite en la siguiente liga: " +
-            "<a href=\"http://agqa.imss.gob.mx/escritorio/web/publico\">http://agqa.imss.gob.mx/escritorio/web/publico</a>" +
-            "</p><br>" +
-            "<p style='font-size: 12px; color: #777;'>" +
-            "Este es un correo automático. Por favor, no responda a esta dirección.</p>" +
-            "</body></html>",
-           contenidoEspecifico
-        );
-    }
+    private void sincronizarConLegacy(NdtPlantillaDato plantilla, JsonNode rootNode) throws Exception {
+        String curp = extraerCurp(rootNode);
+        if (curp == null) return;
 
-    // --- MÉTODOS PÚBLICOS REFRACTORIZADOS (Ahora son de una sola línea lógica) ---
-
-    @Override
-    public Mono<String> enviarCorreoAcreditacion(String rfc, String nombreCompleto, String jwtToken) {
-        String contenido = "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                "Se le informa que la presentación de su constancia de acreditación de evaluación en materia de la " +
-                "Ley del Seguro Social y sus reglamentos y su constancia de ser integrante o miembro de un colegio o " +
-                "asociación de profesionales de la contaduría pública, han sido recibidas.</p>";
-        
-        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken, "Constancia de acreditación/membresía", contenido);
-    }
-
-    @Override
-    public Mono<String> enviarCorreoSolicitudBaja(String rfc, String nombreCompleto, String jwtToken) {
-        // Nota: Usé el texto estándar de baja, ajusta si el texto original era intencional
-        String contenido = "<p style='margin-bottom: 15px; line-height: 1.5;'>" +
-                "Se le informa que su solicitud de baja en el registro de contadores públicos autorizados ha sido recibida.</p>";
-                
-        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "SOLICITUD DE BAJA", contenido);
-    }
-
-    @Override
-    public Mono<String> enviarCorreoModificacionDatosContacto(String rfc, String nombreCompleto, String jwtToken) {
-        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
-                           "<p><span class=\"label\">Datos modificados:</span> Datos personales.</p>";
-                           
-        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
-    }
-
-    @Override
-    public Mono<String> enviarCorreoModificacionDatosDespacho(String rfc, String nombreCompleto, String jwtToken) {
-        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
-                           "<p><span class=\"label\">Datos modificados:</span> Despacho.</p>";
-                           
-        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken,  "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
-    }
-
-    @Override
-    public Mono<String> enviarCorreoModificacionDatosColegio(String rfc, String nombreCompleto, String jwtToken) {
-        String contenido = "<p>Se le informa que el aviso de modificación de datos en el registro de contadores públicos autorizados ha sido recibido.</p>" +
-                           "<p><span class=\"label\">Datos modificados:</span> Colegio o asociación.</p>";
-                           
-        return procesarEnvioCorreo(rfc, nombreCompleto, jwtToken, "Aviso de modificación de datos en el registro de contadores públicos autorizados", contenido);
-    }
-
-    // Helper: Obtener Correo 
-    private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String jwtToken) {
-        String url = catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc;
-        return webClient.get().uri(url).header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtToken).retrieve()
-            .bodyToMono(MediosContactoContadoresResponseDto.class)
-            .map(response -> {
-                if (response != null && response.getMedios() != null) {
-                    for (MedioContactoContadoresDto medio : response.getMedios()) {
-                        if ("1".equalsIgnoreCase(medio.getTipoContacto())) return medio.getDesFormaContacto();
-                    }
-                }
-                return null;
-            })
-            .onErrorResume(e -> Mono.just(""));
-    }
-
-
-
-/**
-     * Método centralizado para guardar en tablas Legacy (Oracle)
-     */
-    private void guardarEnTablasLegado(NdtPlantillaDato plantilla) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(plantilla.getDesDatos());
-        
-        // --- 1. LÓGICA DE EXTRACCIÓN DE CURP MEJORADA (CRÍTICO) ---
-        String curpEncontrada = null;
-
-        // Prioridad 1: "curp" (minúscula, común en modificación)
-        if (rootNode.has("curp")) {
-            curpEncontrada = rootNode.get("curp").asText();
-        } 
-        // Prioridad 2: "CURP" (mayúscula, común en acreditación)
-        else if (rootNode.has("CURP")) {
-            curpEncontrada = rootNode.get("CURP").asText();
-        } 
-        // Prioridad 3: Anidado en datosPersonalesDto
-        else if (rootNode.has("datosPersonalesDto") && rootNode.get("datosPersonalesDto").has("curp")) {
-            curpEncontrada = rootNode.get("datosPersonalesDto").get("curp").asText();
-        }
-
-        final String curp = curpEncontrada;
-
-        if (curp == null || curp.isEmpty()) {
-            logger.warn("No se encontró CURP en el JSON. No se puede guardar en Legacy. JSON: {}", plantilla.getDesDatos());
-            return;
-        }
-
-
-
-        String idPlantillaReferencia = (plantilla.getCveIdPlantillaDato() != null) 
-                                   ? plantilla.getCveIdPlantillaDato().toString() 
-                                   : null;
-    
-        // Extraemos el folio (numTramiteNotaria es el estándar del JSON de acuses)
-        String folio = rootNode.has("numTramiteNotaria") ? rootNode.get("numTramiteNotaria").asText() : 
-                    (rootNode.has("folioFirma") ? rootNode.get("folioFirma").asText() : "S/F");
-                    
-
-
-
-        // --- 2. Buscar al Contador ---
         NdtContadorPublicoAut contador = contadorRepository.findByCurp(curp)
-            .orElseThrow(() -> new RuntimeException("Contador no encontrado en BD Legacy para CURP: " + curp));
+            .orElseThrow(() -> new RuntimeException("Contador no encontrado: " + curp));
 
-        String tipoAcuse = plantilla.getDesTipoAcuse(); 
+        String idPlantilla = plantilla.getCveIdPlantillaDato().toString();
+        String folio = rootNode.path("numTramiteNotaria").asText(rootNode.path("folioFirma").asText("S/F"));
+        String tipoAcuse = plantilla.getDesTipoAcuse();
 
-        // --- 3. Derivar al guardado específico ---
         if ("ACREDITACION_MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
-            guardarAcreditacionLegacy(contador, rootNode, folio, idPlantillaReferencia);
+            guardarAcreditacionLegacy(contador, rootNode, folio, idPlantilla);
         } else if ("ACUSE_SOLICITUD_CAMBIO".equalsIgnoreCase(tipoAcuse)) {
-            guardarModificacionLegacy(contador, rootNode, folio, idPlantillaReferencia);
+            guardarModificacionLegacy(contador, rootNode, folio, idPlantilla);
         } else if ("ACUSE_SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
-            guardarBajaLegacy(contador, rootNode, folio, idPlantillaReferencia);
-        } else {
-            logger.warn("El tipo de acuse '{}' no tiene lógica de guardado Legacy configurada.", tipoAcuse);
+            guardarBajaLegacy(contador, rootNode, folio, idPlantilla);
         }
     }
 
-private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
-    LocalDateTime fechaActual = LocalDateTime.now();
-    String usuario = contador.getCurp();
-    
-    // --- 1. CREAR EL TRÁMITE ---
-    NdtCpaTramite tramite = new NdtCpaTramite();
-    tramite.setCveIdCpa(contador.getCveIdCpa());
-    tramite.setFecSolicitudMovimiento(fechaActual);
-    tramite.setFecRegistroAlta(fechaActual);
-    tramite.setCveIdUsuario(usuario);
-    tramite.setNumTramiteNotaria(folio);      // Folio UUID
-    tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
-    
-    NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
-    logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
-
-    // --- 2. GUARDAR ACREDITACIÓN VINCULADA ---
-    NdtCpaAcreditacion acreditacion = new NdtCpaAcreditacion();
-    acreditacion.setCveIdCpa(contador.getCveIdCpa());
-    acreditacion.setCveIdCpaTramite(tramiteGuardado.getCveIdCpaTramite()); 
-    acreditacion.setFecRegistroAlta(fechaActual);
-    acreditacion.setFecRegistroActualizado(fechaActual); 
-    acreditacion.setCveIdUsuario(usuario);
-
-    // Búsqueda del colegio activo (SQL Lógica)
-    r3ColegioRepository.findByCveIdCpaAndFecRegistroBajaIsNull(contador.getCveIdCpa())
-        .ifPresent(r3 -> acreditacion.setCveIdColegio(r3.getCveIdColegio()));
- 
- 
-
-    // --- 4. MAPEO DE FECHAS (Desde el JSON de Angular) ---
-    if (json.has("fechaExpedicionAcreditacion")) {
-        acreditacion.setFecAcreditacionCp(parseFecha(json.get("fechaExpedicionAcreditacion").asText()));
-    }
-    if (json.has("fechaExpedicionMembresia")) {
-        acreditacion.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
+    private String extraerCurp(JsonNode root) {
+        if (root.has("curp")) return root.get("curp").asText();
+        if (root.has("CURP")) return root.get("CURP").asText();
+        if (root.has("datosPersonalesDto") && root.get("datosPersonalesDto").has("curp")) {
+            return root.get("datosPersonalesDto").get("curp").asText();
+        }
+        return null;
     }
 
-    acreditacion.setIndAcredMembresia(0); // 0 según regla de negocio para estos movimientos
-    
-    // Guardamos la acreditación
-    acreditacionRepository.save(acreditacion);
+    private void guardarAcreditacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
+        LocalDateTime ahora = LocalDateTime.now();
+        String usr = contador.getCurp();
 
-        // --- 4. GUARDAR DOCUMENTOS (PDFs) en NDT_DOCUMENTO_PROBATORIO ---
-        // IDs de tipo de documento (Debes confirmar estos IDs en tu tabla NDC_TIPO_DOCUMENTO)
-        // Ejemplo: 74 = Acreditación, 132 = Membresía
-        Long TIPO_DOC_ACREDITACION = 133L; 
-        Long TIPO_DOC_MEMBRESIA = 132L;   
+        NdtCpaTramite tr = new NdtCpaTramite();
+        tr.setCveIdCpa(contador.getCveIdCpa());
+        tr.setFecSolicitudMovimiento(ahora);
+        tr.setFecRegistroAlta(ahora);
+        tr.setCveIdUsuario(usr);
+        tr.setNumTramiteNotaria(folio);
+        tr.setUrlAcuseNotaria(idPlantilla);
+        NdtCpaTramite trG = tramiteRepository.save(tr);
 
-        if (json.has("desPathHdfsAcreditacion")) {
-            guardarDocumentoLegacy(contador.getCveIdCpa(), 
-                                   json.get("desPathHdfsAcreditacion").asText(), 
-                                   TIPO_DOC_ACREDITACION, 
-                                   usuario);
+        NdtCpaAcreditacion acred = new NdtCpaAcreditacion();
+        acred.setCveIdCpa(contador.getCveIdCpa());
+        acred.setCveIdCpaTramite(trG.getCveIdCpaTramite());
+        acred.setFecRegistroAlta(ahora);
+        acred.setCveIdUsuario(usr);
+        r3ColegioRepository.findByCveIdCpaAndFecRegistroBajaIsNull(contador.getCveIdCpa())
+            .ifPresent(r3 -> acred.setCveIdColegio(r3.getCveIdColegio()));
+
+        if (json.has("fechaExpedicionAcreditacion")) acred.setFecAcreditacionCp(parseFecha(json.get("fechaExpedicionAcreditacion").asText()));
+        if (json.has("fechaExpedicionMembresia")) acred.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
+        acred.setIndAcredMembresia(0);
+        acreditacionRepository.save(acred);
+
+        // Nombres de métodos corregidos aquí
+        if (json.has("desPathHdfsAcreditacion")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsAcreditacion").asText(), 133L, usr);
+        if (json.has("desPathHdfsMembresia")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsMembresia").asText(), 132L, usr);
+    }
+
+    private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
+        LocalDateTime ahora = LocalDateTime.now();
+        String usr = contador.getCurp();
+
+        NdtCpaTramite tr = new NdtCpaTramite();
+        tr.setCveIdCpa(contador.getCveIdCpa());
+        tr.setFecSolicitudMovimiento(ahora);
+        tr.setFecRegistroAlta(ahora);
+        tr.setCveIdUsuario(usr);
+        tr.setNumTramiteNotaria(json.path("folioSolicitud").asText("S/F"));
+        tr.setUrlAcuseNotaria(idPlantilla);
+        NdtCpaTramite trG = tramiteRepository.save(tr);
+
+        NdtCpaEstatus est = new NdtCpaEstatus();
+        est.setCveIdCpa(contador.getCveIdCpa());
+        est.setCveIdEstadoCpa(10L); 
+        est.setFecBaja(ahora);
+        est.setFecRegistroAlta(ahora);
+        est.setCveIdUsuario(usr);
+        est.setCveIdCpaTramite(trG.getCveIdCpaTramite());
+        String mot = json.path("motivoBaja").asText("Baja desde Portal");
+        est.setDesComentarios(mot.length() > 3100 ? mot.substring(0, 3100) : mot);
+        estatusRepository.save(est);
+
+        contador.setCveIdEstadoCpa(10L);
+        contador.setFecRegistroBaja(ahora);
+        contadorRepository.save(contador);
+    }
+
+    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
+        LocalDateTime ahora = LocalDateTime.now();
+        String usr = contador.getCurp();
+
+        NdtCpaTramite tr = new NdtCpaTramite();
+        tr.setCveIdCpa(contador.getCveIdCpa());
+        tr.setFecSolicitudMovimiento(ahora);
+        tr.setFecRegistroAlta(ahora);
+        tr.setCveIdUsuario(usr);
+        tr.setNumTramiteNotaria(folio);
+        tr.setUrlAcuseNotaria(idPlantilla);
+        NdtCpaTramite trG = tramiteRepository.save(tr);
+
+        String tipo = json.path("tipoSolicitud").asText("").toUpperCase();
+        JsonNode state = json.get("state");
+
+        switch (tipo) {
+            case "CONTACTO": sincronizarR1(contador, state, trG, usr); break;
+            case "DESPACHO": sincronizarR2(contador, state, trG, usr); break;
+            case "COLEGIO": sincronizarR3(contador, state, json, trG, usr); break;
+        }
+    }
+
+    private void sincronizarR1(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
+        LocalDateTime ahora = LocalDateTime.now();
+        NdtR1DatosPersonales ant = datosPersonalesRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+
+        NdtR1DatosPersonales r1New = new NdtR1DatosPersonales();
+        r1New.setCveIdCpa(contador.getCveIdCpa());
+        r1New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+        r1New.setFecRegistroAlta(ahora);
+        r1New.setCveIdUsuario(usr);
+
+        if (ant != null) {
+            r1New.setCedulaProfesional(ant.getCedulaProfesional());
+            r1New.setFecExpedicionCedprof(ant.getFecExpedicionCedprof());
+            r1New.setCveIdSubdelegacion(ant.getCveIdSubdelegacion());
+            r1New.setCveIdPfdomFiscal(ant.getCveIdPfdomFiscal());
+            ant.setFecRegistroBaja(ahora);
+            datosPersonalesRepository.save(ant);
         }
 
-        if (json.has("desPathHdfsMembresia")) {
-            guardarDocumentoLegacy(contador.getCveIdCpa(), 
-                                   json.get("desPathHdfsMembresia").asText(), 
-                                   TIPO_DOC_MEMBRESIA, 
-                                   usuario);
+        NdtR1DatosPersonales g = datosPersonalesRepository.save(r1New);
+        if (state != null) {
+            vincularR1Contacto(g.getCveIdR1DatosPersonales(), state.path("nuevoCorreoElectronico2").asText(null), 1L, usr);
+            vincularR1Contacto(g.getCveIdR1DatosPersonales(), state.path("nuevoCorreoElectronico3").asText(null), 1L, usr);
+            vincularR1Contacto(g.getCveIdR1DatosPersonales(), state.path("nuevoTelefono2").asText(null), 2L, usr);
         }
-        
-        logger.info("Acreditación y Documentos guardados en Legacy para CPA: {}", contador.getCveIdCpa());
     }
 
-    // Método auxiliar para guardar documentos
-    private void guardarDocumentoLegacy(Long idCpa, String url, Long tipoDoc, String usuario) {
-        if(url == null || url.isEmpty()) return;
+    private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
+        LocalDateTime ahora = LocalDateTime.now();
+        NdtR2Despacho ant = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
 
+        NdtR2Despacho r2New = new NdtR2Despacho();
+        r2New.setCveIdCpa(contador.getCveIdCpa());
+        r2New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+        r2New.setFecRegistroAlta(ahora);
+        r2New.setCveIdUsuario(usr);
+
+        if (ant != null) {
+            r2New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
+            r2New.setCveIdDespacho(ant.getCveIdDespacho());
+            ant.setFecRegistroBaja(ahora);
+            r2DespachoRepository.save(ant);
+        }
+
+        if (state != null) {
+            long tipoSoc = state.path("selectedTipoSociedad").asLong(2);
+            r2New.setIndTipoCpa(tipoSoc);
+            if (tipoSoc == 2) {
+                r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(state.path("tieneTrabajadores").asText()) ? "1" : "0");
+                r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
+            } else {
+                r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+                String tel = state.path("telefonoFijoDespacho").asText(null);
+                if (tel != null) {
+                    NdtR2Despacho g = r2DespachoRepository.save(r2New);
+                    vincularR2Contacto(g.getCveIdR2Despacho(), tel, usr);
+                    return;
+                }
+            }
+        }
+        r2DespachoRepository.save(r2New);
+    }
+
+    private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonNode root, NdtCpaTramite tr, String usr) {
+        LocalDateTime ahora = LocalDateTime.now();
+        NdtR3Colegio ant = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+
+        NdtR3Colegio r3New = new NdtR3Colegio();
+        r3New.setCveIdCpa(contador.getCveIdCpa());
+        r3New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+        r3New.setFecRegistroAlta(ahora);
+        r3New.setCveIdUsuario(usr);
+
+        if (ant != null) {
+            r3New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
+            r3New.setCveIdColegio(ant.getCveIdColegio());
+            ant.setFecRegistroBaja(ahora);
+            r3ColegioRepository.save(ant);
+        }
+
+        r3ColegioRepository.save(r3New);
+        // Nombre de método corregido aquí
+        if (root.has("desPathHdfsConstancia")) guardarDocumentoLegacy(contador.getCveIdCpa(), root.get("desPathHdfsConstancia").asText(), 132L, usr);
+    }
+
+    // --- MÉTODOS DE APOYO ---
+
+    private String aplicarLogicaHash(String cadena, String folio) {
+        if (folio == null || folio.isEmpty() || !cadena.contains("|HASH|")) return cadena;
+        int idx = cadena.indexOf("|HASH|");
+        int start = idx + 6;
+        int end = cadena.indexOf("|", start);
+        String oldHash = (end != -1) ? cadena.substring(start, end) : cadena.substring(start);
+        return cadena.replace("|HASH|" + oldHash, "|HASH|" + folio + "|" + oldHash);
+    }
+
+    private void vincularR1Contacto(Long idR1, String val, Long tipo, String usr) {
+        if (val == null || val.trim().isEmpty()) return;
+        NdtFormaContacto fc = new NdtFormaContacto();
+        fc.setDesFormaContacto(val);
+        fc.setCveIdTipoContacto(tipo);
+        fc.setFecRegistroAlta(LocalDateTime.now());
+        NdtFormaContacto g = formaContactoRepository.save(fc);
+
+        NdtR1FormaContacto rel = new NdtR1FormaContacto();
+        rel.setCveIdR1DatosPersonales(idR1);
+        rel.setCveIdFormaContacto(g.getCveIdFormaContacto());
+        rel.setFecRegistroAlta(LocalDateTime.now());
+        rel.setCveIdUsuario(usr);
+        r1FormaContactoRepository.save(rel);
+    }
+
+    private void vincularR2Contacto(Long idR2, String tel, String usr) {
+        NdtFormaContacto fc = new NdtFormaContacto();
+        fc.setDesFormaContacto(tel);
+        fc.setCveIdTipoContacto(2L);
+        fc.setFecRegistroAlta(LocalDateTime.now());
+        NdtFormaContacto g = formaContactoRepository.save(fc);
+
+        NdtR2FormaContacto rel = new NdtR2FormaContacto();
+        rel.setCveIdR2Despacho(idR2);
+        rel.setCveIdFormaContacto(g.getCveIdFormaContacto());
+        rel.setFecRegistroAlta(LocalDateTime.now());
+        rel.setCveIdUsuario(usr);
+        r2FormaContactoRepository.save(rel);
+    }
+
+    // Nombre definitivo del método para evitar el error 'undefined'
+    private void guardarDocumentoLegacy(Long idCpa, String url, Long tipo, String usr) {
         NdtDocumentoProbatorio doc = new NdtDocumentoProbatorio();
         doc.setCveIdCpa(idCpa);
-        doc.setUrlDocumentoProb(url); // Aquí va el path de HDFS o JSON de Bóveda
-        doc.setCveIdDoctoProbPorTipo(tipoDoc);
+        doc.setUrlDocumentoProb(url);
+        doc.setCveIdDoctoProbPorTipo(tipo);
         doc.setFecRegistroAlta(LocalDateTime.now());
-        doc.setCveIdUsuario(usuario);
-        
+        doc.setCveIdUsuario(usr);
         documentoProbatorioRepository.save(doc);
     }
 
-    /**
-     * Método auxiliar para convertir String a LocalDateTime.
-     * Soporta formato ISO (2025-12-17) y formato MX (17/12/2025)
-     */
-    private LocalDateTime parseFecha(String fechaStr) {
-        if (fechaStr == null || fechaStr.isEmpty()) return null;
-        try {
-            // Intento 1: Formato DD/MM/YYYY (El que pusiste en tu ejemplo)
-            DateTimeFormatter formatterMX = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            return LocalDate.parse(fechaStr, formatterMX).atStartOfDay();
-        } catch (Exception e1) {
-            try {
-                // Intento 2: Formato ISO YYYY-MM-DD (Estándar de JSON)
-                return LocalDate.parse(fechaStr).atStartOfDay();
-            } catch (Exception e2) {
-                logger.warn("No se pudo parsear la fecha recibida: {}", fechaStr);
-                return null;
-            }
-        }
+    private LocalDateTime parseFecha(String f) {
+        if (f == null || f.isEmpty()) return null;
+        try { return LocalDate.parse(f, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay(); }
+        catch (Exception e) { try { return LocalDate.parse(f).atStartOfDay(); } catch (Exception e2) { return null; } }
     }
 
-    /*
-    
-    115	NO ACTIVADO
-1	SOLICITADO
-2	RECHAZADO
-3	ACTIVO
-4	NO LOCALIZADO
-5	1ERA. AMONESTACIÓN
-6	2DA. AMONESTACIÓN
-7	SUSPENSIÓN POR 1 AÑO
-8	SUSPENSIÓN POR 2 AÑOS
-9	SUSPENSIÓN POR 3 AÑOS
-10	BAJA VOLUNTARIA
-11	BAJA POR NO DICTAMINAR EN 5 AÑOS
-12	SIN ACTIVACIÓN DE REGISTRO
-13	BAJA POR FALLECIMIENTO
-14	CANCELADO
-101	NO ACTIVADO
-102	NO ACTIVADO
-103	NO ACTIVADO
-104	NO ACTIVADO
-105	NO ACTIVADO
-106	NO ACTIVADO
-107	NO ACTIVADO
-108	NO ACTIVADO
-109	NO ACTIVADO
-110	NO ACTIVADO
-111	NO ACTIVADO
-112	NO ACTIVADO
-113	NO ACTIVADO
-114	NO ACTIVADO
-15	3RA. AMONESTACIÓN
-    */
+    // --- CORREOS ---
 
-   private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
-        Long ID_ESTADO_BAJA = 10L; 
-        LocalDateTime fechaActual = LocalDateTime.now();
-        String usuario = contador.getCurp();
-        String folioSolicitud = json.has("folioSolicitud") ? json.get("folioSolicitud").asText() : "S/F";
-
-        // --- 1. Crear el TRÁMITE (El eslabón perdido) ---
-        NdtCpaTramite tramite = new NdtCpaTramite();
-        tramite.setCveIdCpa(contador.getCveIdCpa());
-        tramite.setFecSolicitudMovimiento(fechaActual);
-        tramite.setFecRegistroAlta(fechaActual);
-        tramite.setCveIdUsuario(usuario);
-        tramite.setNumTramiteNotaria(folioSolicitud);
-        tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
-        
-        NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
-        logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
-
-        // --- 2. Guardar en Histórico (NDT_CPA_ESTATUS) ---
-        NdtCpaEstatus estatus = new NdtCpaEstatus();
-        estatus.setCveIdCpa(contador.getCveIdCpa());
-        estatus.setCveIdEstadoCpa(ID_ESTADO_BAJA);
-        estatus.setFecBaja(fechaActual);
-        estatus.setFecRegistroAlta(fechaActual);
-        estatus.setFecRegistroActualizado(fechaActual);
-        estatus.setCveIdUsuario(usuario);
-        
-        // VINCULAMOS EL ESTATUS CON EL TRÁMITE
-        estatus.setCveIdCpaTramite(tramiteGuardado.getCveIdCpaTramite()); 
-
-        if (json.has("motivoBaja")) {
-            String motivo = json.get("motivoBaja").asText();
-            if (motivo != null && motivo.length() > 3100) motivo = motivo.substring(0, 3100);
-            estatus.setDesComentarios(motivo);
-        } else {
-            estatus.setDesComentarios("Solicitud de Baja desde Portal Digital");
-        }
-        
-        estatusRepository.save(estatus);
-
-        // --- 3. Actualizar Maestro (NDT_CONTADOR_PUBLICO_AUT) ---
-        contador.setCveIdEstadoCpa(ID_ESTADO_BAJA);
-        contador.setFecRegistroBaja(fechaActual);
-        contador.setFecRegistroActualizado(fechaActual);
-        contador.setCveIdUsuario(usuario);
-        
-        contadorRepository.save(contador);
-        
-        logger.info("BAJA COMPLETA LEGACY (Tramite+Estatus+Maestro) para CPA: {}", contador.getCveIdCpa());
+    @Override
+    public Mono<String> enviarCorreoAcreditacion(String rfc, String nom, String token) {
+        return procesarEnvioCorreo(rfc, nom, token, "Constancia de acreditación/membresía", 
+            "<p>Se le informa que la presentación de sus constancias ha sido recibida.</p>");
     }
 
-
-
-    private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
-        LocalDateTime fechaActual = LocalDateTime.now();
-        String usuario = contador.getCurp();
-        String folioSolicitud = json.has("folio") ? json.get("folio").asText() : "S/F";
-
-        // 1. CREAR TRÁMITE (Común para todos los cambios)
-        NdtCpaTramite tramite = new NdtCpaTramite();
-        tramite.setCveIdCpa(contador.getCveIdCpa());
-        tramite.setFecSolicitudMovimiento(fechaActual);
-        tramite.setFecRegistroAlta(fechaActual);
-        tramite.setCveIdUsuario(usuario);
-        tramite.setNumTramiteNotaria(folioSolicitud);
-        tramite.setNumTramiteNotaria(folio);
-        tramite.setUrlAcuseNotaria(idPlantilla);     // GUARDAMOS EL ID DE LA PLANTILLA
-        NdtCpaTramite tramiteGuardado = tramiteRepository.save(tramite);
-        logger.info("tramiteGuardado tramiteGuardado.getCveIdCpaTramite(): {}", tramiteGuardado.getCveIdCpaTramite());
-
-        // 2. DETERMINAR TIPO DE SOLICITUD
-        String tipoSolicitud = "";
-        if (json.has("tipoSolicitud")) {
-            tipoSolicitud = json.get("tipoSolicitud").asText().toUpperCase();
-        }
-
-        JsonNode state = json.has("state") ? json.get("state") : null;
-
-        // 3. DERIVAR A LA TABLA CORRESPONDIENTE
-        switch (tipoSolicitud) {
-            case "CONTACTO":
-                guardarR1Personales(contador, state, tramiteGuardado, usuario);
-                break;
-            case "DESPACHO":
-                guardarR2Despacho(contador, state, tramiteGuardado, usuario);
-                break;
-            case "COLEGIO":
-                guardarR3Colegio(contador, state, json, tramiteGuardado, usuario);
-                break;
-            default:
-                logger.warn("Tipo de solicitud de modificación '{}' no reconocida. Se generó trámite pero no detalle.", tipoSolicitud);
-        }
+    @Override
+    public Mono<String> enviarCorreoSolicitudBaja(String rfc, String nom, String token) {
+        return procesarEnvioCorreo(rfc, nom, token, "SOLICITUD DE BAJA", 
+            "<p>Se le informa que su solicitud de baja ha sido recibida.</p>");
     }
 
-private void guardarR1Personales(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
-    LocalDateTime fechaActual = LocalDateTime.now();
-
-    // 1. BUSCAR REGISTRO ACTIVO ANTERIOR PARA HEREDAR DATOS FIJOS
-    NdtR1DatosPersonales r1Anterior = datosPersonalesRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
-            .orElse(null);
-
-    // 2. PREPARAR NUEVO REGISTRO R1 (Para mantener integridad con el SQL)
-    NdtR1DatosPersonales r1Nuevo = new NdtR1DatosPersonales();
-    r1Nuevo.setCveIdCpa(contador.getCveIdCpa());
-    r1Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
-    r1Nuevo.setFecRegistroAlta(fechaActual);
-    r1Nuevo.setCveIdUsuario(usuario);
-
-    if (r1Anterior != null) {
-        // --- BLOQUE DE SEGURIDAD: NO MODIFICAR CÉDULA ---
-        r1Nuevo.setCedulaProfesional(r1Anterior.getCedulaProfesional()); // Se hereda la original
-        r1Nuevo.setDesTituloExpedidoPor(r1Anterior.getDesTituloExpedidoPor());
-        r1Nuevo.setFecExpedicionCedprof(r1Anterior.getFecExpedicionCedprof());
-        
-        // Otros datos obligatorios para evitar ORA-02291
-        r1Nuevo.setCveIdSubdelegacion(r1Anterior.getCveIdSubdelegacion());
-        r1Nuevo.setCveIdPfdomFiscal(r1Anterior.getCveIdPfdomFiscal());
-
-        // Damos de baja el anterior para que el SQL "fec_registro_baja is null" funcione
-        r1Anterior.setFecRegistroBaja(fechaActual);
-        datosPersonalesRepository.save(r1Anterior);
-    }
-
-    // 3. GUARDAR EL NUEVO R1 PARA OBTENER SU ID
-    NdtR1DatosPersonales r1Guardado = datosPersonalesRepository.save(r1Nuevo);
-
-    // 4. PROCESAR MEDIOS DE CONTACTO DE LA IMAGEN
-    if (state != null) {
-        // CORREO ELECTRÓNICO 2 (Tipo 1)
-        if (state.has("nuevoCorreoElectronico2")) {
-            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
-                                state.get("nuevoCorreoElectronico2").asText(), 1L, usuario);
-        }
-
-        // CORREO ELECTRÓNICO 3 (Tipo 1)
-        if (state.has("nuevoCorreoElectronico3")) {
-            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
-                                state.get("nuevoCorreoElectronico3").asText(), 1L, usuario);
-        }
-
-        // TELÉFONO 2 (Tipo 2)
-        if (state.has("nuevoTelefono2")) {
-            vincularDatoContacto(r1Guardado.getCveIdR1DatosPersonales(), 
-                                state.get("nuevoTelefono2").asText(), 2L, usuario);
-        }
+    @Override
+    public Mono<String> enviarCorreoModificacionDatosContacto(String rfc, String nom, String token) {
+        return procesarEnvioCorreo(rfc, nom, token, "Modificación de datos", 
+            "<p>El aviso de modificación de datos personales ha sido recibido.</p>");
     }
     
-    logger.info("Sincronización R1 completa. Trámite vinculado: {}", tramite.getCveIdCpaTramite());
-}
-
-/**
- * Método auxiliar que sigue la estructura de las columnas proporcionadas para NDT_R1_FORMACONTACTO
- */
-private void vincularDatoContacto(Long idR1, String valor, Long tipoId, String usuario) {
-    if (valor == null || valor.trim().isEmpty()) return;
-
-    // A. Crear registro en NDT_FORMA_CONTACTO
-    NdtFormaContacto fc = new NdtFormaContacto();
-    fc.setDesFormaContacto(valor);
-    fc.setCveIdTipoContacto(tipoId);
-    fc.setFecRegistroAlta(LocalDateTime.now());
-    NdtFormaContacto fcGuardada = formaContactoRepository.save(fc);
-
-    // B. Crear registro en NDT_R1_FORMACONTACTO (Usando la nueva entidad)
-    NdtR1FormaContacto relacion = new NdtR1FormaContacto();
-    relacion.setCveIdR1DatosPersonales(idR1);
-    relacion.setCveIdFormaContacto(fcGuardada.getCveIdFormaContacto()); // <-- Nombre corregido
-    relacion.setFecRegistroAlta(LocalDateTime.now());
-    relacion.setFecRegistroActualizado(LocalDateTime.now());
-    relacion.setCveIdUsuario(usuario);
-
-    r1FormaContactoRepository.save(relacion);
-}  
-
-private void guardarR2Despacho(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tramite, String usuario) {
-        LocalDateTime fechaActual = LocalDateTime.now();
-        
-        // 1. Buscar registro activo anterior
-        NdtR2Despacho r2Anterior = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
-                .orElse(null);
-
-        // 2. Preparar nuevo registro
-        NdtR2Despacho r2Nuevo = new NdtR2Despacho();
-        r2Nuevo.setCveIdCpa(contador.getCveIdCpa());
-        r2Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
-        r2Nuevo.setFecRegistroAlta(fechaActual);
-        r2Nuevo.setCveIdUsuario(usuario);
-
-        // 3. Herencia inicial (Se sobrescribirá o limpiará según el caso)
-        if (r2Anterior != null) {
-            // Heredamos Domicilio y Despacho por defecto (se limpian abajo si cambia el tipo)
-            r2Nuevo.setCveIdPmdomFiscal(r2Anterior.getCveIdPmdomFiscal());
-            r2Nuevo.setCveIdPfdomFiscal(r2Anterior.getCveIdPfdomFiscal());
-            r2Nuevo.setCveIdDespacho(r2Anterior.getCveIdDespacho()); 
-            
-            // Baja al anterior
-            r2Anterior.setFecRegistroBaja(fechaActual);
-            r2DespachoRepository.save(r2Anterior);
-        }
-
-        // 4. Lógica de Negocio según selección (Independiente vs Despacho)
-        String telefonoParaGuardar = null;
-
-        if (state != null && state.has("selectedTipoSociedad")) {
-            long tipoSociedad = state.get("selectedTipoSociedad").asLong();
-            r2Nuevo.setIndTipoCpa(tipoSociedad);
-
-            if (tipoSociedad == 2) { 
-                // =================================================
-                // CASO 1: INDEPENDIENTE (ID 2)
-                // =================================================
-                
-                // Limpiamos datos de Despacho (No aplican)
-                r2Nuevo.setCveIdDespacho(null); 
-                r2Nuevo.setCveIdPmdomFiscal(null); 
-                r2Nuevo.setCargoQueDesempena(null);
-                // No hay teléfono de despacho
-
-                // Llenamos datos de Trabajadores
-                if (state.has("tieneTrabajadores")) {
-                    String tieneTrab = state.get("tieneTrabajadores").asText();
-                    if ("Si".equalsIgnoreCase(tieneTrab)) {
-                        r2Nuevo.setIndCuentaconTrab("1"); // 1 = Si
-                        if (state.has("numeroTrabajadores")) {
-                            r2Nuevo.setNumTrabajadores(state.get("numeroTrabajadores").asInt());
-                        }
-                    } else {
-                        r2Nuevo.setIndCuentaconTrab("0"); // 0 = No
-                        r2Nuevo.setNumTrabajadores(0);
-                    }
-                }
-
-            } else {
-                // =================================================
-                // CASO 2: DESPACHO (Cualquier otro ID)
-                // =================================================
-                
-                // Limpiamos datos de Independiente
-                r2Nuevo.setIndCuentaconTrab(null);
-                r2Nuevo.setNumTrabajadores(null);
-
-                // Llenamos datos de Despacho
-                if (state.has("selectedCargoDesempena")) {
-                    r2Nuevo.setCargoQueDesempena(state.get("selectedCargoDesempena").asText());
-                }
-
-                // Capturamos el teléfono (se guarda en tabla aparte al final)
-                if (state.has("telefonoFijoDespacho")) {
-                    telefonoParaGuardar = state.get("telefonoFijoDespacho").asText();
-                }
-                
-                // LOGICA RFC DESPACHO:
-                // Si el RFC cambió, aquí deberías buscar el nuevo ID de despacho en NDT_DESPACHOS.
-                // Como no tenemos ese repositorio ahorita, asumimos que si no cambió, 
-                // se mantiene el heredado (línea 18). Si cambió, idealmente buscaríamos el ID.
-            }
-        }
-
-        // Guardamos R2
-        NdtR2Despacho r2Guardado = r2DespachoRepository.save(r2Nuevo);
-        
-        // 5. Guardar Teléfono (SOLO SI ES DESPACHO y hay teléfono)
-        if (telefonoParaGuardar != null && !telefonoParaGuardar.isEmpty()) {
-            guardarTelefonoDespacho(r2Guardado.getCveIdR2Despacho(), telefonoParaGuardar, usuario);
-        }
-
-        logger.info("Modificación R2 completada. Tipo CPA: {}", r2Nuevo.getIndTipoCpa());
+    @Override public Mono<String> enviarCorreoModificacionDatosDespacho(String r, String n, String t) { 
+        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de Despacho ha sido recibido.</p>"); 
+    }
+    @Override public Mono<String> enviarCorreoModificacionDatosColegio(String r, String n, String t) { 
+        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de Colegio ha sido recibido.</p>"); 
     }
 
-
-
-
-
-    // Método auxiliar para guardar el teléfono
-    private void guardarTelefonoDespacho(Long idR2Despacho, String telefono, String usuario) {
-        // A. Guardar el dato en NDT_FORMA_CONTACTO
-        NdtFormaContacto contacto = new NdtFormaContacto();
-        contacto.setDesFormaContacto(telefono);
-        contacto.setCveIdTipoContacto(2L); // 2 = Teléfono Fijo (Según catálogos estándar IMSS)
-        contacto.setFecRegistroAlta(LocalDateTime.now());
-        
-        
-        NdtFormaContacto contactoGuardado = formaContactoRepository.save(contacto);
-
-        // B. Relacionar en NDT_R2_FORMACONTACTO
-        NdtR2FormaContacto relacion = new NdtR2FormaContacto();
-        relacion.setCveIdR2Despacho(idR2Despacho);
-        relacion.setCveIdFormaContacto(contactoGuardado.getCveIdFormaContacto());
-        relacion.setFecRegistroAlta(LocalDateTime.now());
-        relacion.setCveIdUsuario(usuario);
-        
-        r2FormaContactoRepository.save(relacion);
+    private Mono<String> procesarEnvioCorreo(String rfc, String nom, String token, String asunto, String html) {
+        return obtenerCorreoDeMediosContacto(rfc, token).flatMap(mail -> {
+            if (mail == null || mail.isEmpty()) return Mono.just("No se encontró correo.");
+            CorreoDto dto = new CorreoDto();
+            dto.setRemitente("tramites.cpa@imss.gob.mx");
+            dto.setCorreoPara(Collections.singletonList(mail));
+            dto.setAsunto(asunto);
+            dto.setCuerpoCorreo(construirHtmlBase(nom, rfc, html));
+            return webClient.post().uri(urlSendCorreoElectronico).bodyValue(dto).retrieve().toBodilessEntity().thenReturn("Enviado");
+        }).onErrorResume(e -> Mono.just("Continuando sin correo."));
     }
 
-    private void guardarR3Colegio(NdtContadorPublicoAut contador, JsonNode state, JsonNode rootJson, NdtCpaTramite tramite, String usuario) {
-        LocalDateTime fechaActual = LocalDateTime.now();
+    private String construirHtmlBase(String n, String r, String h) {
+        return "<html><body>" + h + "<br><p>Seguimiento en: http://agqa.imss.gob.mx/escritorio/web/publico</p></body></html>";
+    }
 
-        // 1. Buscar registro activo anterior
-        NdtR3Colegio r3Anterior = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa())
-                .orElse(null);
-
-        // 2. Dar de baja el anterior
-        if (r3Anterior != null) {
-            r3Anterior.setFecRegistroBaja(fechaActual);
-            r3ColegioRepository.save(r3Anterior);
-        }
-
-        // 3. Crear nuevo registro
-        NdtR3Colegio r3Nuevo = new NdtR3Colegio();
-        r3Nuevo.setCveIdCpa(contador.getCveIdCpa());
-        r3Nuevo.setCveIdCpaTramite(tramite.getCveIdCpaTramite());
-        r3Nuevo.setFecRegistroAlta(fechaActual);
-        r3Nuevo.setCveIdUsuario(usuario);
-
-        // --- HERENCIA DE DATOS CRÍTICOS ---
-        if (r3Anterior != null) {
-            // Heredamos el domicilio fiscal para evitar el error ORA-02291
-            r3Nuevo.setCveIdPmdomFiscal(r3Anterior.getCveIdPmdomFiscal());
-            r3Nuevo.setCveIdColegio(r3Anterior.getCveIdColegio());
-        }
-
-        // 4. Actualizar con el nuevo Colegio si se buscó uno
-        if (state != null && state.has("nuevoRfcColegio")) {
-             // Aquí iría la lógica de buscar el ID del nuevo colegio por RFC si fuera necesario
-             // Por ahora mantendrá el anterior o se actualizará según tu lógica de negocio
-        }
-
-        r3ColegioRepository.save(r3Nuevo);
-        
-        // 5. Guardar documento (Constancia)
-        if (rootJson.has("desPathHdfsConstancia")) {
-             guardarDocumentoLegacy(contador.getCveIdCpa(), 
-                                    rootJson.get("desPathHdfsConstancia").asText(), 
-                                    132L, 
-                                    usuario);
-        }
-
-        logger.info("Modificación R3 (Colegio) guardada con éxito.");
+    private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String token) {
+        return webClient.get().uri(catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).retrieve()
+            .bodyToMono(MediosContactoContadoresResponseDto.class)
+            .map(res -> res.getMedios().stream().filter(m -> "1".equals(m.getTipoContacto())).findFirst()
+                .map(MedioContactoContadoresDto::getDesFormaContacto).orElse(null))
+            .onErrorResume(e -> Mono.empty());
     }
 }
- 
-
