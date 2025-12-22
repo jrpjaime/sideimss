@@ -1,4 +1,5 @@
 package mx.gob.imss.contadores.service;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -88,7 +89,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
     @Override
     public Mono<NdtPlantillaDato> obtenerSelloYGuardarPlantilla(NdtPlantillaDato ndtPlantillaDato, String jwtToken) {
-        logger.info("Iniciando proceso reactivo de sellado y sincronización Legacy.");
+        logger.info("Iniciando proceso reactivo de sellado, sincronización Legacy y Envío de Correo Final.");
 
         return Mono.just(ndtPlantillaDato).<NdtPlantillaDato>flatMap(dato -> {
             try {
@@ -123,6 +124,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
                             return Mono.<NdtPlantillaDato>error(new RuntimeException("Error en sello: " + selloDto.getMensaje()));
                         }
 
+                        // 1. PRIMERO: PERSISTENCIA (Si esto falla, hay rollback y NO hay correo)
                         return Mono.<NdtPlantillaDato>fromCallable(() -> {
                             return transactionTemplate.execute(status -> {
                                 try {
@@ -136,22 +138,61 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
                                     return guardada;
                                 } catch (Exception ex) {
-                                    logger.error("Error en persistencia, ejecutando Rollback: {}", ex.getMessage());
+                                    logger.error("Error en persistencia, Rollback activado: {}", ex.getMessage());
                                     status.setRollbackOnly();
                                     throw new RuntimeException(ex.getMessage());
                                 }
                             });
-                        }).subscribeOn(Schedulers.boundedElastic());
+                        })
+                        .subscribeOn(Schedulers.boundedElastic())
+                        // 2. SEGUNDO: ENVÍO DE CORREO (Solo si la persistencia fue exitosa)
+                        .flatMap(guardada -> {
+                            logger.info("Persistencia exitosa. Iniciando envío de correo de confirmación.");
+                            return dispararEmailAutomatico(guardada, jwtToken)
+                                   .thenReturn(guardada); // Retornamos la entidad guardada al final
+                        });
                     });
             } catch (Exception e) {
                 return Mono.<NdtPlantillaDato>error(new RuntimeException("Error procesamiento: " + e.getMessage()));
             }
         })
         .onErrorResume(e -> {
-            logger.error("Fallo crítico en el trámite: {}", e.getMessage());
-            return Mono.error(new RuntimeException("No se pudo completar el trámite. Intente más tarde."));
+            logger.error("Fallo crítico en el trámite (No se envió correo): {}", e.getMessage());
+            return Mono.error(new RuntimeException("No se pudo completar el trámite: " + e.getMessage()));
         });
     }
+
+    /**
+     * Identifica el tipo de trámite y dispara el correo correspondiente.
+     */
+    private Mono<String> dispararEmailAutomatico(NdtPlantillaDato plantilla, String jwtToken) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(plantilla.getDesDatos());
+            String rfc = plantilla.getDesRfc();
+            String nombre = root.path("nombreCompleto").asText("Contador Público");
+            String tipoAcuse = plantilla.getDesTipoAcuse();
+
+            if ("ACREDITACION_MEMBRESIA".equalsIgnoreCase(tipoAcuse)) {
+                return enviarCorreoAcreditacion(rfc, nombre, jwtToken);
+            } else if ("ACUSE_SOLICITUD_BAJA".equalsIgnoreCase(tipoAcuse)) {
+                return enviarCorreoSolicitudBaja(rfc, nombre, jwtToken);
+            } else if ("ACUSE_SOLICITUD_CAMBIO".equalsIgnoreCase(tipoAcuse)) {
+                String subTipo = root.path("tipoSolicitud").asText("").toUpperCase();
+                switch (subTipo) {
+                    case "CONTACTO": return enviarCorreoModificacionDatosContacto(rfc, nombre, jwtToken);
+                    case "DESPACHO": return enviarCorreoModificacionDatosDespacho(rfc, nombre, jwtToken);
+                    case "COLEGIO":  return enviarCorreoModificacionDatosColegio(rfc, nombre, jwtToken);
+                }
+            }
+            return Mono.just("Tipo de acuse no reconocido para correo.");
+        } catch (Exception e) {
+            logger.error("Error al preparar disparo de correo: {}", e.getMessage());
+            return Mono.just("Error preparacion correo.");
+        }
+    }
+
+    // --- LÓGICA DE SINCRONIZACIÓN LEGACY (Se mantiene igual) ---
 
     private void sincronizarConLegacy(NdtPlantillaDato plantilla, JsonNode rootNode) throws Exception {
         String curp = extraerCurp(rootNode);
@@ -208,7 +249,6 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         acred.setIndAcredMembresia(0);
         acreditacionRepository.save(acred);
 
-        // Nombres de métodos corregidos aquí
         if (json.has("desPathHdfsAcreditacion")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsAcreditacion").asText(), 133L, usr);
         if (json.has("desPathHdfsMembresia")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsMembresia").asText(), 132L, usr);
     }
@@ -346,7 +386,6 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         }
 
         r3ColegioRepository.save(r3New);
-        // Nombre de método corregido aquí
         if (root.has("desPathHdfsConstancia")) guardarDocumentoLegacy(contador.getCveIdCpa(), root.get("desPathHdfsConstancia").asText(), 132L, usr);
     }
 
@@ -392,7 +431,6 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         r2FormaContactoRepository.save(rel);
     }
 
-    // Nombre definitivo del método para evitar el error 'undefined'
     private void guardarDocumentoLegacy(Long idCpa, String url, Long tipo, String usr) {
         NdtDocumentoProbatorio doc = new NdtDocumentoProbatorio();
         doc.setCveIdCpa(idCpa);
@@ -409,55 +447,79 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         catch (Exception e) { try { return LocalDate.parse(f).atStartOfDay(); } catch (Exception e2) { return null; } }
     }
 
-    // --- CORREOS ---
+    // --- MÉTODOS DE ENVÍO DE CORREO ---
 
     @Override
     public Mono<String> enviarCorreoAcreditacion(String rfc, String nom, String token) {
         return procesarEnvioCorreo(rfc, nom, token, "Constancia de acreditación/membresía", 
-            "<p>Se le informa que la presentación de sus constancias ha sido recibida.</p>");
+            "<p>Se le informa que la presentación de sus constancias de acreditación y membresía han sido recibidas.</p>");
     }
 
     @Override
     public Mono<String> enviarCorreoSolicitudBaja(String rfc, String nom, String token) {
         return procesarEnvioCorreo(rfc, nom, token, "SOLICITUD DE BAJA", 
-            "<p>Se le informa que su solicitud de baja ha sido recibida.</p>");
+            "<p>Se le informa que su solicitud de baja ha sido recibida satisfactoriamente.</p>");
     }
 
     @Override
     public Mono<String> enviarCorreoModificacionDatosContacto(String rfc, String nom, String token) {
         return procesarEnvioCorreo(rfc, nom, token, "Modificación de datos", 
-            "<p>El aviso de modificación de datos personales ha sido recibido.</p>");
+            "<p>El aviso de modificación de datos personales (medios de contacto) ha sido recibido.</p>");
     }
     
     @Override public Mono<String> enviarCorreoModificacionDatosDespacho(String r, String n, String t) { 
-        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de Despacho ha sido recibido.</p>"); 
+        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de datos del Despacho ha sido recibido.</p>"); 
     }
     @Override public Mono<String> enviarCorreoModificacionDatosColegio(String r, String n, String t) { 
-        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de Colegio ha sido recibido.</p>"); 
+        return procesarEnvioCorreo(r, n, t, "Modificación de datos", "<p>El aviso de modificación de datos del Colegio ha sido recibido.</p>"); 
     }
 
     private Mono<String> procesarEnvioCorreo(String rfc, String nom, String token, String asunto, String html) {
         return obtenerCorreoDeMediosContacto(rfc, token).flatMap(mail -> {
-            if (mail == null || mail.isEmpty()) return Mono.just("No se encontró correo.");
+            if (mail == null || mail.isEmpty()) {
+                logger.warn("No se puede enviar correo: destinatario vacío para RFC {}", rfc);
+                return Mono.just("Sin destinatario");
+            }
             CorreoDto dto = new CorreoDto();
             dto.setRemitente("tramites.cpa@imss.gob.mx");
             dto.setCorreoPara(Collections.singletonList(mail));
             dto.setAsunto(asunto);
             dto.setCuerpoCorreo(construirHtmlBase(nom, rfc, html));
-            return webClient.post().uri(urlSendCorreoElectronico).bodyValue(dto).retrieve().toBodilessEntity().thenReturn("Enviado");
-        }).onErrorResume(e -> Mono.just("Continuando sin correo."));
+
+            return webClient.post()
+                .uri(urlSendCorreoElectronico)
+                .bodyValue(dto)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, resp -> resp.bodyToMono(String.class).flatMap(e -> Mono.error(new RuntimeException(e))))
+                .toBodilessEntity()
+                .thenReturn("Correo Enviado");
+        }).onErrorResume(e -> {
+            logger.error("Error al enviar correo (el tramite ya se guardo): {}", e.getMessage());
+            return Mono.just("Continuando pese a error de correo.");
+        });
     }
 
     private String construirHtmlBase(String n, String r, String h) {
-        return "<html><body>" + h + "<br><p>Seguimiento en: http://agqa.imss.gob.mx/escritorio/web/publico</p></body></html>";
+        return "<html><body style='font-family: Arial, sans-serif;'>" +
+               "<h3>Estimado(a) " + n + "</h3>" +
+               h +
+               "<br><p>Puede dar seguimiento a su trámite en: <a href='http://agqa.imss.gob.mx/escritorio/web/publico'>Portal SIDEIMSS</a></p>" +
+               "<p style='font-size: 11px; color: #555;'>Este es un mensaje automático, por favor no responda.</p>" +
+               "</body></html>";
     }
 
     private Mono<String> obtenerCorreoDeMediosContacto(String rfc, String token) {
         return webClient.get().uri(catalogosMicroserviceUrl.trim() + "/mediosContacto/" + rfc)
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).retrieve()
             .bodyToMono(MediosContactoContadoresResponseDto.class)
-            .map(res -> res.getMedios().stream().filter(m -> "1".equals(m.getTipoContacto())).findFirst()
-                .map(MedioContactoContadoresDto::getDesFormaContacto).orElse(null))
-            .onErrorResume(e -> Mono.empty());
+            .map(res -> {
+                if (res == null || res.getMedios() == null) return "";
+                return res.getMedios().stream()
+                    .filter(m -> "1".equals(m.getTipoContacto()))
+                    .findFirst()
+                    .map(MedioContactoContadoresDto::getDesFormaContacto)
+                    .orElse("");
+            })
+            .onErrorResume(e -> Mono.just(""));
     }
 }
