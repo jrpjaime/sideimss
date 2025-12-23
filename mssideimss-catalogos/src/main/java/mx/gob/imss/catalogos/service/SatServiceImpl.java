@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
-import java.util.List;
-import javax.xml.ws.BindingProvider;
+import java.util.List; 
+import jakarta.xml.ws.BindingProvider;
 
 import mx.gob.imss.catalogos.dto.RfcColegioRequestDto;
 import mx.gob.imss.catalogos.dto.RfcColegioResponseDto;

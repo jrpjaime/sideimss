@@ -10,6 +10,6 @@ public class CorreoDto {
 	private String asunto;
 	private String remitente;
 	private String cuerpoCorreo;
-
+private List<ArchivoAdjuntoDto> adjuntos; 
     
 }

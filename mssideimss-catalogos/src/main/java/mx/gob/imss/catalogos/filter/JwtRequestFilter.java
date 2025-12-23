@@ -54,7 +54,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 Claims claims = jwtUtilService.extractAllClaims(jwt);
                 
                 // Forma segura de manejar la claim "role"
-                Object roleClaim = claims.get("role");
+                Object roleClaim = claims.get("roles");
                 List<String> roles = new java.util.ArrayList<>();
                 
                 if (roleClaim instanceof String) {
