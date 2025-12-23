@@ -361,11 +361,17 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
             r2DespachoRepository.save(r2New);
         } else { // ES UN DESPACHO
-            r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+               r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+    
+        
+            if (state.has("cveIdDespacho")) {
+                r2New.setCveIdDespacho(state.get("cveIdDespacho").asLong());
+            }
             
-            // Si es despacho, necesitamos el ID del despacho (D.CVE_ID_DESPACHO)
-            // Aquí deberías tener lógica para buscar el ID del despacho por el RFC
-            // r2New.setCveIdDespacho(idEncontrado); 
+            // También el domicilio fiscal del despacho si aplica
+            if (state.has("cveIdPmdomFiscal")) {
+                r2New.setCveIdPmdomFiscal(state.get("cveIdPmdomFiscal").asLong());
+            }
 
             NdtR2Despacho guardado = r2DespachoRepository.save(r2New);
 
