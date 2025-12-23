@@ -350,23 +350,32 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             r2DespachoRepository.save(ant);
         }
 
-        if (state != null) {
-            long tipoSoc = state.path("selectedTipoSociedad").asLong(2);
-            r2New.setIndTipoCpa(tipoSoc);
-            if (tipoSoc == 2) {
-                r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(state.path("tieneTrabajadores").asText()) ? "1" : "0");
-                r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
-            } else {
-                r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
-                String tel = state.path("telefonoFijoDespacho").asText(null);
-                if (tel != null) {
-                    NdtR2Despacho g = r2DespachoRepository.save(r2New);
-                    vincularR2Contacto(g.getCveIdR2Despacho(), tel, usr);
-                    return;
-                }
+    if (state != null) {
+        long tipoSoc = state.path("selectedTipoSociedad").asLong();
+        r2New.setIndTipoCpa(tipoSoc);
+
+        if (tipoSoc == 2) { // PROFESIONAL INDEPENDIENTE
+            // IMPORTANTE: Guardar como "1" o "0" para que la consulta lo entienda
+            String tieneTrab = state.path("tieneTrabajadores").asText();
+            r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(tieneTrab) ? "1" : "0");
+            r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
+            r2DespachoRepository.save(r2New);
+        } else { // ES UN DESPACHO
+            r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+            
+            // Si es despacho, necesitamos el ID del despacho (D.CVE_ID_DESPACHO)
+            // Aquí deberías tener lógica para buscar el ID del despacho por el RFC
+            // r2New.setCveIdDespacho(idEncontrado); 
+
+            NdtR2Despacho guardado = r2DespachoRepository.save(r2New);
+
+            // GUARDADO DEL TELÉFONO (Vincular a R2)
+            String tel = state.path("telefonoFijoDespacho").asText(null);
+            if (tel != null && !tel.isEmpty()) {
+                vincularR2Contacto(guardado.getCveIdR2Despacho(), tel, usr);
             }
         }
-        r2DespachoRepository.save(r2New);
+    }
     }
 
     private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonNode root, NdtCpaTramite tr, String usr) {
