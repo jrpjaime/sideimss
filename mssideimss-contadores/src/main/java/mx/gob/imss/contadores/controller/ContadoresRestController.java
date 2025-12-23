@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import mx.gob.imss.contadores.dto.AcreditacionMenbresiaResponseDto;
 import mx.gob.imss.contadores.dto.ColegioContadorDto;
+import mx.gob.imss.contadores.dto.DespachoRequestDto;
+import mx.gob.imss.contadores.dto.DespachoResponseDto;
 import mx.gob.imss.contadores.dto.DictamenEnProcesoDto;
 import mx.gob.imss.contadores.dto.PlantillaDatoDto;
 import mx.gob.imss.contadores.dto.RfcRequestDto;
@@ -38,6 +40,7 @@ import mx.gob.imss.contadores.dto.SolicitudBajaDto;
 import mx.gob.imss.contadores.entity.NdtPlantillaDato;
 import mx.gob.imss.contadores.service.AcreditacionMembresiaService;
 import mx.gob.imss.contadores.service.ContadorPublicoAutorizadoService;
+import mx.gob.imss.contadores.service.DespachoService;
 import mx.gob.imss.contadores.service.JwtUtilService;
  
 
@@ -60,6 +63,11 @@ public class ContadoresRestController {
   
     @Autowired
     private ContadorPublicoAutorizadoService contadorPublicoAutorizadoService;
+
+
+     
+    @Autowired
+    private DespachoService despachoService;
 
 
     @Value("${sideimss.acuses.microservice.url}")  
@@ -578,5 +586,27 @@ public class ContadoresRestController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
 
+
+    /**
+     * Método para consultar los datos del despacho  
+     * @param despachoRequestDto DTO con el RFC.
+     * @return ResponseEntity con los datos del despacho o NotFound.
+     */
+    @PostMapping("/consultarDatosDespacho")
+    public ResponseEntity<DespachoResponseDto> consultarDatosDespacho(@RequestBody DespachoRequestDto despachoRequestDto) {
+        logger.info("Recibiendo solicitud para /consultarDatosDespacho con RFC: {}", despachoRequestDto.getRfc());
+        
+        DespachoResponseDto response = despachoService.consultarDatosDespacho(despachoRequestDto);
+
+        if (response != null) {
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            logger.info("No se encontraron datos de despacho para el RFC proporcionado.");
+           
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+        
 }

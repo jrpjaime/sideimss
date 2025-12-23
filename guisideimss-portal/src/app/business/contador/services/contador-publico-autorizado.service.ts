@@ -11,6 +11,8 @@ import { FirmaRequestFrontendDto } from '../model/FirmaRequestFrontendDto';
 import { FirmaRequestBackendResponse } from '../model/FirmaRequestBackendResponse';
 import { ColegioContadorDto } from '../model/ColegioContadorDto';
 import { RfcRequestDto } from '../model/RfcRequestDto';
+import { DespachoRequestDto } from '../model/DespachoRequestDto';
+import { DespachoResponseDto } from '../model/DespachoResponseDto';
 
 @Injectable({
   providedIn: 'root'
@@ -119,7 +121,7 @@ export class ContadorPublicoAutorizadoService {
    * Guarda la modificación de datos una vez firmada.
    * @param submitDto Datos de la plantilla con la firma y cadena original.
    */
-    guardarModificacionDatos(submitDto: PlantillaDatoDto): Observable<any> { 
+    guardarModificacionDatos(submitDto: PlantillaDatoDto): Observable<any> {
        const url = `${environment.contadoresApiUrl}${EPs.contadores.guardarModificacionDatos}`;
       return this.httpClient.post<any>(url, submitDto);
     }
@@ -132,10 +134,22 @@ export class ContadorPublicoAutorizadoService {
    */
   validarDictamenEnProceso(numRegistroCpa: number): Observable<{ tieneDictamen: boolean }> {
     const url = `${environment.contadoresApiUrl}${EPs.contadores.validarDictamenEnProceso}`;
- 
+
     const params = new HttpParams().set('numRegistroCpa', numRegistroCpa.toString());
-    
+
     return this.httpClient.get<{ tieneDictamen: boolean }>(url, { params });
   }
+
+
+      /**
+   * Consulta los datos del despacho asociado a un RFC.
+   * @param request DTO con el RFC del contador.
+   * @returns Observable con los datos del despacho.
+   */
+  consultarDatosDespacho(request: DespachoRequestDto): Observable<DespachoResponseDto> {
+    const url = `${environment.contadoresApiUrl}${EPs.contadores.consultarDatosDespacho}`;
+    return this.httpClient.post<DespachoResponseDto>(url, request);
+  }
+
 
 }

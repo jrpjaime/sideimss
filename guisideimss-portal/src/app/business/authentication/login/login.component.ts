@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
+import { take } from 'rxjs';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../../core/services/auth.service';
@@ -81,15 +82,20 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
       this.authService.login(user, password).subscribe({
         next: (response) => {
           this.sharedService.initializeUserData();
-            this.sharedService.currentRole.subscribe(roles => {
+            this.sharedService.currentRole.pipe(take(1)).subscribe(roles => {
               this.roles = roles; // Asigna el array de roles
               console.log("this.roles: "+ this.roles.join(', '));
+              const tieneAcceso = this.roles.includes(Constants.rolePatron) ||
+                    this.roles.includes(Constants.roleContador) ||
+                    this.roles.includes(Constants.roleRepresentante);
 
               // Usa .includes() para verificar si tiene el rol deseado
-              if (this.roles.includes(Constants.rolePatron)) {
+              if (tieneAcceso) {
                 this.router.navigate([NAV.home]);
               } else {
-              this.router.navigate([NAV.login]);
+                  this.errorMessage = "No cuenta con un rol autorizado para acceder al sistema. Favor de verificar";
+                  this.alertService.error(this.errorMessage);
+                  this.router.navigate([NAV.login]);
               }
             });
         },
@@ -175,15 +181,20 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
             next: (response) => {
               this.sharedService.initializeUserData();
                //  Recibe 'roles' (array) en lugar de 'role' (string)
-             this.sharedService.currentRole.subscribe(roles => {
+             this.sharedService.currentRole.pipe(take(1)).subscribe(roles => {
                 this.roles = roles; // Asigna el array de roles
-                //  Usa .includes() para verificar si tiene el rol deseado
-              /*  if (this.roles.includes(Constants.rolePatron)) {
-                this.router.navigate([NAV.home]);
+                console.log("this.roles: "+ this.roles.join(', '));
+                const tieneAcceso = this.roles.includes(Constants.rolePatron) ||
+                    this.roles.includes(Constants.roleContador) ||
+                    this.roles.includes(Constants.roleRepresentante);
+
+                if (tieneAcceso) {
+                  this.router.navigate([NAV.home]);
                 } else {
+                  this.errorMessage = "El certificado utilizado no tiene un rol autorizado.";
+                  this.alertService.error(this.errorMessage);
                   this.router.navigate([NAV.login]);
-                }*/
-               this.router.navigate([NAV.home]);
+                }
              });
             },
               error: (err: HttpErrorResponse) => {

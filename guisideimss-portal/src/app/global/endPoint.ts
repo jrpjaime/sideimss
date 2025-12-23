@@ -19,7 +19,7 @@ export const EPs = {
     datoRfc: '/v1/datoRfc',
     tiposSociedadFormaParte: '/v1/tiposSociedadFormaParte',
     cargosContador: '/v1/cargosContador',
-    consultarDatosDespacho: '/v1/consultarDatosDespacho',
+
 
   },
 
@@ -32,7 +32,8 @@ export const EPs = {
     solicitudBaja: '/v1/solicitudBaja',
     colegioContador: '/v1/colegioContador',
     guardarModificacionDatos: '/v1/guardarModificacionDatos',
-    validarDictamenEnProceso: '/v1/validarDictamenEnProceso', 
+    validarDictamenEnProceso: '/v1/validarDictamenEnProceso',
+    consultarDatosDespacho: '/v1/consultarDatosDespacho',
 
 
   },

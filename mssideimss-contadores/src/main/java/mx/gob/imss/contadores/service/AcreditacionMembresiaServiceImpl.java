@@ -240,13 +240,14 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         acred.setCveIdCpa(contador.getCveIdCpa());
         acred.setCveIdCpaTramite(trG.getCveIdCpaTramite());
         acred.setFecRegistroAlta(ahora);
+        acred.setFecRegistroActualizado(ahora); 
         acred.setCveIdUsuario(usr);
         r3ColegioRepository.findByCveIdCpaAndFecRegistroBajaIsNull(contador.getCveIdCpa())
             .ifPresent(r3 -> acred.setCveIdColegio(r3.getCveIdColegio()));
 
         if (json.has("fechaExpedicionAcreditacion")) acred.setFecAcreditacionCp(parseFecha(json.get("fechaExpedicionAcreditacion").asText()));
         if (json.has("fechaExpedicionMembresia")) acred.setFecPresentacionAcreditacion(parseFecha(json.get("fechaExpedicionMembresia").asText()));
-        acred.setIndAcredMembresia(0);
+        acred.setIndAcredMembresia(null);
         acreditacionRepository.save(acred);
 
         if (json.has("desPathHdfsAcreditacion")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsAcreditacion").asText(), 133L, usr);

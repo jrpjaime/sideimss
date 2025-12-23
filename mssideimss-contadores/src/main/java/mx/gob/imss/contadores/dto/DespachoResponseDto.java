@@ -1,4 +1,4 @@
-package mx.gob.imss.catalogos.dto;
+package mx.gob.imss.contadores.dto;
 
 
 import lombok.Data;

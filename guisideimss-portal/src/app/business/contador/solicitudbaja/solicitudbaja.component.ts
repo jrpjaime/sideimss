@@ -10,6 +10,8 @@ import { Router } from '@angular/router';
 import { LoaderService } from '../../../shared/services/loader.service';
 import { SharedService } from '../../../shared/services/shared.service';
 import { Subscription } from 'rxjs';
+import { BaseComponent } from '../../../shared/base/base.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-solicitudbaja',
@@ -18,7 +20,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './solicitudbaja.component.html',
   styleUrl: './solicitudbaja.component.css'
 })
-export class SolicitudbajaComponent implements OnInit, OnDestroy {
+export class SolicitudbajaComponent extends BaseComponent implements OnInit, OnDestroy {
 
    private resetSubscription!: Subscription;
 
@@ -33,26 +35,31 @@ export class SolicitudbajaComponent implements OnInit, OnDestroy {
 
   tieneBloqueoDictamen: boolean = false;
 
-  constructor(
-    private contadorPublicoAutorizadoService: ContadorPublicoAutorizadoService,
-    private solicitudBajaDataService: SolicitudBajaDataService,
-    private alertService: AlertService,
-    private router: Router,
-    private loaderService: LoaderService,
-    private sharedService: SharedService
+constructor(
+  private contadorPublicoAutorizadoService: ContadorPublicoAutorizadoService,
+  private solicitudBajaDataService: SolicitudBajaDataService,
+  private alertService: AlertService,
+  private router: Router,
+  private loaderService: LoaderService,
+  private authService: AuthService,
+  sharedService: SharedService
+) {
+  super(sharedService);
+}
 
-  ) { }
+ override ngOnInit(): void {
+  // 1. Inicializamos los datos de la sesión del padre
+  this.recargaParametros();
 
-  ngOnInit(): void {
-      this.resetSubscription = this.sharedService.resetSolicitudBaja$.subscribe(() => {
-      this.resetFormulario();
-    });
-    this.loaderService.show();
-    this.cargarDatosPreviosYFolio();
-  }
+  this.resetSubscription = this.sharedService.resetSolicitudBaja$.subscribe(() => {
+    this.resetFormulario();
+  });
+
+  this.cargarDatosPreviosYFolio();
+}
 
 
-    ngOnDestroy(): void {
+ override   ngOnDestroy(): void {
     if (this.resetSubscription) {
       this.resetSubscription.unsubscribe();
     }
@@ -67,7 +74,7 @@ export class SolicitudbajaComponent implements OnInit, OnDestroy {
     this.error = null;
   }
 
-
+/*
   async cargarDatosPreviosYFolio(): Promise<void> {
     const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
 
@@ -148,6 +155,106 @@ export class SolicitudbajaComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  */
+
+async cargarDatosPreviosYFolio(): Promise<void> {
+  this.loaderService.show();
+  this.error = null;
+  this.tieneBloqueoDictamen = false;
+
+  // 1. OBTENEMOS EL NÚMERO DE REGISTRO DESDE LA SESIÓN (BASE COMPONENT)
+  const registroValue = this.sharedService.currentNumeroRegistroImssSesionValue;
+  // 2. VALIDACIÓN DE SESIÓN: Si no hay registro, redirigimos al login inmediatamente
+  if (!registroValue || registroValue.trim() === '' || registroValue === '0' || registroValue === 'null') {
+    console.error("Sesión inválida: No se encontró el Número de Registro IMSS en el Token.");
+    this.loaderService.hide();
+
+    // Opcional: limpiar los datos locales antes de salir
+    this.authService.logout();
+
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  const numRegistro = parseInt(registroValue);
+
+
+  // 2. VALIDACIÓN TEMPRANA: Solo llamamos a la validación de dictamen
+  this.contadorPublicoAutorizadoService.validarDictamenEnProceso(numRegistro).subscribe({
+    next: (res) => {
+      if (res.tieneDictamen) {
+        this.tieneBloqueoDictamen = true;
+        this.loading = false;
+        this.loaderService.hide();
+        //this.alertService.error('No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', { autoClose: true }    );
+        // AQUÍ TERMINA EL FLUJO. No se consulta nada más.
+      } else {
+        // 3. SI PASA LA VALIDACIÓN, CONTINUAMOS CON EL RESTO DE LAS CONSULTAS
+        this.procederACargarInformacion();
+      }
+    },
+    error: (err) => {
+      this.error = 'Ocurrió un error al validar su estatus de dictámenes.';
+      this.loading = false;
+      this.loaderService.hide();
+    }
+  });
+}
+
+// Método para continuar cuando la validación es exitosa
+private async procederACargarInformacion(): Promise<void> {
+  const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
+
+if (datosGuardados) {
+  this.solicitudBajaData = {
+    folioSolicitud: datosGuardados.folioSolicitud ?? '', // Forzamos a string
+    datosPersonalesDto: datosGuardados.datosPersonalesDto,
+    domicilioFiscalDto: datosGuardados.domicilioFiscalDto,
+    datosContactoDto: datosGuardados.datosContactoDto,
+    motivoBaja: datosGuardados.motivoBaja
+  };
+
+  this.folioSolicitud = datosGuardados.folioSolicitud ?? '';
+  this.motivoBaja = datosGuardados.motivoBaja;
+  this.actualizarCaracteresRestantes();
+  this.loading = false;
+  this.loaderService.hide();
+  this.solicitudBajaDataService.clearDatosParaRegresar();
+}
+}
+
+// Versión simplificada de carga de datos (sin volver a validar)
+private cargarDatosContadorDespuesDeValidar(): void {
+  this.contadorPublicoAutorizadoService.getDatosContador().subscribe({
+    next: (data) => {
+      this.solicitudBajaData = { ...data, folioSolicitud: this.folioSolicitud!, motivoBaja: this.motivoBaja };
+      this.loading = false;
+      this.loaderService.hide();
+    },
+    error: (err) => {
+      this.error = 'No se pudieron cargar los datos del contador.';
+      this.loading = false;
+      this.loaderService.hide();
+    }
+  });
+}
+
+
+
+
+
+// Método auxiliar para evitar repetir código de asignación
+private async finalizarCargaExitosa(data: any): Promise<void> {
+    if (!this.folioSolicitud) {
+        await this.generarFolioSolicitud();
+    }
+    this.solicitudBajaData = { ...data, folioSolicitud: this.folioSolicitud!, motivoBaja: this.motivoBaja };
+    this.tieneBloqueoDictamen = false;
+    this.loading = false;
+    this.loaderService.hide();
+}
+
 
   async generarFolioSolicitud(): Promise<void> {
     this.loaderService.show();

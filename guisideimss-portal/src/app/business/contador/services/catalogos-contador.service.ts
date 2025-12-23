@@ -61,15 +61,6 @@ export class CatalogosContadorService {
   }
 
 
-    /**
-   * Consulta los datos del despacho asociado a un RFC.
-   * @param request DTO con el RFC del contador.
-   * @returns Observable con los datos del despacho.
-   */
-  consultarDatosDespacho(request: DespachoRequestDto): Observable<DespachoResponseDto> {
-    const url = `${environment.catalogosApiUrl}${EPs.catalogo.consultarDatosDespacho}`;
-    return this.httpClient.post<DespachoResponseDto>(url, request);
-  }
 
 
 

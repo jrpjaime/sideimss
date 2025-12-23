@@ -921,7 +921,7 @@ limpiarNuevoRfcColegio(): void {
       rfc: this.rfcSesion
     };
 
-    this.catalogosContadorService.consultarDatosDespacho(request)
+    this.contadorPublicoAutorizadoService.consultarDatosDespacho(request)
       .pipe(finalize(() => this.loadingDespacho = false))
       .subscribe({
         next: (response: DespachoResponseDto) => {

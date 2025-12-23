@@ -199,23 +199,6 @@ private handleError(error: HttpErrorResponse) {
 
 
 
-  logout(): void {
-    console.log("Cerrando sesión...");
-
-    this.modalService.close();
-
-
-    sessionStorage.removeItem(this.tokenKey);
-    sessionStorage.removeItem(this.refreshTokenKey);
-    Opcional: sessionStorage.clear();
-
-    // Cancelar el refresco automático programado
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-    }
-
-    this.router.navigate(['/login']);
-  }
 
 
 
@@ -225,6 +208,7 @@ private handleError(error: HttpErrorResponse) {
    * Método para inicializar el estado de la sesión al cargar la aplicación.
    * Este método debe ser llamado desde AppComponent.ngOnInit().
    */
+  /*
   iniciarYRestaurarSesion(): void {
     console.log("AuthService: Verificando e inicializando sesión...");
 
@@ -247,6 +231,61 @@ private handleError(error: HttpErrorResponse) {
         this.logout();
     }
   }
+
+
+
+    logout(): void {
+    console.log("Cerrando sesión...");
+
+    this.modalService.close();
+
+
+    sessionStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.refreshTokenKey);
+    Opcional: sessionStorage.clear();
+
+    // Cancelar el refresco automático programado
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+
+    this.router.navigate(['/login']);
+  }
+    */
+
+iniciarYRestaurarSesion(): void {
+  console.log("AuthService: Verificando sesión...");
+
+  if (this.isAuthenticated()) {
+    console.log("Sesión válida encontrada. Restaurando contexto...");
+    const token = this.getToken();
+    this.actualizarContextoDesdeToken(token);
+    this.autoRefreshToken();
+  } else {
+    // CAMBIO CLAVE: Ya no llamamos a this.logout()
+    // Solo limpiamos los datos locales por si hay basura de una sesión expirada
+    console.log("No se encontró sesión activa o el token expiró. El sistema permanecerá en espera.");
+    this.limpiarDatosLocales();
+  }
+}
+
+// Nuevo método auxiliar para limpiar sin redirigir
+private limpiarDatosLocales(): void {
+  if (this.timeoutId) {
+    clearTimeout(this.timeoutId);
+  }
+  sessionStorage.removeItem(this.tokenKey);
+  sessionStorage.removeItem(this.refreshTokenKey);
+  // No pongas router.navigate aquí
+}
+
+// Modifica el logout para que use el auxiliar
+logout(): void {
+  console.log("Cerrando sesión y redirigiendo...");
+  this.modalService.close();
+  this.limpiarDatosLocales();
+  this.router.navigate(['/login']);
+}
 
 
 }

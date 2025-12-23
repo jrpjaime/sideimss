@@ -185,27 +185,24 @@ export class SharedService {
     console.log("desSubdelegacion: " + desSubdelegacion);
     console.log("numeroRegistroImss: " + numeroRegistroImss);
 
-    this.changeRfcSesion(rfc);
-    this.changeCurpSesion(curp);
-    this.changeNombreSesion(nombre);
-    this.changePrimerApellidoSesion(primerApellido);
-    this.changeSegundoApellidoSesion(segundoApellido);
-    this.changeDelegacionSesion(desDelegacion);
-    this.changeSubdelegacionSesion(desSubdelegacion);
-    this.changeRoleSesion(roles);
-    this.changeNumeroRegistroImssSesion(numeroRegistroImss);
+    const rolesPermitidos = [Constants.rolePatron, Constants.roleContador, Constants.roleRepresentante];
+    const tieneRolValido = roles.some(r => rolesPermitidos.includes(r));
 
-    if (roles.includes(Constants.rolePatron)) {
+    if (tieneRolValido) {
+      // Seteamos datos de sesión (identidad)
+      this.changeRfcSesion(payload.rfc);
+      this.changeCurpSesion(payload.curp);
+      this.changeNombreSesion(payload.nombre);
+      this.changePrimerApellidoSesion(payload.primerApellido);
+      this.changeSegundoApellidoSesion(payload.segundoApellido);
+      this.changeRoleSesion(roles);
+      this.changeNumeroRegistroImssSesion(payload.numeroRegistroImss);
 
-      this.changeRfc(rfc);
-      this.changeCurp(curp);
-      this.changeNombre(nombre);
-      this.changePrimerApellido(primerApellido);
-      this.changeSegundoApellido(segundoApellido);
+      // Seteamos datos de trabajo (contexto)
+      this.changeRfc(payload.rfc);
+      this.changeCurp(payload.curp);
+      this.changeNombre(payload.nombre);
       this.changeRole(roles);
-
-      console.log("::rfc: " + rfc);
-      console.log("::curp: " + curp);
     }
     console.log("TERMINA SharedService initializeUserData: " );
   }

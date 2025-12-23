@@ -187,10 +187,7 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
 
         if (response.tieneDictamen) {
           // TIENE DICTAMEN: MANTENER AL USUARIO AQUI Y MOSTRAR ERROR
-          this.alertService.error(
-            'No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.',
-            { autoClose: false, keepAfterRouteChange: false }
-          );
+         //this.alertService.error('No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', { autoClose: true, keepAfterRouteChange: false } );
         } else {
           // NO TIENE DICTAMEN: DEJAR PASAR
           this.router.navigate([route]);

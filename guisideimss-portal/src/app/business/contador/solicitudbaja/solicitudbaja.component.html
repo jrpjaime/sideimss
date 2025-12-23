@@ -1,4 +1,3 @@
-
 <div class="row">
   <div class="col-12">
     <h3 class="mb-0">Solicitud de Baja</h3>
@@ -8,6 +7,7 @@
 
 <div class="container-fluid mt-3">
 
+  <!-- 1. ESTADO DE CARGA (SPINNER) -->
   @if (loading) {
     <div class="text-center">
       <div class="spinner-border text-primary" role="status">
@@ -15,219 +15,236 @@
       </div>
       <p>Cargando datos del contador...</p>
     </div>
-  } @else if (error) {
+  }
+
+  <!-- 2. ESTADO BLOQUEADO (DICTAMEN EN PROCESO) -->
+  <!-- Si hay bloqueo, solo mostramos el mensaje y el botón para salir -->
+  @else if (tieneBloqueoDictamen) {
+    <div class="alert alert-danger" role="alert">
+
+      No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.
+    </div>
+
+    <div class="pull-right">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" (click)="onCancelar()">Regresar al inicio</button>
+      </div>
+    </div>
+  }
+
+  <!-- 3. ERROR DE SISTEMA -->
+  @else if (error) {
     <div class="alert alert-danger" role="alert">
       {{ error }}
-     <!-- <button type="button" class="btn btn-primary btn-sm ms-3" (click)="cargarDatosContador()">Reintentar</button>  -->
     </div>
-  } @else if (solicitudBajaData) {
+    <div class="pull-right">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onCancelar()">Cancelar</button>
+      </div>
+    </div>
+  }
+
+  <!-- 4. FLUJO EXITOSO (MOSTRAR DATOS) -->
+  <!-- Solo entra aquí si hay datos Y no hay bloqueo de dictamen -->
+  @else if (solicitudBajaData && !tieneBloqueoDictamen) {
     <p>El folio de la solicitud es: <strong>{{ solicitudBajaData.folioSolicitud }}</strong></p>
     <p>Paso 1 de 2: Datos Personales</p>
 
     <!-- SECCIÓN DE DATOS PERSONALES -->
+    <div class="row">
+      <div class="col-12">
+        <h3 class="mb-0">Datos personales</h3>
+        <hr class="red">
+      </div>
+    </div>
 
-        <div class="row">
-          <div class="col-12">
-            <h3 class="mb-0">Datos personales</h3>
-            <hr class="red">
-          </div>
-        </div>
-
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">RFC</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.rfc }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">CURP</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.curp }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Apellido paterno</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.apellidoPaterno }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Apellido materno</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.apellidoMaterno }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Nombre(s)</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.nombre }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Registro IMSS</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.registroIMSS }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Estatus</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.estatus }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Delegación</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.delegacion }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Subdelegación</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.subdelegacion }}</p>
-          </div>
-        </div>
-
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">RFC</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.rfc }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">CURP</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.curp }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Apellido paterno</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.apellidoPaterno }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Apellido materno</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.apellidoMaterno }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Nombre(s)</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.nombre }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Registro IMSS</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.registroIMSS }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Estatus</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.estatus }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Delegación</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.delegacion }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Subdelegación</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosPersonalesDto.subdelegacion }}</p>
+      </div>
+    </div>
 
     <!-- SECCIÓN DE DOMICILIO FISCAL -->
+    <div class="row">
+      <div class="col-12">
+        <h3 class="mb-0">Domicilio fiscal</h3>
+        <hr class="red">
+      </div>
+    </div>
 
-
-        <div class="row">
-          <div class="col-12">
-            <h3 class="mb-0">Domicilio fiscal</h3>
-            <hr class="red">
-          </div>
-        </div>
-
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Calle</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.calle }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Número exterior</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.numeroExterior }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Número interior</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.numeroInterior }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Entre la calle de</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.entreCalle }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Y la calle de</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.yCalle }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Colonia (asentamiento)</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.colonia }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Localidad</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.localidad }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Municipio o delegación</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.municipioODelegacion }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Entidad federativa</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.entidadFederativa }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Código postal</label>
-            <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.codigoPostal }}</p>
-          </div>
-        </div>
-
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Calle</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.calle }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Número exterior</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.numeroExterior }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Número interior</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.numeroInterior }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Entre la calle de</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.entreCalle }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Y la calle de</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.yCalle }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Colonia (asentamiento)</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.colonia }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Localidad</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.localidad }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Municipio o delegación</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.municipioODelegacion }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Entidad federativa</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.entidadFederativa }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Código postal</label>
+        <p class="form-value-custom">{{ solicitudBajaData.domicilioFiscalDto.codigoPostal }}</p>
+      </div>
+    </div>
 
     <!-- SECCIÓN DE DATOS DE CONTACTO -->
+    <div class="row">
+      <div class="col-12">
+        <h3 class="mb-0">Datos de contacto</h3>
+        <hr class="red">
+      </div>
+    </div>
 
-          <div class="row">
-            <div class="col-12">
-              <h3 class="mb-0">Datos de contacto</h3>
-              <hr class="red">
-            </div>
-          </div>
-
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Correo electrónico 1</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico1 }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Teléfono</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.telefono1 }}</p>
-          </div>
-        </div>
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Correo electrónico 2</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico2 }}</p>
-          </div>
-          <div class="col-sm-6">
-            <label class="form-label-custom">Correo electrónico 3</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico3 }}</p>
-          </div>
-        </div>
-
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <label class="form-label-custom">Teléfono 2</label>
-            <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.telefono2 }}</p>
-          </div>
-        </div>
-
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Correo electrónico 1</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico1 }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Teléfono</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.telefono1 }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Correo electrónico 2</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico2 }}</p>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label-custom">Correo electrónico 3</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.correoElectronico3 }}</p>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <label class="form-label-custom">Teléfono 2</label>
+        <p class="form-value-custom">{{ solicitudBajaData.datosContactoDto.telefono2 }}</p>
+      </div>
+    </div>
 
     <!-- SECCIÓN DE MOTIVO DE BAJA -->
-
-
-        <strong>Motivo de baja</strong>
-
-          <div class="row">
-            <div class="col-12">
-              <h3 class="mb-0">Motivo de baja</h3>
-              <hr class="red">
-            </div>
-          </div>
-
-
-        <div class="row mb-2">
-          <div class="col-12">
-            <p class="form-label-custom">* El motivo de la solicitud baja:</p>
-            <textarea
-              class="form-control"
-              rows="3"
-              placeholder="Ingresa el motivo de la baja aquí..."
-              [(ngModel)]="motivoBaja"
-              (input)="actualizarCaracteresRestantes()"
-              maxlength="1000"
-            ></textarea>
-            <small class="form-text text-muted">{{ caracteresRestantes }} caracteres restantes.</small>
-          </div>
-        </div>
-
-
-
-
-
-  <div class="pull-right">
-    <div class="modal-footer">
-          <div class="col-12 d-flex justify-content-end">
-            <p class="me-3">* Campo obligatorio</p>
-          </div>
-          <button type="button" class="btn btn-secondary" (click)="onCancelar()">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="continuarConAcuse()" [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud || tieneBloqueoDictamen">Siguiente</button>
-
+    <div class="row">
+      <div class="col-12">
+        <h3 class="mb-0">Motivo de baja</h3>
+        <hr class="red">
+      </div>
     </div>
-  </div>
 
+    <div class="row mb-2">
+      <div class="col-12">
+        <p class="form-label-custom">* El motivo de la solicitud baja:</p>
+        <textarea
+          class="form-control"
+          rows="3"
+          placeholder="Ingresa el motivo de la baja aquí..."
+          [(ngModel)]="motivoBaja"
+          (input)="actualizarCaracteresRestantes()"
+          maxlength="1000"
+        ></textarea>
+        <small class="form-text text-muted">{{ caracteresRestantes }} caracteres restantes.</small>
+      </div>
+    </div>
 
-  } @else {
-    <p class="text-center">No hay datos disponibles para mostrar.</p>
+    <div class="pull-right">
+      <div class="modal-footer">
+        <div class="col-12 d-flex justify-content-end">
+          <p class="me-3">* Campo obligatorio</p>
+        </div>
+        <button type="button" class="btn btn-secondary" (click)="onCancelar()">Cancelar</button>
+        <button type="button" class="btn btn-primary"
+                (click)="continuarConAcuse()"
+                [disabled]="!motivoBaja || motivoBaja.trim().length === 0 || !folioSolicitud">
+          Siguiente
+        </button>
+      </div>
+    </div>
   }
+
+  <!-- 5. ESTADO SIN DATOS (FALLBACK) -->
+  @else {
+    <p class="text-center">No hay datos disponibles para mostrar.</p>
+    <div class="text-center">
+        <button type="button" class="btn btn-secondary" (click)="onCancelar()">Regresar</button>
+    </div>
+  }
+
 </div>
