@@ -22,7 +22,7 @@
   </div>
   <div class="row">
           <div class="col-sm-4">
-            <label for="fechaExpedicionAcreditacion" class="form-label">* Fecha de expedición de la creditación: </label>
+            <label for="fechaExpedicionAcreditacion" class="form-label">* Fecha de expedición de Acreditación: </label>
             <div class="form-group datepicker-group">
               <input class="form-control"  id="fechaExpedicionAcreditacion" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionAcreditacion" type="date" [max]="maxDate" onkeydown="return false" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.invalid && formAcreditacionMembresia.get('fechaExpedicionAcreditacion')?.touched) {
