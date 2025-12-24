@@ -453,13 +453,13 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
         String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
         
         // Consulta extendida para traer el ID del Colegio y el ID de su Domicilio Fiscal Activo
-        String sqlColegio = "SELECT C.CVE_ID_COLEGIO, DF.CVE_ID_PMDOM_FISCAL " +
+        String sqlColegio = "SELECT C.CVE_ID_COLEGIO, PDF.CVE_ID_PMDOM_FISCAL " +
                             "FROM MGPBDTU9X.NDT_COLEGIO C " +
                             "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
-                            "LEFT JOIN MGPBDTU9X.DIT_PMDOM_FISCAL DF ON PM.CVE_ID_PERSONA_MORAL = DF.CVE_ID_PERSONA_MORAL " +
+                            "LEFT JOIN MGPBDTU9X.DIT_PERSONAM_DOM_FISCAL PDF ON PM.CVE_ID_PERSONA_MORAL = PDF.CVE_ID_PERSONA_MORAL " +
+                            "AND PDF.FEC_REGISTRO_BAJA IS NULL " + 
                             "WHERE PM.RFC = :rfc " +
-                            "AND C.FEC_REGISTRO_BAJA IS NULL " +
-                            "AND (DF.FEC_REGISTRO_BAJA IS NULL OR DF.CVE_ID_PMDOM_FISCAL IS NULL)";
+                            "AND C.FEC_REGISTRO_BAJA IS NULL";
 
         try {
             Object[] result = (Object[]) entityManager.createNativeQuery(sqlColegio)
