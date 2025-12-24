@@ -476,6 +476,7 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
             if (idDomicilio == null) {
                 logger.warn(">>> El Colegio {} existe pero no tiene un domicilio fiscal activo registrado.", rfcColegio);
                 // Aquí decides si permites continuar con null o lanzas error
+                 throw new RuntimeException("El Colegio " + rfcColegio +" existe pero no tiene un domicilio fiscal activo registrado.");
             }
 
             logger.info(">>> Vinculado a Colegio ID: {} con Domicilio ID: {}", idColegio, idDomicilio);
