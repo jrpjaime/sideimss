@@ -452,36 +452,41 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
     // 4. Buscar el ID del nuevo Colegio por RFC (vía Persona Moral) 
     if (state != null && state.has("nuevoRfcColegio")) {
         String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
-        logger.info(">>> Buscando Colegio con RFC: {}", rfcColegio);
         
-        String sqlColegio = "SELECT C.CVE_ID_COLEGIO FROM MGPBDTU9X.NDT_COLEGIO C " +
+        // Consulta extendida para traer el ID del Colegio y el ID de su Domicilio Fiscal Activo
+        String sqlColegio = "SELECT C.CVE_ID_COLEGIO, DF.CVE_ID_PMDOM_FISCAL " +
+                            "FROM MGPBDTU9X.NDT_COLEGIO C " +
                             "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
-                            "WHERE PM.RFC = :rfc AND C.FEC_REGISTRO_BAJA IS NULL";
+                            "LEFT JOIN MGPBDTU9X.DIT_PMDOM_FISCAL DF ON PM.CVE_ID_PERSONA_MORAL = DF.CVE_ID_PERSONA_MORAL " +
+                            "WHERE PM.RFC = :rfc " +
+                            "AND C.FEC_REGISTRO_BAJA IS NULL " +
+                            "AND (DF.FEC_REGISTRO_BAJA IS NULL OR DF.CVE_ID_PMDOM_FISCAL IS NULL)";
+
         try {
-            Object resultado = entityManager.createNativeQuery(sqlColegio)
+            Object[] result = (Object[]) entityManager.createNativeQuery(sqlColegio)
                     .setParameter("rfc", rfcColegio)
                     .getSingleResult();
             
-            r3New.setCveIdColegio(((Number) resultado).longValue());
-            logger.info(">>> ID Colegio encontrado: {}", r3New.getCveIdColegio());
+            Long idColegio = ((Number) result[0]).longValue();
+            Long idDomicilio = (result[1] != null) ? ((Number) result[1]).longValue() : null;
+
+            r3New.setCveIdColegio(idColegio);
+            r3New.setCveIdPmdomFiscal(idDomicilio); // <--- Asignamos el domicilio del NUEVO colegio
+
+            if (idDomicilio == null) {
+                logger.warn(">>> El Colegio {} existe pero no tiene un domicilio fiscal activo registrado.", rfcColegio);
+                // Aquí decides si permites continuar con null o lanzas error
+            }
+
+            logger.info(">>> Vinculado a Colegio ID: {} con Domicilio ID: {}", idColegio, idDomicilio);
 
         } catch (jakarta.persistence.NoResultException e) {
-            // CAMBIO CLAVE: En lugar de heredar el anterior, lanzamos error
-            logger.error(">>> ERROR: No existe el Colegio con RFC: {}", rfcColegio);
-            throw new RuntimeException("El Colegio con RFC " + rfcColegio + " no es válido o no está registrado en el sistema.");
+            throw new RuntimeException("El Colegio con RFC " + rfcColegio + " no es válido o no está registrado.");
         } catch (Exception e) {
-            logger.error(">>> Error en búsqueda de Colegio: {}", e.getMessage());
-            throw new RuntimeException("Error al validar el Colegio: " + e.getMessage());
+            throw new RuntimeException("Error al validar datos del Colegio: " + e.getMessage());
         }
-    } else {
-        // Si el trámite requiere colegio y no viene en el state, también podrías lanzar error
-        throw new RuntimeException("No se proporcionó el RFC del Colegio para la sincronización.");
     }
 
-    // 5. Mantener el domicilio fiscal anterior si existe (opcional)
-    if (ant != null) {
-        r3New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
-    }
 
     // 6. Guardar el nuevo registro (Activo)
     r3ColegioRepository.save(r3New);
