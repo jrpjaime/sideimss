@@ -371,11 +371,10 @@ private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCp
                         .setParameter("rfc", rfcDespacho)
                         .getSingleResult();
 
-                if (result != null) {
-                    Long idDespacho = ((Number) result).longValue();
-                    r2New.setCveIdDespacho(idDespacho);
-                    logger.info(">>> Despacho encontrado. ID vinculado: {}", idDespacho);
-                }
+                // Si llega aquí, es porque encontró uno
+                Long idDespacho = ((Number) result).longValue();
+                r2New.setCveIdDespacho(idDespacho);
+                logger.info(">>> Despacho encontrado ID: {}", idDespacho);
             } catch (jakarta.persistence.NoResultException e) {
                 logger.error(">>> ERROR: No existe un registro en NDT_DESPACHOS para el RFC: {}", rfcDespacho);
                 // Si no existe, podrías decidir si heredar el anterior o lanzar error
@@ -471,13 +470,14 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
             Long idDomicilio = (result[1] != null) ? ((Number) result[1]).longValue() : null;
 
             r3New.setCveIdColegio(idColegio);
-            r3New.setCveIdPmdomFiscal(idDomicilio); // <--- Asignamos el domicilio del NUEVO colegio
+            
 
             if (idDomicilio == null) {
                 logger.warn(">>> El Colegio {} existe pero no tiene un domicilio fiscal activo registrado.", rfcColegio);
                 // Aquí decides si permites continuar con null o lanzas error
-                 throw new RuntimeException("El Colegio " + rfcColegio +" existe pero no tiene un domicilio fiscal activo registrado.");
+                throw new RuntimeException("El Colegio " + rfcColegio + " existe pero no tiene un domicilio fiscal activo.");
             }
+            r3New.setCveIdPmdomFiscal(idDomicilio); 
 
             logger.info(">>> Vinculado a Colegio ID: {} con Domicilio ID: {}", idColegio, idDomicilio);
 
@@ -486,6 +486,9 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
         } catch (Exception e) {
             throw new RuntimeException("Error al validar datos del Colegio: " + e.getMessage());
         }
+    }else {
+        // Si el trámite es de Colegio pero no trae el RFC nuevo, es un error de datos
+        throw new RuntimeException("No se proporcionó el RFC del nuevo Colegio.");
     }
 
 
