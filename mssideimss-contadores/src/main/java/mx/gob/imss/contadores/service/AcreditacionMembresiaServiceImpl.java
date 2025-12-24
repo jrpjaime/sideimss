@@ -19,6 +19,9 @@ import org.springframework.http.HttpHeaders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jakarta.persistence.EntityManager;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
@@ -61,6 +64,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
     
     private final WebClient webClient;
     private final TransactionTemplate transactionTemplate;
+
+    private final EntityManager entityManager;
 
     @Override
     public Mono<DocumentoIndividualDto> cargarDocumentoAlmacenamiento(DocumentoIndividualDto documento, String jwtToken) {
@@ -333,77 +338,158 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         }
     }
 
-    private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
-        LocalDateTime ahora = LocalDateTime.now();
-        NdtR2Despacho ant = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
+    logger.info(">>> [INICIO] Sincronizar R2 para Despacho (Persona Moral)");
+    LocalDateTime ahora = LocalDateTime.now();
 
-        NdtR2Despacho r2New = new NdtR2Despacho();
-        r2New.setCveIdCpa(contador.getCveIdCpa());
-        r2New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
-        r2New.setFecRegistroAlta(ahora);
-        r2New.setCveIdUsuario(usr);
+    // 1. Obtener registro previo para darlo de baja
+    NdtR2Despacho ant = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
 
-        if (ant != null) {
-            r2New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
-            r2New.setCveIdDespacho(ant.getCveIdDespacho());
-            ant.setFecRegistroBaja(ahora);
-            r2DespachoRepository.save(ant);
-        }
+    NdtR2Despacho r2New = new NdtR2Despacho();
+    r2New.setCveIdCpa(contador.getCveIdCpa());
+    r2New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+    r2New.setFecRegistroAlta(ahora);
+    r2New.setCveIdUsuario(usr);
 
     if (state != null) {
         long tipoSoc = state.path("selectedTipoSociedad").asLong();
         r2New.setIndTipoCpa(tipoSoc);
 
-        if (tipoSoc == 2) { // PROFESIONAL INDEPENDIENTE
-            // IMPORTANTE: Guardar como "1" o "0" para que la consulta lo entienda
-            String tieneTrab = state.path("tieneTrabajadores").asText();
-            r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(tieneTrab) ? "1" : "0");
-            r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
-            r2DespachoRepository.save(r2New);
-        } else { // ES UN DESPACHO
-               r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
-    
-        
-            if (state.has("cveIdDespacho")) {
-                r2New.setCveIdDespacho(state.get("cveIdDespacho").asLong());
-            }
+        if (tipoSoc == 1) { // ES UN DESPACHO
+            String rfcDespacho = state.path("nuevoRfcDespacho").asText().trim().toUpperCase();
+            logger.info(">>> Buscando Despacho con RFC: {}", rfcDespacho);
             
-            // También el domicilio fiscal del despacho si aplica
-            if (state.has("cveIdPmdomFiscal")) {
-                r2New.setCveIdPmdomFiscal(state.get("cveIdPmdomFiscal").asLong());
+            // SQL optimizado usando solo las tablas que confirmaste que tienes
+            String sqlLookup = "SELECT D.CVE_ID_DESPACHO " +
+                               "FROM MGPBDTU9X.DIT_PERSONA_MORAL PM " +
+                               "INNER JOIN MGPBDTU9X.NDT_DESPACHOS D ON D.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                               "WHERE PM.RFC = :rfc AND D.FEC_REGISTRO_BAJA IS NULL";
+
+            try {
+                // Ejecutamos la consulta para obtener el ID del Despacho
+                Object result = entityManager.createNativeQuery(sqlLookup)
+                        .setParameter("rfc", rfcDespacho)
+                        .getSingleResult();
+
+                if (result != null) {
+                    Long idDespacho = ((Number) result).longValue();
+                    r2New.setCveIdDespacho(idDespacho);
+                    logger.info(">>> Despacho encontrado. ID vinculado: {}", idDespacho);
+                }
+            } catch (jakarta.persistence.NoResultException e) {
+                logger.error(">>> ERROR: No existe un registro en NDT_DESPACHOS para el RFC: {}", rfcDespacho);
+                // Si no existe, podrías decidir si heredar el anterior o lanzar error
+            } catch (Exception e) {
+                logger.error(">>> Error en búsqueda de Despacho: {}", e.getMessage());
             }
+
+            r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+            
+            // IMPORTANTE: Como no tienes la tabla de domicilio PM, seteamos null o heredamos el anterior
+            r2New.setCveIdPmdomFiscal(null); 
 
             NdtR2Despacho guardado = r2DespachoRepository.save(r2New);
+            logger.info(">>> Registro R2 guardado exitosamente con ID: {}", guardado.getCveIdR2Despacho());
 
-            // GUARDADO DEL TELÉFONO (Vincular a R2)
+            // Vinculación de contacto (Teléfono)
             String tel = state.path("telefonoFijoDespacho").asText(null);
             if (tel != null && !tel.isEmpty()) {
                 vincularR2Contacto(guardado.getCveIdR2Despacho(), tel, usr);
             }
+        } else {
+            // Lógica para Profesional Independiente (Tipo 2)
+            r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(state.path("tieneTrabajadores").asText()) ? "1" : "0");
+            r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
+            r2DespachoRepository.save(r2New);
+            logger.info(">>> Guardado como Profesional Independiente.");
         }
-    }
-    }
 
-    private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonNode root, NdtCpaTramite tr, String usr) {
-        LocalDateTime ahora = LocalDateTime.now();
-        NdtR3Colegio ant = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
-
-        NdtR3Colegio r3New = new NdtR3Colegio();
-        r3New.setCveIdCpa(contador.getCveIdCpa());
-        r3New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
-        r3New.setFecRegistroAlta(ahora);
-        r3New.setCveIdUsuario(usr);
-
+        // 2. Dar de baja el registro anterior después de guardar el nuevo
         if (ant != null) {
-            r3New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
-            r3New.setCveIdColegio(ant.getCveIdColegio());
             ant.setFecRegistroBaja(ahora);
-            r3ColegioRepository.save(ant);
+            r2DespachoRepository.save(ant);
+            logger.info(">>> Registro R2 anterior (ID: {}) marcado de baja.", ant.getCveIdR2Despacho());
         }
-
-        r3ColegioRepository.save(r3New);
-        if (root.has("desPathHdfsConstancia")) guardarDocumentoLegacy(contador.getCveIdCpa(), root.get("desPathHdfsConstancia").asText(), 132L, usr);
     }
+}
+
+private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonNode root, NdtCpaTramite tr, String usr) {
+    logger.info(">>> [INICIO] sincronizarR3 - CPA ID: {}, Usuario: {}", contador.getCveIdCpa(), usr);
+    LocalDateTime ahora = LocalDateTime.now();
+    
+    // 1. Buscar registro activo actual para pasarlo a historial (baja)
+    NdtR3Colegio ant = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+    logger.info(">>> Registro previo encontrado: {}", (ant != null ? "ID: " + ant.getCveIdR3Colegio() : "Ninguno"));
+
+    // 2. Inicializar el nuevo registro de Colegio
+    NdtR3Colegio r3New = new NdtR3Colegio();
+    r3New.setCveIdCpa(contador.getCveIdCpa());
+    r3New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+    r3New.setFecRegistroAlta(ahora);
+    r3New.setCveIdUsuario(usr);
+    
+    // Seteamos folios del trámite si están disponibles
+    r3New.setNumTramiteNotaria(tr.getNumTramiteNotaria());
+    r3New.setUrlAcuseNotaria(tr.getUrlAcuseNotaria());
+
+    // 3. Procesar el documento (Constancia) si viene en el JSON
+    if (root != null && root.has("desPathHdfsConstancia")) {
+        String pathDoc = root.get("desPathHdfsConstancia").asText();
+        logger.info(">>> Procesando constancia HDFS: {}", pathDoc);
+        
+        // Llamada al método que ahora retorna NdtDocumentoProbatorio
+        NdtDocumentoProbatorio docGuardado = guardarDocumentoLegacy(contador.getCveIdCpa(), pathDoc, 132L, usr);
+        
+        if (docGuardado != null) {
+            // Vinculamos el ID generado a la columna CVE_ID_DOCTO_PROBATORIO
+            r3New.setCveIdDoctoProbatorio(docGuardado.getCveIdDoctoProbatorio());
+            logger.info(">>> Documento vinculado con ID: {}", docGuardado.getCveIdDoctoProbatorio());
+        }
+    }
+
+    // 4. Buscar el ID del nuevo Colegio por RFC (vía Persona Moral)
+    if (state != null && state.has("nuevoRfcColegio")) {
+        String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
+        logger.info(">>> Buscando Colegio con RFC: {}", rfcColegio);
+        
+        String sqlColegio = "SELECT C.CVE_ID_COLEGIO FROM MGPBDTU9X.NDT_COLEGIO C " +
+                            "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                            "WHERE PM.RFC = :rfc AND C.FEC_REGISTRO_BAJA IS NULL";
+        try {
+            Object resultado = entityManager.createNativeQuery(sqlColegio)
+                    .setParameter("rfc", rfcColegio)
+                    .getSingleResult();
+            
+            r3New.setCveIdColegio(((Number) resultado).longValue());
+            logger.info(">>> ID Colegio encontrado y asignado: {}", r3New.getCveIdColegio());
+        } catch (Exception e) {
+            logger.warn(">>> No se encontró colegio activo para el RFC: {}. Error: {}", rfcColegio, e.getMessage());
+            // Si no se encuentra el nuevo, heredar el anterior para no dejarlo nulo
+            if (ant != null) {
+                r3New.setCveIdColegio(ant.getCveIdColegio());
+                logger.info(">>> Se hereda el Colegio anterior (ID: {}) debido a búsqueda fallida.", ant.getCveIdColegio());
+            }
+        }
+    }
+
+    // 5. Mantener el domicilio fiscal anterior si existe (opcional)
+    if (ant != null) {
+        r3New.setCveIdPmdomFiscal(ant.getCveIdPmdomFiscal());
+    }
+
+    // 6. Guardar el nuevo registro (Activo)
+    r3ColegioRepository.save(r3New);
+    logger.info(">>> Nuevo registro NDT_R3_COLEGIO guardado exitosamente.");
+
+    // 7. Dar de baja el registro anterior (Histórico)
+    if (ant != null) {
+        ant.setFecRegistroBaja(ahora);
+        r3ColegioRepository.save(ant);
+        logger.info(">>> Registro anterior (ID: {}) marcado de BAJA.", ant.getCveIdR3Colegio());
+    }
+    
+    logger.info(">>> [FIN] sincronizarR3 finalizado correctamente.");
+}
 
     // --- MÉTODOS DE APOYO ---
 
@@ -447,15 +533,20 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         r2FormaContactoRepository.save(rel);
     }
 
-    private void guardarDocumentoLegacy(Long idCpa, String url, Long tipo, String usr) {
-        NdtDocumentoProbatorio doc = new NdtDocumentoProbatorio();
-        doc.setCveIdCpa(idCpa);
-        doc.setUrlDocumentoProb(url);
-        doc.setCveIdDoctoProbPorTipo(tipo);
-        doc.setFecRegistroAlta(LocalDateTime.now());
-        doc.setCveIdUsuario(usr);
-        documentoProbatorioRepository.save(doc);
-    }
+ 
+
+    private NdtDocumentoProbatorio guardarDocumentoLegacy(Long idCpa, String url, Long tipo, String usr) {
+    NdtDocumentoProbatorio doc = new NdtDocumentoProbatorio();
+    doc.setCveIdCpa(idCpa);
+    doc.setUrlDocumentoProb(url);
+    doc.setCveIdDoctoProbPorTipo(tipo);
+    doc.setFecRegistroAlta(LocalDateTime.now());
+    doc.setCveIdUsuario(usr);
+    
+    // Al hacer save, Hibernate usa la secuencia que definiste y llena el campo cveIdDoctoProbatorio
+    return documentoProbatorioRepository.save(doc);
+}
+
 
     private LocalDateTime parseFecha(String f) {
         if (f == null || f.isEmpty()) return null;

@@ -39,4 +39,10 @@ public class NdtR3Colegio {
 
     @Column(name = "CVE_ID_DOCTO_PROBATORIO")
     private Long cveIdDoctoProbatorio;
+
+    @Column(name = "NUM_TRAMITE_NOTARIA")
+    private String numTramiteNotaria;
+
+    @Column(name = "URL_ACUSE_NOTARIA")
+    private String urlAcuseNotaria;
 }
