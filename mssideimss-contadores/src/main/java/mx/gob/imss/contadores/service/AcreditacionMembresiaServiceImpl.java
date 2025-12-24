@@ -379,8 +379,10 @@ private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCp
             } catch (jakarta.persistence.NoResultException e) {
                 logger.error(">>> ERROR: No existe un registro en NDT_DESPACHOS para el RFC: {}", rfcDespacho);
                 // Si no existe, podrías decidir si heredar el anterior o lanzar error
+                 throw new RuntimeException("El despacho solicitado con RFC " + rfcDespacho + " no es válido o no se encuentra registrado.");
             } catch (Exception e) {
                 logger.error(">>> Error en búsqueda de Despacho: {}", e.getMessage());
+                throw new RuntimeException("Error al validar la información del despacho: " + e.getMessage());
             }
 
             r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
@@ -447,7 +449,7 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
         }
     }
 
-    // 4. Buscar el ID del nuevo Colegio por RFC (vía Persona Moral)
+    // 4. Buscar el ID del nuevo Colegio por RFC (vía Persona Moral) 
     if (state != null && state.has("nuevoRfcColegio")) {
         String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
         logger.info(">>> Buscando Colegio con RFC: {}", rfcColegio);
@@ -461,15 +463,19 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
                     .getSingleResult();
             
             r3New.setCveIdColegio(((Number) resultado).longValue());
-            logger.info(">>> ID Colegio encontrado y asignado: {}", r3New.getCveIdColegio());
+            logger.info(">>> ID Colegio encontrado: {}", r3New.getCveIdColegio());
+
+        } catch (jakarta.persistence.NoResultException e) {
+            // CAMBIO CLAVE: En lugar de heredar el anterior, lanzamos error
+            logger.error(">>> ERROR: No existe el Colegio con RFC: {}", rfcColegio);
+            throw new RuntimeException("El Colegio con RFC " + rfcColegio + " no es válido o no está registrado en el sistema.");
         } catch (Exception e) {
-            logger.warn(">>> No se encontró colegio activo para el RFC: {}. Error: {}", rfcColegio, e.getMessage());
-            // Si no se encuentra el nuevo, heredar el anterior para no dejarlo nulo
-            if (ant != null) {
-                r3New.setCveIdColegio(ant.getCveIdColegio());
-                logger.info(">>> Se hereda el Colegio anterior (ID: {}) debido a búsqueda fallida.", ant.getCveIdColegio());
-            }
+            logger.error(">>> Error en búsqueda de Colegio: {}", e.getMessage());
+            throw new RuntimeException("Error al validar el Colegio: " + e.getMessage());
         }
+    } else {
+        // Si el trámite requiere colegio y no viene en el state, también podrías lanzar error
+        throw new RuntimeException("No se proporcionó el RFC del Colegio para la sincronización.");
     }
 
     // 5. Mantener el domicilio fiscal anterior si existe (opcional)
