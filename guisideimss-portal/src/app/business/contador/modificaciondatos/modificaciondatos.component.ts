@@ -195,6 +195,11 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
     this.deseaActualizarDespacho = null;
     this.deseaActualizarContacto = null;
 
+    // Limpiar banderas de archivo
+    this.fileConstanciaUploadSuccess = false;
+    this.fileConstanciaHdfsPath = null;
+    this.selectedFileConstancia = null;
+
     // 5. Limpiar datos temporales del servicio (Para que no se autorrellene al recargar)
     this.modificacionDatosDataService.clearDatosFormularioPrevio();
 
@@ -421,6 +426,7 @@ export class ModificaciondatosComponent extends BaseComponent implements OnInit,
    */
   private resetearVariablesYSalir(): void {
     this.habilitarEdicionRfcColegio = false;
+    this.modificacionDatosDataService.clearDatosFormularioPrevio();
     this.limpiarNuevoRfcColegio();
 
     // Limpiar variables del archivo
@@ -535,6 +541,8 @@ limpiarNuevoRfcColegio(): void {
       this.colegioContador.razonSocial = '';
       this.colegioContador.rfcColegio = '';
     }
+
+    this.modificacionDatosDataService.clearDatosFormularioPrevio();
 
     // 2. Eliminar archivo del servidor si ya se había subido con éxito
     if (this.fileConstanciaHdfsPath) {

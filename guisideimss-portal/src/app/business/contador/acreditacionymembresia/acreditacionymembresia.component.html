@@ -38,7 +38,7 @@
   </div>
   <div class="row">
           <div class="col-sm-4">
-            <label for="fechaExpedicionMembresia" class="form-label">* Fecha expedición de la membresía: </label>
+            <label for="fechaExpedicionMembresia" class="form-label">* Fecha expedición de la Membresía: </label>
             <div class="form-group datepicker-group">
               <input class="form-control"  id="fechaExpedicionMembresia" placeholder="DD/MM/AAAA" formControlName="fechaExpedicionMembresia" type="date" [max]="maxDate" onkeydown="return false" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               @if (formAcreditacionMembresia.get('fechaExpedicionMembresia')?.invalid && formAcreditacionMembresia.get('fechaExpedicionMembresia')?.touched) {

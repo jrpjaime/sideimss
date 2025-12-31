@@ -122,12 +122,26 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
         this.descargarAcusePreview(); // Una vez tenemos la config, descargamos el PDF
         this.loaderService.hide();
       },
-      error: (err) => {
-        this.loaderService.hide();
-        console.error('Error config acuse', err);
-        this.acusePreviewError = 'Error al cargar configuración del documento.';
-        this.alertService.error(this.acusePreviewError);
-      }
+      error: (err: HttpErrorResponse) => {
+              this.loaderService.hide();
+              console.error('Error al obtener parámetros del acuse:', err);
+
+              // 1. Mensaje amigable que no menciona "configuración" ni "parámetros"
+              let mensajeError = 'No se pudo preparar el documento para su visualización. Por favor, intente más tarde.';
+
+              // 2. Validación por tipo de error técnico
+              if (err.status === 0) {
+                mensajeError = 'No se pudo establecer comunicación con el sistema. Verifique su conexión a internet.';
+              } else if (err.status === 401 || err.status === 403) {
+                mensajeError = 'Su sesión ha expirado. Por favor, ingrese nuevamente al portal.';
+              } else if (err.status >= 500) {
+                mensajeError = 'El servicio de documentos no está disponible temporalmente. Intente más tarde.';
+              }
+
+              // 3. Actualización de estado y alerta
+              this.acusePreviewError = mensajeError;
+              this.alertService.error(mensajeError);
+            }
     });
   }
 
@@ -171,11 +185,26 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
           this.acusePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
         }
       },
-      error: (err) => {
-        this.loadingAcusePreview = false;
-        this.acusePreviewError = 'No se pudo generar la vista previa.';
-        this.alertService.error(this.acusePreviewError);
-      }
+      error: (err: HttpErrorResponse) => {
+              this.loadingAcusePreview = false;
+              console.error('Error al generar preview:', err);
+
+              // 1. Definimos un mensaje base amigable
+              let mensajeError = 'No se pudo generar la vista previa del documento en este momento.';
+
+              // 2. Personalizamos según el tipo de falla técnica
+              if (err.status === 0) {
+                mensajeError = 'No hay conexión con el servidor de documentos. Verifique su internet.';
+              } else if (err.status === 401 || err.status === 403) {
+                mensajeError = 'Su sesión ha expirado. Por favor, vuelva a ingresar al sistema.';
+              } else if (err.status >= 500) {
+                mensajeError = 'Hubo un inconveniente en el servidor al generar el PDF. Intente más tarde.';
+              }
+
+              // 3. Asignamos a la variable de la UI y mostramos la alerta
+              this.acusePreviewError = mensajeError;
+              this.alertService.error(mensajeError);
+            }
     });
   }
 
@@ -289,7 +318,7 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
       certificado: this.certificado,
       acuse: this.acuse,
       fecha: this.fechaAcuse,
-      folio: this.folioSolicitud, 
+      folio: this.folioSolicitud,
       ...this.acuseParameters
     };
 
@@ -327,10 +356,26 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
           this.alertService.error(response.mensaje || 'Error al guardar modificación.');
         }
       },
-      error: (err) => {
-        console.error(err);
-        this.alertService.error('Error al enviar solicitud final.');
+      error: (err: HttpErrorResponse) => {
+        // Mantenemos el log para nosotros los desarrolladores, pero no para el usuario
+        console.error('Error detallado:', err);
+
+        let mensajeError = 'Ocurrió un error inesperado al enviar la solicitud. Por favor, intente más tarde.';
+
+        if (err.status === 0) {
+          mensajeError = 'No se pudo establecer conexión con el servidor. Verifique su conexión a internet o intente más tarde.';
+        } else if (err.status === 400) {
+          mensajeError = 'La información enviada es incompleta o incorrecta. Por favor, verifique sus datos.';
+        } else if (err.status === 401 || err.status === 403) {
+          mensajeError = 'Su sesión ha expirado o no cuenta con los permisos necesarios. Intente ingresar nuevamente.';
+        } else if (err.status === 500) {
+          mensajeError = 'Hubo un problema en el servidor al procesar su solicitud. Por favor, intente más tarde.';
+        }
+
+        this.alertService.error(mensajeError);
       }
+
+
     });
   }
 
@@ -348,10 +393,25 @@ export class ModificaciondatosAcuseComponent extends BaseComponent implements On
           this.mostrarAcuse = true;
         }
       },
-      error: (err) => {
-        this.loaderService.hide();
-        this.alertService.error('No se pudo cargar el documento final.');
-      }
+      error: (err: HttpErrorResponse) => {
+              this.loaderService.hide();
+              console.error('Error al visualizar acuse:', err);
+
+              // 1. Mensaje amigable.
+              // Nota que confirmamos que el trámite fue exitoso aunque el PDF no cargue.
+              let mensajeError = 'Su trámite se registró con éxito, pero no se pudo visualizar el acuse en este momento.';
+
+              // 2. Personalización por error técnico
+              if (err.status === 0) {
+                mensajeError = 'No hay conexión para descargar su acuse.';
+              } else if (err.status === 404) {
+                mensajeError = 'No se puede descargar su acuse reintente mas tarde.';
+              } else if (err.status >= 500) {
+                mensajeError = 'No se puede descargar su acuse reintente mas tarde.';
+              }
+
+              this.alertService.error(mensajeError);
+            }
     });
   }
 
