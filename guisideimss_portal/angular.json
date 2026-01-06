@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "guisideimss-portal": {
+    "guisideimss_portal": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/guisideimss-portal",
+            "outputPath": "dist/guisideimss_portal",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -70,13 +70,13 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "guisideimss-portal:build:production"
+              "buildTarget": "guisideimss_portal:build:production"
             },
             "development": {
-              "buildTarget": "guisideimss-portal:build:development"
+              "buildTarget": "guisideimss_portal:build:development"
             },
             "qa": {                                     
-              "buildTarget": "guisideimss-portal:build:qa"
+              "buildTarget": "guisideimss_portal:build:qa"
             }
           },
           "defaultConfiguration": "development"

@@ -1,5 +1,5 @@
 {
-  "name": "guisideimss-portal",
+  "name": "guisideimss_portal",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -19,7 +19,7 @@
     "@angular/router": "^19.2.14",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
-    "guisideimss-portal": "file:",
+    "guisideimss_portal": "file:",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.1"
