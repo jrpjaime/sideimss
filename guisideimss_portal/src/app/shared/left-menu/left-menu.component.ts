@@ -19,6 +19,7 @@ export interface MenuItem {
   children?: MenuItem[]; // Para los subniveles
   action?: 'limpiarContexto';
   roles?: string[]; // Para especificar qué roles pueden ver este elemento
+  disabled?: boolean;
 }
 
 @Component({
@@ -31,6 +32,9 @@ export interface MenuItem {
 export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos OnInit y OnDestroy
 
   @Output() toggleMenuClicked = new EventEmitter<void>();
+
+  private bajaSubscription!: Subscription;
+  private esBaja: boolean = false;
 
   // Definimos la estructura completa del menú con sus roles asociados
   private fullMenuItems: MenuItem[] = [
@@ -68,11 +72,23 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
   ) { }
 
   ngOnInit(): void {
+
+
+
+
     // Nos suscribimos a los cambios de roles del usuario
     this.rolesSubscription = this.sharedService.currentRoleSesion.subscribe(userRoles => {
       console.log('LeftMenuComponent - Roles del usuario recibidos:', userRoles);
       this.filterMenuItems(userRoles);
+      this.aplicarRestriccionBaja(); 
     });
+
+
+    this.bajaSubscription = this.sharedService.currentIndBajaSesion.subscribe(estadoBaja => {
+      this.esBaja = estadoBaja;
+      this.aplicarRestriccionBaja();
+    });
+
   }
 
   ngOnDestroy(): void {
@@ -80,6 +96,30 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
     if (this.rolesSubscription) {
       this.rolesSubscription.unsubscribe();
     }
+
+    if (this.bajaSubscription){
+      this.bajaSubscription.unsubscribe();
+    } 
+  }
+
+
+ 
+
+  private aplicarRestriccionBaja(): void {
+    const rutasBloqueadas = [
+      '/contador/acreditacionymembresia',
+      '/contador/modificaciondatos',
+      '/contador/solicitudbaja'
+    ];
+
+    this.menuItems.forEach(item => {
+      if (item.children) {
+        item.children.forEach(child => {
+          // Si es baja y la ruta está en la lista negra, deshabilitar
+          child.disabled = this.esBaja && rutasBloqueadas.includes(child.route || '');
+        });
+      }
+    });
   }
 
   // Método para filtrar los elementos del menú basados en los roles del usuario
@@ -114,6 +154,13 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
   }
 
   onItemClick(event: MouseEvent, item: MenuItem): void {
+    if (item.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return; // Bloqueo total
+    }
+
+
     if (item.action) {
       event.preventDefault();
       if (item.action === 'limpiarContexto') {

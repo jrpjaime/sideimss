@@ -1,6 +1,7 @@
 package mx.gob.imss.seguridad.dto;
 
- 
+import java.time.LocalDate;
+
 public interface  DITPersonaProjection {
     String getRfc();
     String getNomNombre();
@@ -9,4 +10,5 @@ public interface  DITPersonaProjection {
     String getCurp();
     String getNumRegistroCpa();
     String getCveIdCpa();
+    LocalDate getFecRegistroBaja(); 
 }

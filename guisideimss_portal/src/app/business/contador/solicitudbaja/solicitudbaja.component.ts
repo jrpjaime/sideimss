@@ -74,95 +74,13 @@ constructor(
     this.error = null;
   }
 
-/*
-  async cargarDatosPreviosYFolio(): Promise<void> {
-    const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
 
-    if (datosGuardados) {
-      // Si hay datos guardados, los usamos
-      const folioPrevio = datosGuardados.folioSolicitud ?? ''; // Usa operador nullish coalescing para asegurar string
-
-      this.folioSolicitud = folioPrevio; // Asignamos el folio a la propiedad local
-
-      this.solicitudBajaData = {
-        folioSolicitud: folioPrevio, // Aquí ya es string gracias a '??'
-        datosPersonalesDto: datosGuardados.datosPersonalesDto,
-        domicilioFiscalDto: datosGuardados.domicilioFiscalDto,
-        datosContactoDto: datosGuardados.datosContactoDto,
-        motivoBaja: datosGuardados.motivoBaja
-      };
-      this.motivoBaja = datosGuardados.motivoBaja;
-      this.actualizarCaracteresRestantes();
-      this.loading = false;
-      this.loaderService.hide();
-      this.solicitudBajaDataService.clearDatosParaRegresar();
-    } else {
-      // Si no hay datos guardados, generamos un nuevo folio y luego cargamos los datos del contador
-      await this.generarFolioSolicitud(); // Esperamos a que se genere el folio
-      this.cargarDatosContador(); // Luego cargamos los datos del contador
-    }
-  }
-
-  cargarDatosContador(): void {
-    // Si llegamos aquí, folioSolicitud ya debería estar inicializado por generarFolioSolicitud()
-    if (!this.folioSolicitud) {
-      // Esto solo debería pasar si hubo un error en generarFolioSolicitud, pero es una buena salvaguarda
-      this.error = 'No se pudo obtener un folio de solicitud. Intente de nuevo.';
-      this.loading = false;
-      this.loaderService.hide();
-      this.alertService.error(this.error, { autoClose: false });
-      return;
-    }
-
-    this.loading = true;
-    this.error = null;
-    this.tieneBloqueoDictamen = false;
-    this.contadorPublicoAutorizadoService.getDatosContador().subscribe({
-      next: (data) => {
-        // Asegúrate de que `data` no sobrescriba el folio si ya lo tiene.
-        // Pero idealmente, la API debería devolver los datos del contador sin el folio
-        // y nosotros lo adjuntamos.
-        this.solicitudBajaData = { ...data, folioSolicitud: this.folioSolicitud!, motivoBaja: this.motivoBaja }; // Aquí usamos el operador !
-        const numRegistro = parseInt(data.datosPersonalesDto.registroIMSS);
-
-        if (!isNaN(numRegistro)) {
-          this.contadorPublicoAutorizadoService.validarDictamenEnProceso(numRegistro).subscribe({
-            next: (res) => {
-              if (res.tieneDictamen) {
-                this.tieneBloqueoDictamen = true;
-                // Mostramos el mensaje de error de la imagen
-                this.alertService.error('No es posible iniciar su trámite, tiene un dictamen en proceso. Favor de concluir con la presentación respectiva.', { autoClose: false });
-              }
-              this.loading = false;
-              this.loaderService.hide();
-            },
-            error: () => {
-              this.loading = false;
-              this.loaderService.hide();
-            }
-          });
-        } else {
-          this.loading = false;
-          this.loaderService.hide();
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar los datos del contador:', err);
-        this.error = 'No se pudieron cargar los datos. Intente de nuevo más tarde.';
-        this.loading = false;
-        this.loaderService.hide();
-        this.alertService.error(this.error, { autoClose: true });
-      }
-    });
-  }
-
-  */
 
 async cargarDatosPreviosYFolio(): Promise<void> {
   this.loaderService.show();
   this.error = null;
   this.tieneBloqueoDictamen = false;
-
+  console.log("cargarDatosPreviosYFolio");
   // 1. OBTENEMOS EL NÚMERO DE REGISTRO DESDE LA SESIÓN (BASE COMPONENT)
   const registroValue = this.sharedService.currentNumeroRegistroImssSesionValue;
   // 2. VALIDACIÓN DE SESIÓN: Si no hay registro, redirigimos al login inmediatamente
@@ -179,11 +97,12 @@ async cargarDatosPreviosYFolio(): Promise<void> {
 
   const numRegistro = parseInt(registroValue);
 
-
+  console.log("validarDictamenEnProceso");
   // 2. VALIDACIÓN TEMPRANA: Solo llamamos a la validación de dictamen
   this.contadorPublicoAutorizadoService.validarDictamenEnProceso(numRegistro).subscribe({
     next: (res) => {
       if (res.tieneDictamen) {
+        console.log("tieneDictamen");
         this.tieneBloqueoDictamen = true;
         this.loading = false;
         this.loaderService.hide();
@@ -191,10 +110,12 @@ async cargarDatosPreviosYFolio(): Promise<void> {
         // AQUÍ TERMINA EL FLUJO. No se consulta nada más.
       } else {
         // 3. SI PASA LA VALIDACIÓN, CONTINUAMOS CON EL RESTO DE LAS CONSULTAS
+        console.log("procederACargarInformacion");
         this.procederACargarInformacion();
       }
     },
     error: (err) => {
+      console.log("Ocurrió un error al validar su estatus de dictámenes.");
       this.error = 'Ocurrió un error al validar su estatus de dictámenes.';
       this.loading = false;
       this.loaderService.hide();
@@ -202,10 +123,11 @@ async cargarDatosPreviosYFolio(): Promise<void> {
   });
 }
 
+/*
 // Método para continuar cuando la validación es exitosa
 private async procederACargarInformacion(): Promise<void> {
   const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
-
+  console.log("datosGuardados:"+ datosGuardados);
 if (datosGuardados) {
   this.solicitudBajaData = {
     folioSolicitud: datosGuardados.folioSolicitud ?? '', // Forzamos a string
@@ -214,7 +136,7 @@ if (datosGuardados) {
     datosContactoDto: datosGuardados.datosContactoDto,
     motivoBaja: datosGuardados.motivoBaja
   };
-
+ console.log("datosGuardados.folioSolicitud:"+ datosGuardados.folioSolicitud);
   this.folioSolicitud = datosGuardados.folioSolicitud ?? '';
   this.motivoBaja = datosGuardados.motivoBaja;
   this.actualizarCaracteresRestantes();
@@ -222,6 +144,43 @@ if (datosGuardados) {
   this.loaderService.hide();
   this.solicitudBajaDataService.clearDatosParaRegresar();
 }
+}*/
+
+
+private async procederACargarInformacion(): Promise<void> {
+  const datosGuardados = this.solicitudBajaDataService.getDatosParaRegresar();
+  console.log("datosGuardados:", datosGuardados);
+
+  if (datosGuardados) {
+    // CASO A: El usuario regresó de otra pantalla, usamos lo que ya tenemos en memoria
+    this.solicitudBajaData = {
+      folioSolicitud: datosGuardados.folioSolicitud ?? '',
+      datosPersonalesDto: datosGuardados.datosPersonalesDto,
+      domicilioFiscalDto: datosGuardados.domicilioFiscalDto,
+      datosContactoDto: datosGuardados.datosContactoDto,
+      motivoBaja: datosGuardados.motivoBaja
+    };
+    this.folioSolicitud = datosGuardados.folioSolicitud ?? '';
+    this.motivoBaja = datosGuardados.motivoBaja;
+    this.actualizarCaracteresRestantes();
+    
+    // Finalizamos la carga
+    this.loading = false;
+    this.loaderService.hide();
+    this.solicitudBajaDataService.clearDatosParaRegresar();
+  } else {
+    // CASO B: Es la primera vez que entra (datosGuardados es null)
+    // Debemos generar un folio nuevo y traer los datos del contador desde el API
+    console.log("No hay datos guardados, iniciando carga limpia...");
+    try {
+      await this.generarFolioSolicitud(); // Primero obtenemos el folio
+      this.cargarDatosContadorDespuesDeValidar(); // Luego los datos del contador (este método ya quita el loader)
+    } catch (error) {
+      console.error("Error en carga inicial:", error);
+      this.loaderService.hide();
+      this.loading = false;
+    }
+  }
 }
 
 // Versión simplificada de carga de datos (sin volver a validar)

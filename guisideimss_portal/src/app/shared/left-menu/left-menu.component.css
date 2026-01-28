@@ -251,3 +251,21 @@ li.expanded > .submenu {
 :host-context(.menu-collapsed) .menu-toggle-container {
   justify-content: center;
 }
+
+/* Estilo para opciones inhibidas */
+.menu-item-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    pointer-events: none; /* Evita que el cursor reaccione */
+    background-color: transparent !important;
+}
+
+.menu-item-disabled .menu-text, 
+.menu-item-disabled i {
+    color: #a0a0a0 !important; /* Gris claro */
+}
+
+/* Opcional: si quieres que al pasar el mouse no cambie el color */
+.menu-item-disabled:hover {
+    background-color: transparent !important;
+}

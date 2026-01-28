@@ -41,6 +41,8 @@ export class BaseComponent implements OnInit {
   desDelegacionSesion: string = '';
   desSubdelegacionSesion: string = '';
 
+  indBajaSesion: boolean = false; 
+
 /*
   selectedFile: File | null = null; // Variable para almacenar el archivo seleccionado
   fileErrorMessage: string = '';
@@ -70,6 +72,10 @@ export class BaseComponent implements OnInit {
   recargaParametros(): void {
     console.log('.........BaseComponent ');
     this.sharedService.initializeUserData();
+
+    this.sharedService.currentIndBajaSesion.subscribe(indBaja => {
+      this.indBajaSesion = indBaja;
+    });
 
     this.sharedService.currentRfc.subscribe(rfc => {
       this.rfc = rfc;

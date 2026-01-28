@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -337,7 +338,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
             vincularR1Contacto(g.getCveIdR1DatosPersonales(), state.path("nuevoTelefono2").asText(null), 2L, usr);
         }
     }
-
+/* 
 private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
     logger.info(">>> [INICIO] Sincronizar R2 para Despacho (Persona Moral)");
     LocalDateTime ahora = LocalDateTime.now();
@@ -360,10 +361,17 @@ private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCp
             logger.info(">>> Buscando Despacho con RFC: {}", rfcDespacho);
             
             // SQL optimizado usando solo las tablas que confirmaste que tienes
-            String sqlLookup = "SELECT D.CVE_ID_DESPACHO " +
-                               "FROM MGPBDTU9X.DIT_PERSONA_MORAL PM " +
-                               "INNER JOIN MGPBDTU9X.NDT_DESPACHOS D ON D.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
-                               "WHERE PM.RFC = :rfc AND D.FEC_REGISTRO_BAJA IS NULL";
+          
+
+            String sqlLookup = "SELECT * FROM (" +
+                            "  SELECT D.CVE_ID_DESPACHO " +
+                            "  FROM MGPBDTU9X.DIT_PERSONA_MORAL PM " +
+                            "  INNER JOIN MGPBDTU9X.NDT_DESPACHOS D ON D.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                            "  WHERE PM.RFC = :rfc " +
+                            "    AND D.FEC_REGISTRO_BAJA IS NULL " +
+                            "    AND PM.FEC_REGISTRO_BAJA IS NULL " + // Asegurar que PM también esté activa
+                            "  ORDER BY PM.FEC_REGISTRO_ALTA DESC, D.CVE_ID_DESPACHO DESC " + 
+                            ") WHERE ROWNUM = 1";                               
 
             try {
                 // Ejecutamos la consulta para obtener el ID del Despacho
@@ -453,13 +461,20 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
         String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
         
         // Consulta extendida para traer el ID del Colegio y el ID de su Domicilio Fiscal Activo
-        String sqlColegio = "SELECT C.CVE_ID_COLEGIO, PDF.CVE_ID_PMDOM_FISCAL " +
-                            "FROM MGPBDTU9X.NDT_COLEGIO C " +
-                            "INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
-                            "LEFT JOIN MGPBDTU9X.DIT_PERSONAM_DOM_FISCAL PDF ON PM.CVE_ID_PERSONA_MORAL = PDF.CVE_ID_PERSONA_MORAL " +
-                            "AND PDF.FEC_REGISTRO_BAJA IS NULL " + 
-                            "WHERE PM.RFC = :rfc " +
-                            "AND C.FEC_REGISTRO_BAJA IS NULL";
+      
+
+                            
+       String sqlColegio = "SELECT * FROM (" +
+                            "  SELECT C.CVE_ID_COLEGIO, PDF.CVE_ID_PMDOM_FISCAL " +
+                            "  FROM MGPBDTU9X.NDT_COLEGIO C " +
+                            "  INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                            "  LEFT JOIN MGPBDTU9X.DIT_PERSONAM_DOM_FISCAL PDF ON PM.CVE_ID_PERSONA_MORAL = PDF.CVE_ID_PERSONA_MORAL " +
+                            "       AND PDF.FEC_REGISTRO_BAJA IS NULL " + 
+                            "  WHERE PM.RFC = :rfc " +
+                            "    AND C.FEC_REGISTRO_BAJA IS NULL " +
+                            "    AND PM.FEC_REGISTRO_BAJA IS NULL " +
+                            "  ORDER BY C.FEC_REGISTRO_ALTA DESC, C.CVE_ID_COLEGIO DESC " +
+                            ") WHERE ROWNUM = 1";                            
 
         try {
             Object[] result = (Object[]) entityManager.createNativeQuery(sqlColegio)
@@ -505,6 +520,173 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
     
     logger.info(">>> [FIN] sincronizarR3 finalizado correctamente.");
 }
+    */
+
+
+private void sincronizarR2(NdtContadorPublicoAut contador, JsonNode state, NdtCpaTramite tr, String usr) {
+    logger.info(">>> [INICIO] Sincronizar R2 para Despacho (Persona Moral)");
+    LocalDateTime ahora = LocalDateTime.now();
+
+    // 1. Obtener registro previo para darlo de baja después
+    NdtR2Despacho ant = r2DespachoRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+
+    NdtR2Despacho r2New = new NdtR2Despacho();
+    r2New.setCveIdCpa(contador.getCveIdCpa());
+    r2New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+    r2New.setFecRegistroAlta(ahora);
+    r2New.setCveIdUsuario(usr);
+
+    if (state != null) {
+        long tipoSoc = state.path("selectedTipoSociedad").asLong();
+        r2New.setIndTipoCpa(tipoSoc);
+
+        if (tipoSoc == 1) { // ES UN DESPACHO
+            String rfcDespacho = state.path("nuevoRfcDespacho").asText().trim().toUpperCase();
+            logger.info(">>> Buscando Despacho más reciente con RFC: {}", rfcDespacho);
+            
+            // SQL con ordenamiento por fecha descendente y límite de 1 fila para evitar duplicados
+            String sqlLookup = "SELECT CVE_ID_DESPACHO FROM (" +
+                               "  SELECT D.CVE_ID_DESPACHO " +
+                               "  FROM MGPBDTU9X.DIT_PERSONA_MORAL PM " +
+                               "  INNER JOIN MGPBDTU9X.NDT_DESPACHOS D ON D.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                               "  WHERE PM.RFC = :rfc " +
+                               "    AND D.FEC_REGISTRO_BAJA IS NULL " +
+                               "    AND PM.FEC_REGISTRO_BAJA IS NULL " +
+                               "  ORDER BY D.FEC_REGISTRO_ALTA DESC, D.CVE_ID_DESPACHO DESC " +
+                               ") WHERE ROWNUM = 1";
+
+            try {
+                List<?> results = entityManager.createNativeQuery(sqlLookup)
+                        .setParameter("rfc", rfcDespacho)
+                        .getResultList();
+
+                if (results.isEmpty()) {
+                    throw new NoResultException("No se encontró el despacho solicitado.");
+                }
+
+                Long idDespacho = ((Number) results.get(0)).longValue();
+                r2New.setCveIdDespacho(idDespacho);
+                logger.info(">>> Despacho vinculado ID: {}", idDespacho);
+
+            } catch (NoResultException e) {
+                logger.error(">>> ERROR: Despacho no encontrado o inactivo para RFC: {}", rfcDespacho);
+                throw new RuntimeException("El despacho solicitado con RFC " + rfcDespacho + " no es válido o no está registrado.");
+            } catch (Exception e) {
+                logger.error(">>> Error en búsqueda de Despacho: {}", e.getMessage());
+                throw new RuntimeException("Error al validar la información del despacho: " + e.getMessage());
+            }
+
+            r2New.setCargoQueDesempena(state.path("selectedCargoDesempena").asText(null));
+            r2New.setCveIdPmdomFiscal(null); // Según indicación previa
+
+            NdtR2Despacho guardado = r2DespachoRepository.save(r2New);
+
+            String tel = state.path("telefonoFijoDespacho").asText(null);
+            if (tel != null && !tel.isEmpty()) {
+                vincularR2Contacto(guardado.getCveIdR2Despacho(), tel, usr);
+            }
+        } else {
+            // Profesional Independiente
+            r2New.setIndCuentaconTrab("Si".equalsIgnoreCase(state.path("tieneTrabajadores").asText()) ? "1" : "0");
+            r2New.setNumTrabajadores(state.path("numeroTrabajadores").asInt(0));
+            r2DespachoRepository.save(r2New);
+            logger.info(">>> Guardado como Profesional Independiente.");
+        }
+
+        // Dar de baja el anterior
+        if (ant != null) {
+            ant.setFecRegistroBaja(ahora);
+            r2DespachoRepository.save(ant);
+            logger.info(">>> Registro R2 anterior (ID: {}) marcado de baja.", ant.getCveIdR2Despacho());
+        }
+    }
+}
+
+
+
+private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonNode root, NdtCpaTramite tr, String usr) {
+    logger.info(">>> [INICIO] sincronizarR3 - CPA ID: {}, Usuario: {}", contador.getCveIdCpa(), usr);
+    LocalDateTime ahora = LocalDateTime.now();
+    
+    // 1. Registro activo actual
+    NdtR3Colegio ant = r3ColegioRepository.findRegistroActivoByCpa(contador.getCveIdCpa()).orElse(null);
+
+    // 2. Nuevo registro
+    NdtR3Colegio r3New = new NdtR3Colegio();
+    r3New.setCveIdCpa(contador.getCveIdCpa());
+    r3New.setCveIdCpaTramite(tr.getCveIdCpaTramite());
+    r3New.setFecRegistroAlta(ahora);
+    r3New.setCveIdUsuario(usr);
+    r3New.setNumTramiteNotaria(tr.getNumTramiteNotaria());
+    r3New.setUrlAcuseNotaria(tr.getUrlAcuseNotaria());
+
+    // 3. Documento Constancia
+    if (root != null && root.has("desPathHdfsConstancia")) {
+        String pathDoc = root.get("desPathHdfsConstancia").asText();
+        NdtDocumentoProbatorio docGuardado = guardarDocumentoLegacy(contador.getCveIdCpa(), pathDoc, 132L, usr);
+        if (docGuardado != null) {
+            r3New.setCveIdDoctoProbatorio(docGuardado.getCveIdDoctoProbatorio());
+        }
+    }
+
+    // 4. Buscar el Colegio más reciente por RFC
+    if (state != null && state.has("nuevoRfcColegio")) {
+        String rfcColegio = state.get("nuevoRfcColegio").asText().trim().toUpperCase();
+        
+        String sqlColegio = "SELECT * FROM (" +
+                            "  SELECT C.CVE_ID_COLEGIO, PDF.CVE_ID_PMDOM_FISCAL " +
+                            "  FROM MGPBDTU9X.NDT_COLEGIO C " +
+                            "  INNER JOIN MGPBDTU9X.DIT_PERSONA_MORAL PM ON C.CVE_ID_PERSONA_MORAL = PM.CVE_ID_PERSONA_MORAL " +
+                            "  LEFT JOIN MGPBDTU9X.DIT_PERSONAM_DOM_FISCAL PDF ON PM.CVE_ID_PERSONA_MORAL = PDF.CVE_ID_PERSONA_MORAL " +
+                            "       AND PDF.FEC_REGISTRO_BAJA IS NULL " + 
+                            "  WHERE PM.RFC = :rfc " +
+                            "    AND C.FEC_REGISTRO_BAJA IS NULL " +
+                            "    AND PM.FEC_REGISTRO_BAJA IS NULL " +
+                            "  ORDER BY C.FEC_REGISTRO_ALTA DESC, C.CVE_ID_COLEGIO DESC " +
+                            ") WHERE ROWNUM = 1";
+
+        try {
+            List<?> results = entityManager.createNativeQuery(sqlColegio)
+                    .setParameter("rfc", rfcColegio)
+                    .getResultList();
+            
+            if (results.isEmpty()) {
+                throw new NoResultException("No existe registro activo para el colegio.");
+            }
+
+            Object[] row = (Object[]) results.get(0);
+            Long idColegio = ((Number) row[0]).longValue();
+            Long idDomicilio = (row[1] != null) ? ((Number) row[1]).longValue() : null;
+
+            r3New.setCveIdColegio(idColegio);
+
+            if (idDomicilio == null) {
+                logger.warn(">>> El Colegio {} no tiene domicilio fiscal activo.", rfcColegio);
+                throw new RuntimeException("El Colegio solicitado no tiene un domicilio fiscal activo registrado.");
+            }
+            r3New.setCveIdPmdomFiscal(idDomicilio); 
+
+            logger.info(">>> Colegio vinculado ID: {} (Más reciente)", idColegio);
+
+        } catch (NoResultException e) {
+            throw new RuntimeException("El Colegio con RFC " + rfcColegio + " no es válido o no está registrado.");
+        } catch (Exception e) {
+            logger.error(">>> Error en búsqueda de Colegio: {}", e.getMessage());
+            throw new RuntimeException("Error al validar datos del Colegio: " + e.getMessage());
+        }
+    } else {
+        throw new RuntimeException("No se proporcionó el RFC del nuevo Colegio.");
+    }
+
+    r3ColegioRepository.save(r3New);
+
+    if (ant != null) {
+        ant.setFecRegistroBaja(ahora);
+        r3ColegioRepository.save(ant);
+    }
+    logger.info(">>> [FIN] sincronizarR3 finalizado correctamente.");
+}
+
 
     // --- MÉTODOS DE APOYO ---
 
@@ -602,9 +784,11 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
                 logger.warn("No se puede enviar correo: destinatario vacío para RFC {}", rfc);
                 return Mono.just("Sin destinatario");
             }
+
+logger.warn("enviar correo: destinatario  para  {}", mail);
             CorreoDto dto = new CorreoDto();
             dto.setRemitente("tramites.cpa@imss.gob.mx");
-            dto.setCorreoPara(Collections.singletonList(mail));
+            dto.setCorreoPara(Collections.singletonList(mail)); 
             dto.setAsunto(asunto);
             dto.setCuerpoCorreo(construirHtmlBase(nom, rfc, html));
 

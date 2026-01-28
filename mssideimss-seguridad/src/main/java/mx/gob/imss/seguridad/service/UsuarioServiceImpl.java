@@ -34,7 +34,7 @@ public class UsuarioServiceImpl implements UsuarioService  {
             }
           
             usuarioDto.setCveIdCpa(dITPersonaProjection.getCveIdCpa());
-          
+            usuarioDto.setIndBaja(dITPersonaProjection.getFecRegistroBaja() != null);
 
             return Optional.of(usuarioDto);
         }

@@ -13,5 +13,6 @@ public class UsuarioDto {
     private String numeroRegistroImss;
     private String numRegistroCpa;
     private String cveIdCpa;
+    private boolean indBaja; 
     
 }
