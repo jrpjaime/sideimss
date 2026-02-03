@@ -11,4 +11,5 @@ public interface  DITPersonaProjection {
     String getNumRegistroCpa();
     String getCveIdCpa();
     LocalDate getFecRegistroBaja(); 
+    Long getCveIdEstadoCpa();
 }

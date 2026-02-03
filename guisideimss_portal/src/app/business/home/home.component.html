@@ -39,16 +39,38 @@
 
         </div>
  
+ 
 
-            @if (indBajaSesion) {
-              <div class="alert alert-warning" role="alert">
-                 
-                <div>
-                  <strong class="d-block">Aviso importante</strong>
-                  Su registro de Contador Público Autorizado se encuentra inactivo.
-                </div>
-              </div>
-            }
+<div class="row mt-4">
+  <div class="col-12">
+
+    <!-- MENSAJE PARA ESTATUS 3: PENDIENTE DE AUTORIZAR -->
+    @if (indPendienteBajaSesion) {
+      <div class="alert alert-warning" role="alert"> 
+          
+          <div>
+            <span class="d-block fw-bold text-dark">
+              Persona Física: {{ rfcSesion }}, {{ nombreCompletoSync }} encontrado/a.
+            </span>
+            <span class="text-muted">
+              Contador, usted tiene una Solicitud de baja pendiente por autorizar.
+            </span>
+          </div> 
+      </div>
+    }
+
+    <!-- MENSAJE PARA ESTATUS 10: BAJA DEFINITIVA -->
+    @if (indBajaSesion) {
+      <div class="alert alert-warning" role="alert"> 
+          <div>
+            <strong class="d-block">Aviso importante</strong>
+            Su registro de Contador Público Autorizado se encuentra inactivo.
+          </div> 
+      </div>
+    }
+
+  </div>
+</div>        
 
 
 

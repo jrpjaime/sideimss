@@ -14,5 +14,6 @@ public class UsuarioDto {
     private String numRegistroCpa;
     private String cveIdCpa;
     private boolean indBaja; 
+    private Long cveIdEstadoCpa;
     
 }

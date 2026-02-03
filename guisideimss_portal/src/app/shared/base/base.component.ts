@@ -3,7 +3,7 @@ import { SharedService } from '../services/shared.service';
 
 import { AuthService } from '../../core/services/auth.service';
 import { Constants } from '../../global/Constants';
-import { combineLatest, map, Observable, startWith } from 'rxjs';
+import { combineLatest, map, Observable, startWith, Subscription } from 'rxjs';
 
 @Directive()
 export class BaseComponent implements OnInit {
@@ -25,7 +25,11 @@ export class BaseComponent implements OnInit {
 
 
 
+  cveIdEstadoCpaSesion: number | null = null; // El ID numérico tal cual (3, 10, etc.)
+  indBajaSesion: boolean = false;            // TRUE solo si estatus es 10
+  indPendienteBajaSesion: boolean = false;   // TRUE solo si estatus es 3
 
+  protected subs: Subscription[] = []; 
 
 
   roles: string[] = [];
@@ -40,8 +44,7 @@ export class BaseComponent implements OnInit {
 
   desDelegacionSesion: string = '';
   desSubdelegacionSesion: string = '';
-
-  indBajaSesion: boolean = false; 
+ 
 
 /*
   selectedFile: File | null = null; // Variable para almacenar el archivo seleccionado
@@ -73,9 +76,17 @@ export class BaseComponent implements OnInit {
     console.log('.........BaseComponent ');
     this.sharedService.initializeUserData();
 
-    this.sharedService.currentIndBajaSesion.subscribe(indBaja => {
-      this.indBajaSesion = indBaja;
-    });
+     // Suscripción al Estatus CPA (Lógica centralizada)
+    this.subs.push(
+      this.sharedService.currentCveIdEstadoCpaSesion.subscribe(estatus => {
+        this.cveIdEstadoCpaSesion = estatus;
+        
+        // Separamos las banderas
+        this.indBajaSesion = (estatus === 10);          // Baja definitiva
+        this.indPendienteBajaSesion = (estatus === 3);  // Trámite de baja pendiente
+        console.log('>>> Banderas - indBaja:', this.indBajaSesion, ' | indPendiente:', this.indPendienteBajaSesion);
+      })
+    );
 
     this.sharedService.currentRfc.subscribe(rfc => {
       this.rfc = rfc;

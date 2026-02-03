@@ -72,6 +72,12 @@ export class SharedService {
   currentIndBajaSesion = this.indBajaSesionSource.asObservable();
 
 
+  
+  private cveIdEstadoCpaSesionSource = new BehaviorSubject<number | null>(null);
+  currentCveIdEstadoCpaSesion = this.cveIdEstadoCpaSesionSource.asObservable();
+
+
+
   constructor() {}
 
   changeRfc(rfc: string) {
@@ -152,6 +158,12 @@ export class SharedService {
     this.indBajaSesionSource.next(indBajaSesion);
   }
 
+
+  changeCveIdEstadoCpaSesion(estatus: number | null) {
+    this.cveIdEstadoCpaSesionSource.next(estatus);
+  }
+    
+
   get currentNumeroRegistroImssSesionValue(): string {
     return this.numeroRegistroImssSesionSource.getValue();
   }
@@ -180,6 +192,7 @@ export class SharedService {
     const desSubdelegacion = payload.desSubdelegacion;
     const numeroRegistroImss = payload.numeroRegistroImss;
     const indBajaSesion = payload.indBaja || false;
+    const cveIdEstadoCpa = payload.cveIdEstadoCpa;
 
 
     console.log("rfc: " + rfc);
@@ -191,6 +204,7 @@ export class SharedService {
     console.log("desDelegacion: " + desDelegacion);
     console.log("desSubdelegacion: " + desSubdelegacion);
     console.log("numeroRegistroImss: " + numeroRegistroImss);
+    console.log("cveIdEstadoCpa: " + cveIdEstadoCpa);
 
     const rolesPermitidos = [Constants.rolePatron, Constants.roleContador, Constants.roleRepresentante];
     const tieneRolValido = roles.some(r => rolesPermitidos.includes(r));
@@ -205,6 +219,7 @@ export class SharedService {
       this.changeRoleSesion(roles);
       this.changeNumeroRegistroImssSesion(payload.numeroRegistroImss);
       this.changeIndBajaSesion(indBajaSesion);
+      this.changeCveIdEstadoCpaSesion(cveIdEstadoCpa);
 
       // Seteamos datos de trabajo (contexto)
       this.changeRfc(payload.rfc);

@@ -38,6 +38,8 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
 
     private static final Logger logger = LogManager.getLogger(AcreditacionMembresiaServiceImpl.class);
 
+    private final NdtCpaTramiteEstadoRepository tramiteEstadoRepository;
+
     @Value("${serviciosdigitales.url.correo}")
     private String urlSendCorreoElectronico;
 
@@ -259,7 +261,7 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         if (json.has("desPathHdfsAcreditacion")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsAcreditacion").asText(), 133L, usr);
         if (json.has("desPathHdfsMembresia")) guardarDocumentoLegacy(contador.getCveIdCpa(), json.get("desPathHdfsMembresia").asText(), 132L, usr);
     }
-
+/*
     private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
         LocalDateTime ahora = LocalDateTime.now();
         String usr = contador.getCurp();
@@ -288,6 +290,75 @@ public class AcreditacionMembresiaServiceImpl implements AcreditacionMembresiaSe
         contador.setFecRegistroBaja(ahora);
         contadorRepository.save(contador);
     }
+    */
+
+
+
+private void guardarBajaLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
+    logger.info(">>> [INICIO] guardarBajaLegacy - CPA ID: {}", contador.getCveIdCpa());
+    LocalDateTime ahora = LocalDateTime.now();
+    
+    // CVE_ID_USUARIO (VARCHAR2 20). Usamos el CURP del contador.
+    String usr = contador.getCurp();
+    if (usr != null && usr.length() > 20) {
+        usr = usr.substring(0, 20);
+    }
+    
+    // Obtenemos el motivo tal cual lo envió el usuario. Si no envió nada, queda vacío.
+    String motivo = json.path("motivoBaja").asText("");
+    
+    // Solo limitamos la longitud para que la base de datos no lance un error de desbordamiento (VARCHAR2 3100)
+    if (motivo.length() > 3100) {
+        motivo = motivo.substring(0, 3100);
+    }
+
+    try {
+        // 1. REGISTRO EN NDT_CPA_TRAMITE
+        NdtCpaTramite tr = new NdtCpaTramite();
+        tr.setCveIdCpa(contador.getCveIdCpa());
+       // tr.setCveIdTramite(1051099333L); // Identificador de trámite de Baja
+        tr.setFecSolicitudMovimiento(ahora);
+        tr.setFecRegistroAlta(ahora);
+        tr.setCveIdUsuario(usr);
+        tr.setNumTramiteNotaria(json.path("folioSolicitud").asText(folio)); 
+        tr.setUrlAcuseNotaria(idPlantilla);
+        NdtCpaTramite trG = tramiteRepository.save(tr);
+
+        // 2. REGISTRO EN NDT_CPA_TRAMITE_ESTADO
+        NdtCpaTramiteEstado te = new NdtCpaTramiteEstado();
+        te.setCveIdCpaTramite(trG.getCveIdCpaTramite());
+        te.setCveIdEstadoTramite(1L); // 1 = Solicitado
+        te.setCveIdEstadoTramitePrevio(0L); 
+        te.setObservaciones(motivo); // Solo el texto del usuario
+        te.setFecRegistroAlta(ahora);
+        te.setCveIdUsuario(usr);
+        tramiteEstadoRepository.save(te);
+
+        // 3. REGISTRO EN NDT_CPA_ESTATUS
+        NdtCpaEstatus est = new NdtCpaEstatus();
+        est.setCveIdCpa(contador.getCveIdCpa());
+        est.setCveIdEstadoCpa(3L); // 3 = Pendiente de Autorizar
+        est.setFecRegistroAlta(ahora);
+        est.setCveIdUsuario(usr);
+        est.setCveIdCpaTramite(trG.getCveIdCpaTramite());
+        est.setDesComentarios(motivo); // Solo el texto del usuario
+        estatusRepository.save(est);
+
+        // 4. ACTUALIZACIÓN EN EL MAESTRO NDT_CONTADOR_PUBLICO_AUT
+        contador.setCveIdEstadoCpa(3L); 
+        contador.setFecRegistroActualizado(ahora);
+        contador.setCveIdUsuario(usr);
+        contadorRepository.save(contador);
+
+        logger.info(">>> Sincronización Legacy de Baja completada para CPA: {}", contador.getCveIdCpa());
+
+    } catch (Exception e) {
+        logger.error(">>> ERROR en guardarBajaLegacy: {}", e.getMessage(), e);
+        throw new RuntimeException("Error al procesar el registro de baja: " + e.getMessage());
+    }
+}
+
+
 
     private void guardarModificacionLegacy(NdtContadorPublicoAut contador, JsonNode json, String folio, String idPlantilla) {
         LocalDateTime ahora = LocalDateTime.now();

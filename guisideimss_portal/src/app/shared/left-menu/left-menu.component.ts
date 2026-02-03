@@ -33,8 +33,8 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
 
   @Output() toggleMenuClicked = new EventEmitter<void>();
 
-  private bajaSubscription!: Subscription;
-  private esBaja: boolean = false;
+private estatusSubscription!: Subscription;
+private cveIdEstadoCpa: number | null = null;
 
   // Definimos la estructura completa del menú con sus roles asociados
   private fullMenuItems: MenuItem[] = [
@@ -84,10 +84,10 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
     });
 
 
-    this.bajaSubscription = this.sharedService.currentIndBajaSesion.subscribe(estadoBaja => {
-      this.esBaja = estadoBaja;
-      this.aplicarRestriccionBaja();
-    });
+  this.estatusSubscription = this.sharedService.currentCveIdEstadoCpaSesion.subscribe(estatus => {
+    this.cveIdEstadoCpa = estatus;
+    this.aplicarRestriccionBaja();
+  });
 
   }
 
@@ -97,30 +97,32 @@ export class LeftMenuComponent implements OnInit, OnDestroy { // Implementamos O
       this.rolesSubscription.unsubscribe();
     }
 
-    if (this.bajaSubscription){
-      this.bajaSubscription.unsubscribe();
+    if (this.estatusSubscription){
+      this.estatusSubscription.unsubscribe();
     } 
   }
 
 
  
 
-  private aplicarRestriccionBaja(): void {
-    const rutasBloqueadas = [
-      '/contador/acreditacionymembresia',
-      '/contador/modificaciondatos',
-      '/contador/solicitudbaja'
-    ];
+private aplicarRestriccionBaja(): void {
+  // Bloqueamos si el estado es 3 (pendiente) O 10 (baja)
+  const bloquearOpciones = (this.cveIdEstadoCpa === 3 || this.cveIdEstadoCpa === 10);
 
-    this.menuItems.forEach(item => {
-      if (item.children) {
-        item.children.forEach(child => {
-          // Si es baja y la ruta está en la lista negra, deshabilitar
-          child.disabled = this.esBaja && rutasBloqueadas.includes(child.route || '');
-        });
-      }
-    });
-  }
+  const rutasRestringidas = [
+    '/contador/acreditacionymembresia',
+    '/contador/modificaciondatos',
+    '/contador/solicitudbaja'
+  ];
+
+  this.menuItems.forEach(item => {
+    if (item.children) {
+      item.children.forEach(child => {
+        child.disabled = bloquearOpciones && rutasRestringidas.includes(child.route || '');
+      });
+    }
+  });
+}
 
   // Método para filtrar los elementos del menú basados en los roles del usuario
   private filterMenuItems(userRoles: string[]): void {

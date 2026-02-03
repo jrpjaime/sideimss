@@ -38,6 +38,7 @@ public class JwtUtilService {
         
         claims.put("roles", roles);  
         claims.put("indBaja", usuarioDto.isIndBaja());
+        claims.put("cveIdEstadoCpa", usuarioDto.getCveIdEstadoCpa());
  
         return Jwts.builder()
                 .claims(claims) // método para establecer los claims
@@ -59,6 +60,7 @@ public class JwtUtilService {
         claims.put("numeroRegistroImss", usuarioDto.getNumeroRegistroImss());
         claims.put("roles", roles);
         claims.put("indBaja", usuarioDto.isIndBaja());
+        claims.put("cveIdEstadoCpa", usuarioDto.getCveIdEstadoCpa());
  
         return Jwts.builder()
                 .claims(claims) // Nuevo método para establecer los claims

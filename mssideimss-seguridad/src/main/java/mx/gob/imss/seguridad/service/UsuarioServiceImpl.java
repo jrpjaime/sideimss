@@ -33,8 +33,10 @@ public class UsuarioServiceImpl implements UsuarioService  {
                 usuarioDto.setNumeroRegistroImss(null);  
             }
           
-            usuarioDto.setCveIdCpa(dITPersonaProjection.getCveIdCpa());
-            usuarioDto.setIndBaja(dITPersonaProjection.getFecRegistroBaja() != null);
+            usuarioDto.setCveIdCpa(dITPersonaProjection.getCveIdCpa()); 
+
+            usuarioDto.setCveIdEstadoCpa(dITPersonaProjection.getCveIdEstadoCpa());  
+            usuarioDto.setIndBaja(dITPersonaProjection.getFecRegistroBaja() != null || (dITPersonaProjection.getCveIdEstadoCpa() != null && dITPersonaProjection.getCveIdEstadoCpa() == 10));
 
             return Optional.of(usuarioDto);
         }
