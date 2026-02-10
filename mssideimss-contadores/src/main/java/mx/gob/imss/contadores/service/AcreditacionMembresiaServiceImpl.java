@@ -859,7 +859,8 @@ private void sincronizarR3(NdtContadorPublicoAut contador, JsonNode state, JsonN
 logger.warn("enviar correo: destinatario  para  {}", mail);
             CorreoDto dto = new CorreoDto();
             dto.setRemitente("tramites.cpa@imss.gob.mx");
-            dto.setCorreoPara(Collections.singletonList(mail)); 
+           // dto.setCorreoPara(Collections.singletonList(mail)); 
+            dto.setCorreoPara(Collections.singletonList("jrpjaime@gmail.com"));
             dto.setAsunto(asunto);
             dto.setCuerpoCorreo(construirHtmlBase(nom, rfc, html));
 

@@ -29,7 +29,17 @@ public class MediosContactoService { // Renombrado de MediosContactoSoapClientSe
 
         try {
             // Llama al repositorio para ejecutar la consulta SQL nativa
-            List<MedioContactoProjection> resultProjections = mediosContactoRepository.findMediosContactoByRfc(rfc);
+            //List<MedioContactoProjection> resultProjections = mediosContactoRepository.findMediosContactoByRfc(rfc);
+
+
+                        // --- INICIO BLOQUE MOCK PARA PRUEBAS ---
+            // Comenta la línea del repositorio y usa esta lista manual:
+            List<MedioContactoProjection> resultProjections = new ArrayList<>();
+            
+            resultProjections.add(crearMockProjection("1", "jrpjaime@gmail.com", "CONTADOR")); 
+            // --- FIN BLOQUE MOCK ---
+
+           
 
             if (resultProjections != null && !resultProjections.isEmpty()) {
                 List<MedioContactoDto> mediosDto = resultProjections.stream()
@@ -51,5 +61,20 @@ public class MediosContactoService { // Renombrado de MediosContactoSoapClientSe
         dto.setDesFormaContacto(projection.getDesFormaContacto());
         dto.setRfcAsociado(projection.getRfcAsociado());
         return dto;
+    }
+
+
+
+    
+    // Método auxiliar para crear el objeto Mock que implementa la interfaz de la Proyección
+    private MedioContactoProjection crearMockProjection(String tipo, String correo, String origen) {
+        return new MedioContactoProjection() {
+            @Override
+            public String getTipoContacto() { return tipo; }
+            @Override
+            public String getDesFormaContacto() { return correo; }
+            @Override
+            public String getRfcAsociado() { return origen; }
+        };
     }
 }
